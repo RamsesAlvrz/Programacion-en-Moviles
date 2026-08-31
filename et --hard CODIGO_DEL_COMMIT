@@ -1,0 +1,30 @@
+[33mcee2195[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: commit: feat: agregar Sistema_matricula dentro de Semana 02
+[33m42010eb[m HEAD@{1}: reset: moving to origin/main
+[33me60afb8[m HEAD@{2}: commit: fix: eliminar carpeta duplica de Sistema matricula
+[33mabcbe35[m HEAD@{3}: commit: fix: eliminar carpeta duplica de Sistema matricula
+[33m1f90851[m HEAD@{4}: commit: feat: agregar impresion formateada del resultado final y cuotas
+[33md916292[m HEAD@{5}: commit: feat: implementar calculos de costos, creditos y carga academica
+[33m98fd43b[m HEAD@{6}: reset: moving to HEAD
+[33m98fd43b[m HEAD@{7}: reset: moving to HEAD
+[33m98fd43b[m HEAD@{8}: commit: feat: agregar captura de inputs del estudiante y cursos
+[33m3441a75[m HEAD@{9}: commit: Fix: Habilitar AndroidX y configurar ejecucion de consola via pruebas unitarias
+[33m2d5fd0e[m HEAD@{10}: commit: Commit 6: Actualiza README.md ajustado al formato del Laboratorio 02 y arquitectura POO
+[33mff9cecd[m HEAD@{11}: commit: Commit 5: Agrega EstrategiaDescuento, GeneradorReporte y Reto Adicional (find/removeIf)
+[33m0ff58ad[m HEAD@{12}: commit: Commit 4: Creacion del contenedor CarritoCompras y Polimorfismo en calculos
+[33m0b15877[m HEAD@{13}: commit: Commit 3: Implementacion de Herencia con ProductoEstandar y ProductoImportado
+[33mda62fc8[m HEAD@{14}: commit: Commit 2: Definicion de Abstraccion y Encapsulamiento con clase base Producto
+[33m81bec8e[m HEAD@{15}: commit: Organiza archivos de Proyecto_Con_IA dentro de su carpeta correspondiente
+[33m3001e0a[m HEAD@{16}: commit: Commit 1: Estructura inicial del proyecto Proyecto_Con_IA
+[33m8da8c54[m HEAD@{17}: pull origin main --rebase (finish): returning to refs/heads/main
+[33m8da8c54[m HEAD@{18}: pull origin main --rebase (pick): Código actualizado con el resultado final que se solicitó
+[33mc1efeac[m HEAD@{19}: pull origin main --rebase (start): checkout c1efeaca901fcf1d861914a92a47edc2959d967f
+[33ma503e15[m HEAD@{20}: commit: Código actualizado con el resultado final que se solicitó
+[33m34ef62c[m HEAD@{21}: commit: Agrega reto adicional: buscar con find y eliminar con removeIf
+[33m6e7c5bb[m HEAD@{22}: commit: Elimina README creado localmente
+[33m4b30202[m HEAD@{23}: pull origin main: Fast-forward
+[33m6c1283d[m HEAD@{24}: commit: Agrega README.md con documentacion y captura
+[33m13ac5b5[m HEAD@{25}: commit: Agrega producto mas caro y descuento por monto con when
+[33m413910b[m HEAD@{26}: commit: Agrega reporte de detalle con columnas alineadas
+[33m4d592d7[m HEAD@{27}: commit (amend): Agrega data class Producto y funciones de subtotal, IGV y total
+[33mbdf8367[m HEAD@{28}: commit: Agrega data class Producto y funciones de subtotal, IGV y total
+[33m0670325[m HEAD@{29}: commit (initial): Proyecto inicial con menú del carrito
