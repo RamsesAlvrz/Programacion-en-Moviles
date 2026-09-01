@@ -18,7 +18,7 @@ fun main() {
         print("Nombre del curso: ")
         val nombreCurso = readln().trim().ifEmpty { "Curso $i" }
 
-        val creditos = pedirEntero("Creditos del curso: ", min = 0)
+        val creditos = pedirEntero("Creditos del curso: ", min = 1)
         val costoCurso = creditos * valorCredito
 
         totalCreditos += creditos
@@ -28,7 +28,7 @@ fun main() {
     }
 
     val cargaAcademica = when {
-        totalCreditos <= 12 -> "Malla Regular"
+        totalCreditos <= 12 -> "Carga Parcial"
         totalCreditos in 13..18 -> "Carga Completa"
         else -> {
             println("\nSu carga ($totalCreditos creditos) supera los 18 creditos.")
