@@ -39,6 +39,15 @@ fun main() {
         val nombreEstudiante = readln().trim().ifEmpty { "Estudiante" }
 
         val turno = pedirTurno("Turno (M: Manana [+10%], T: Tarde [+15%], N: Noche [+20%]): ")
+        val categoria = pedirCategoria("Categoria (O: Ordinario, B: Becado): ")
+
+        // Captura condicional de la matrícula según la categoría
+        val costoMatricula = if (categoria == "Becado") {
+            println("Colocar el precio de matricula: 0")
+            0.0
+        } else {
+            pedirDecimal("Colocar el precio de matricula: ", min = 0.0)
+        }
 
         val cantidadCursos = pedirEntero(
             mensaje = "Cantidad de cursos a matricular: ",
@@ -128,8 +137,9 @@ fun main() {
             else -> 0.0
         }
 
-        val montoRecargoTurno = subtotalCursos * porcentajeTurno
-        val totalPagar = subtotalCursos + montoRecargoTurno
+        val subtotalBase = costoMatricula + subtotalCursos
+        val montoRecargoTurno = subtotalBase * porcentajeTurno
+        val totalPagar = subtotalBase + montoRecargoTurno
 
         val cuotas = if (totalPagar > LIMITE_PAGO_TRES_CUOTAS) 3 else 2
         val montoCuota = totalPagar / cuotas
@@ -139,6 +149,8 @@ fun main() {
         mostrarResultado(
             nombreEstudiante = nombreEstudiante,
             turno = turno,
+            categoria = categoria,
+            costoMatricula = costoMatricula,
             cantidadCursos = cantidadCursos,
             totalCreditos = totalCreditos,
             subtotalCursos = subtotalCursos,
@@ -168,6 +180,17 @@ fun pedirTurno(mensaje: String): String {
             "T", "TARDE" -> return "Tarde"
             "N", "NOCHE" -> return "Noche"
             else -> println("Turno invalido. Ingrese M (Manana), T (Tarde) o N (Noche).")
+        }
+    }
+}
+
+fun pedirCategoria(mensaje: String): String {
+    while (true) {
+        print(mensaje)
+        when (readln().trim().uppercase()) {
+            "O", "ORDINARIO" -> return "Ordinario"
+            "B", "BECADO" -> return "Becado"
+            else -> println("Categoria invalida. Ingrese O (Ordinario) o B (Becado).")
         }
     }
 }
@@ -204,6 +227,8 @@ fun pedirRespuestaSiNo(mensaje: String): Boolean {
 fun mostrarResultado(
     nombreEstudiante: String,
     turno: String,
+    categoria: String,
+    costoMatricula: Double,
     cantidadCursos: Int,
     totalCreditos: Int,
     subtotalCursos: Double,
@@ -216,13 +241,15 @@ fun mostrarResultado(
 ) {
     println("\n================ RESULTADO FINAL ================")
     println("Estudiante          : $nombreEstudiante")
-    println("Turno               : $turno\n")
+    println("Turno               : $turno")
+    println("Categoria           : $categoria\n")
     println(String.format("%-25s %-10s %-10s", "Curso", "Creditos", "Costo"))
     println("-------------------------------------------------------")
     print(detalleCursos)
     println("-------------------------------------------------------")
     println("Cursos matriculados : $cantidadCursos")
     println("Total de creditos   : $totalCreditos")
+    println("Costo matricula     : S/ ${String.format(Locale.US, "%.2f", costoMatricula)}")
     println("Subtotal cursos     : S/ ${String.format(Locale.US, "%.2f", subtotalCursos)}")
     println("Recargo por turno   : S/ ${String.format(Locale.US, "%.2f", montoRecargoTurno)}")
     println("Total a pagar       : S/ ${String.format(Locale.US, "%.2f", totalPagar)}")
