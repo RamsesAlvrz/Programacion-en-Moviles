@@ -9,7 +9,6 @@ const val MAX_CREDITOS_SIN_PERMISO = 18
 const val LIMITE_CARGA_PARCIAL = 12
 const val LIMITE_PAGO_TRES_CUOTAS = 2500.0
 
-// Constantes de recargos por turno
 const val RECARGO_MANANA = 0.10
 const val RECARGO_TARDE = 0.15
 const val RECARGO_NOCHE = 0.20
@@ -37,6 +36,7 @@ fun main() {
         val nombreEstudiante = readln().trim().ifEmpty { "Estudiante" }
 
         val turno = pedirTurno("Turno (M: Manana [+10%], T: Tarde [+15%], N: Noche [+20%]): ")
+        val categoria = pedirCategoria("Categoria (O: Ordinario, B: Becado): ")
 
         val cantidadCursos = pedirEntero(
             mensaje = "Cantidad de cursos a matricular: ",
@@ -119,7 +119,6 @@ fun main() {
             }
         }
 
-        // CÁLCULO DE TURNO
         val porcentajeTurno = when (turno) {
             "Manana" -> RECARGO_MANANA
             "Tarde" -> RECARGO_TARDE
@@ -128,16 +127,28 @@ fun main() {
         }
 
         val montoRecargoTurno = subtotalCursos * porcentajeTurno
-        val totalPagar = subtotalCursos + montoRecargoTurno
+        val totalCalculado = subtotalCursos + montoRecargoTurno
 
-        val cuotas = if (totalPagar > LIMITE_PAGO_TRES_CUOTAS) 3 else 2
-        val montoCuota = totalPagar / cuotas
+        // Si es Becado, el total a pagar automáticamente pasa a 0
+        val totalPagar = if (categoria == "Becado") 0.0 else totalCalculado
+
+        val cuotas: Int
+        val montoCuota: Double
+
+        if (totalPagar == 0.0) {
+            cuotas = 1
+            montoCuota = 0.0
+        } else {
+            cuotas = if (totalPagar > LIMITE_PAGO_TRES_CUOTAS) 3 else 2
+            montoCuota = totalPagar / cuotas
+        }
 
         contadorEstudiantes++
 
         mostrarResultado(
             nombreEstudiante = nombreEstudiante,
             turno = turno,
+            categoria = categoria,
             cantidadCursos = cantidadCursos,
             totalCreditos = totalCreditos,
             subtotalCursos = subtotalCursos,
@@ -167,6 +178,17 @@ fun pedirTurno(mensaje: String): String {
             "T", "TARDE" -> return "Tarde"
             "N", "NOCHE" -> return "Noche"
             else -> println("Turno invalido. Ingrese M (Manana), T (Tarde) o N (Noche).")
+        }
+    }
+}
+
+fun pedirCategoria(mensaje: String): String {
+    while (true) {
+        print(mensaje)
+        when (readln().trim().uppercase()) {
+            "O", "ORDINARIO" -> return "Ordinario"
+            "B", "BECADO" -> return "Becado"
+            else -> println("Categoria invalida. Ingrese O (Ordinario) o B (Becado).")
         }
     }
 }
@@ -203,6 +225,7 @@ fun pedirRespuestaSiNo(mensaje: String): Boolean {
 fun mostrarResultado(
     nombreEstudiante: String,
     turno: String,
+    categoria: String,
     cantidadCursos: Int,
     totalCreditos: Int,
     subtotalCursos: Double,
@@ -215,7 +238,8 @@ fun mostrarResultado(
 ) {
     println("\n================ RESULTADO FINAL ================")
     println("Estudiante          : $nombreEstudiante")
-    println("Turno               : $turno\n")
+    println("Turno               : $turno")
+    println("Categoria           : $categoria\n")
     println(String.format("%-25s %-10s %-10s", "Curso", "Creditos", "Costo"))
     println("-------------------------------------------------------")
     print(detalleCursos)
@@ -226,6 +250,12 @@ fun mostrarResultado(
     println("Recargo por turno   : S/ ${String.format(Locale.US, "%.2f", montoRecargoTurno)}")
     println("Total a pagar       : S/ ${String.format(Locale.US, "%.2f", totalPagar)}")
     println("Carga academica     : $cargaAcademica")
-    println("Forma de pago       : $cuotas cuotas de S/ ${String.format(Locale.US, "%.2f", montoCuota)}")
+
+    if (categoria == "Becado") {
+        println("Forma de pago       : Exonerado de pago (Alumno Becado)")
+    } else {
+        println("Forma de pago       : $cuotas cuotas de S/ ${String.format(Locale.US, "%.2f", montoCuota)}")
+    }
+
     println("=======================================================")
 }
