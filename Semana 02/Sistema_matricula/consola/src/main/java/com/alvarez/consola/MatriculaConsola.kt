@@ -2,20 +2,25 @@ package com.alvarez.consola
 
 import java.util.Locale
 
+// Constante fija de la institución
 const val NOMBRE_INSTITUCION = "UNIVERSIDAD TECNOLÓGICA"
 
+// Constantes de matrícula
 const val MAX_CREDITOS_SIN_PERMISO = 18
 const val LIMITE_CARGA_PARCIAL = 12
 const val LIMITE_PAGO_TRES_CUOTAS = 2500.0
 
+// Constantes de recargos e impuestos
 const val RECARGO_MANANA = 0.10
 const val RECARGO_TARDE = 0.15
 const val RECARGO_NOCHE = 0.20
+const val IGV = 0.18
 
 fun main() {
 
     println("===== SISTEMA DE MATRICULA - $NOMBRE_INSTITUCION =====")
 
+    // Entrada del aforo máximo por consola
     val aforoMaximo = pedirEntero(
         mensaje = "Ingrese el aforo maximo de la institucion: ",
         min = 1
@@ -25,6 +30,7 @@ fun main() {
 
     while (true) {
 
+        // Control de aforo
         if (contadorEstudiantes >= aforoMaximo) {
             println("-------------------------------------------------------")
             println("¡ALERTA DE AFORO! Se ha alcanzado el limite maximo de $aforoMaximo estudiantes.")
@@ -35,6 +41,7 @@ fun main() {
 
         println("\n>>> REGISTRO DE ESTUDIANTE #${contadorEstudiantes + 1} (Disponibles: ${aforoMaximo - contadorEstudiantes}) <<<")
 
+        // Datos del estudiante
         print("Nombre del estudiante: ")
         val nombreEstudiante = readln().trim().ifEmpty { "Estudiante" }
 
@@ -56,6 +63,7 @@ fun main() {
 
         val detalleCursos = StringBuilder()
 
+        // Registro de cursos
         for (i in 1..cantidadCursos) {
 
             println("\n--- Curso $i ---")
@@ -86,6 +94,7 @@ fun main() {
             )
         }
 
+        // Determinar carga académica
         val cargaAcademica = when {
 
             totalCreditos <= LIMITE_CARGA_PARCIAL -> {
@@ -122,6 +131,7 @@ fun main() {
             }
         }
 
+        // CÁLCULOS ADICIONALES (Turno, IGV y Categoría)
         val porcentajeTurno = when (turno) {
             "Manana" -> RECARGO_MANANA
             "Tarde" -> RECARGO_TARDE
@@ -130,11 +140,14 @@ fun main() {
         }
 
         val montoRecargoTurno = subtotalCursos * porcentajeTurno
-        val totalCalculado = subtotalCursos + montoRecargoTurno
+        val baseConRecargo = subtotalCursos + montoRecargoTurno
+        val montoIGV = baseConRecargo * IGV
+        val totalCalculado = baseConRecargo + montoIGV
 
-        // Exoneración para alumno becado
+        // Si es Becado, el total a pagar automáticamente pasa a 0
         val totalPagar = if (categoria == "Becado") 0.0 else totalCalculado
 
+        // Determinar número de cuotas y monto
         val cuotas: Int
         val montoCuota: Double
 
@@ -146,8 +159,10 @@ fun main() {
             montoCuota = totalPagar / cuotas
         }
 
+        // Se incrementa el contador del aforo consumido
         contadorEstudiantes++
 
+        // Mostrar resultado
         mostrarResultado(
             nombreEstudiante = nombreEstudiante,
             turno = turno,
@@ -156,6 +171,7 @@ fun main() {
             totalCreditos = totalCreditos,
             subtotalCursos = subtotalCursos,
             montoRecargoTurno = montoRecargoTurno,
+            montoIGV = montoIGV,
             totalPagar = totalPagar,
             cargaAcademica = cargaAcademica,
             cuotas = cuotas,
@@ -163,6 +179,7 @@ fun main() {
             detalleCursos = detalleCursos
         )
 
+        // Consultar si desea seguir matriculando dentro del aforo
         if (contadorEstudiantes < aforoMaximo) {
             val continuar = pedirRespuestaSiNo("\n¿Desea registrar a otro estudiante? (S/N): ")
             if (!continuar) {
@@ -173,58 +190,126 @@ fun main() {
     }
 }
 
+
+/**
+ * Solicita el turno del estudiante.
+ */
 fun pedirTurno(mensaje: String): String {
+
     while (true) {
+
         print(mensaje)
+
         when (readln().trim().uppercase()) {
+
             "M", "MANANA", "MAÑANA" -> return "Manana"
+
             "T", "TARDE" -> return "Tarde"
+
             "N", "NOCHE" -> return "Noche"
-            else -> println("Turno invalido. Ingrese M (Manana), T (Tarde) o N (Noche).")
+
+            else -> {
+                println("Turno invalido. Ingrese M (Manana), T (Tarde) o N (Noche).")
+            }
         }
     }
 }
 
+
+/**
+ * Solicita la categoría del estudiante.
+ */
 fun pedirCategoria(mensaje: String): String {
+
     while (true) {
+
         print(mensaje)
+
         when (readln().trim().uppercase()) {
+
             "O", "ORDINARIO" -> return "Ordinario"
+
             "B", "BECADO" -> return "Becado"
-            else -> println("Categoria invalida. Ingrese O (Ordinario) o B (Becado).")
+
+            else -> {
+                println("Categoria invalida. Ingrese O (Ordinario) o B (Becado).")
+            }
         }
     }
 }
 
+
+/**
+ * Solicita un número entero mayor o igual al mínimo indicado.
+ */
 fun pedirEntero(mensaje: String, min: Int): Int {
+
     while (true) {
+
         print(mensaje)
-        val valor = readln().trim().toIntOrNull()
-        if (valor != null && valor >= min) return valor
+
+        val valor = readln()
+            .trim()
+            .toIntOrNull()
+
+        if (valor != null && valor >= min) {
+            return valor
+        }
+
         println("Valor invalido. Debe ingresar un numero entero mayor o igual a $min.")
     }
 }
 
+
+/**
+ * Solicita un número decimal mayor o igual al mínimo indicado.
+ */
 fun pedirDecimal(mensaje: String, min: Double): Double {
+
     while (true) {
+
         print(mensaje)
-        val valor = readln().trim().replace(",", ".").toDoubleOrNull()
-        if (valor != null && valor >= min) return valor
+
+        val valor = readln()
+            .trim()
+            .replace(",", ".")
+            .toDoubleOrNull()
+
+        if (valor != null && valor >= min) {
+            return valor
+        }
+
         println("Valor invalido. Debe ingresar un numero valido mayor o igual a $min.")
     }
 }
 
+
+/**
+ * Solicita una respuesta de tipo Sí o No.
+ */
 fun pedirRespuestaSiNo(mensaje: String): Boolean {
+
     while (true) {
+
         print(mensaje)
+
         when (readln().trim().uppercase()) {
+
             "S", "SI", "SÍ" -> return true
+
             "N", "NO" -> return false
-            else -> println("Respuesta invalida. Ingrese S para Si o N para No.")
+
+            else -> {
+                println("Respuesta invalida. Ingrese S para Si o N para No.")
+            }
         }
     }
 }
 
+
+/**
+ * Muestra el resumen final de la matrícula.
+ */
 fun mostrarResultado(
     nombreEstudiante: String,
     turno: String,
@@ -233,31 +318,72 @@ fun mostrarResultado(
     totalCreditos: Int,
     subtotalCursos: Double,
     montoRecargoTurno: Double,
+    montoIGV: Double,
     totalPagar: Double,
     cargaAcademica: String,
     cuotas: Int,
     montoCuota: Double,
     detalleCursos: StringBuilder
 ) {
+
     println("\n================ RESULTADO FINAL ================")
+
     println("Estudiante          : $nombreEstudiante")
     println("Turno               : $turno")
     println("Categoria           : $categoria\n")
-    println(String.format("%-25s %-10s %-10s", "Curso", "Creditos", "Costo"))
+
+    println(
+        String.format(
+            "%-25s %-10s %-10s",
+            "Curso",
+            "Creditos",
+            "Costo"
+        )
+    )
+
     println("-------------------------------------------------------")
+
     print(detalleCursos)
+
     println("-------------------------------------------------------")
+
     println("Cursos matriculados : $cantidadCursos")
     println("Total de creditos   : $totalCreditos")
-    println("Subtotal cursos     : S/ ${String.format(Locale.US, "%.2f", subtotalCursos)}")
-    println("Recargo por turno   : S/ ${String.format(Locale.US, "%.2f", montoRecargoTurno)}")
-    println("Total a pagar       : S/ ${String.format(Locale.US, "%.2f", totalPagar)}")
+
+    println(
+        "Subtotal cursos     : S/ ${
+            String.format(Locale.US, "%.2f", subtotalCursos)
+        }"
+    )
+
+    println(
+        "Recargo por turno   : S/ ${
+            String.format(Locale.US, "%.2f", montoRecargoTurno)
+        }"
+    )
+
+    println(
+        "IGV (18%)           : S/ ${
+            String.format(Locale.US, "%.2f", montoIGV)
+        }"
+    )
+
+    println(
+        "Total a pagar       : S/ ${
+            String.format(Locale.US, "%.2f", totalPagar)
+        }"
+    )
+
     println("Carga academica     : $cargaAcademica")
 
     if (categoria == "Becado") {
         println("Forma de pago       : Exonerado de pago (Alumno Becado)")
     } else {
-        println("Forma de pago       : $cuotas cuotas de S/ ${String.format(Locale.US, "%.2f", montoCuota)}")
+        println(
+            "Forma de pago       : $cuotas cuotas de S/ ${
+                String.format(Locale.US, "%.2f", montoCuota)
+            }"
+        )
     }
 
     println("=======================================================")
