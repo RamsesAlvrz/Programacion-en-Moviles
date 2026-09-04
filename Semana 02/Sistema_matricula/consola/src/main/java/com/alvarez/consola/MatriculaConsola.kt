@@ -11,6 +11,7 @@ const val LIMITE_PAGO_TRES_CUOTAS = 2500.0
 const val RECARGO_MANANA = 0.10
 const val RECARGO_TARDE = 0.15
 const val RECARGO_NOCHE = 0.20
+const val IGV = 0.18
 
 fun main() {
 
@@ -134,7 +135,9 @@ fun main() {
 
         val subtotalBase = costoMatricula + subtotalCursos
         val montoRecargoTurno = subtotalBase * porcentajeTurno
-        val totalPagar = subtotalBase + montoRecargoTurno
+        val baseConRecargo = subtotalBase + montoRecargoTurno
+        val montoIGV = baseConRecargo * IGV
+        val totalPagar = baseConRecargo + montoIGV
 
         val cuotas = if (totalPagar > LIMITE_PAGO_TRES_CUOTAS) 3 else 2
         val montoCuota = totalPagar / cuotas
@@ -150,6 +153,7 @@ fun main() {
             totalCreditos = totalCreditos,
             subtotalCursos = subtotalCursos,
             montoRecargoTurno = montoRecargoTurno,
+            montoIGV = montoIGV,
             totalPagar = totalPagar,
             cargaAcademica = cargaAcademica,
             cuotas = cuotas,
@@ -254,6 +258,7 @@ fun mostrarResultado(
     totalCreditos: Int,
     subtotalCursos: Double,
     montoRecargoTurno: Double,
+    montoIGV: Double,
     totalPagar: Double,
     cargaAcademica: String,
     cuotas: Int,
@@ -273,6 +278,7 @@ fun mostrarResultado(
     println("Costo matricula     : S/ ${String.format(Locale.US, "%.2f", costoMatricula)}")
     println("Subtotal cursos     : S/ ${String.format(Locale.US, "%.2f", subtotalCursos)}")
     println("Recargo por turno   : S/ ${String.format(Locale.US, "%.2f", montoRecargoTurno)}")
+    println("IGV (18%)           : S/ ${String.format(Locale.US, "%.2f", montoIGV)}")
     println("Total a pagar       : S/ ${String.format(Locale.US, "%.2f", totalPagar)}")
     println("Carga academica     : $cargaAcademica")
     println("Forma de pago       : $cuotas cuotas de S/ ${String.format(Locale.US, "%.2f", montoCuota)}")
