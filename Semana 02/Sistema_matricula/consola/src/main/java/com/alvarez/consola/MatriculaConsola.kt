@@ -8,6 +8,10 @@ const val MAX_CREDITOS_SIN_PERMISO = 18
 const val LIMITE_CARGA_PARCIAL = 12
 const val LIMITE_PAGO_TRES_CUOTAS = 2500.0
 
+const val RECARGO_MANANA = 0.10
+const val RECARGO_TARDE = 0.15
+const val RECARGO_NOCHE = 0.20
+
 fun main() {
 
     println("===== SISTEMA DE MATRICULA - $NOMBRE_INSTITUCION =====")
@@ -34,6 +38,8 @@ fun main() {
         print("Nombre del estudiante: ")
         val nombreEstudiante = readln().trim().ifEmpty { "Estudiante" }
 
+        val turno = pedirTurno("Turno (M: Manana [+10%], T: Tarde [+15%], N: Noche [+20%]): ")
+
         val cantidadCursos = pedirEntero(
             mensaje = "Cantidad de cursos a matricular: ",
             min = 1
@@ -45,7 +51,7 @@ fun main() {
         )
 
         var totalCreditos = 0
-        var totalPagar = 0.0
+        var subtotalCursos = 0.0
 
         val detalleCursos = StringBuilder()
 
@@ -66,7 +72,7 @@ fun main() {
             val costoCurso = creditos * valorCredito
 
             totalCreditos += creditos
-            totalPagar += costoCurso
+            subtotalCursos += costoCurso
 
             detalleCursos.append(
                 String.format(
@@ -115,6 +121,16 @@ fun main() {
             }
         }
 
+        val porcentajeTurno = when (turno) {
+            "Manana" -> RECARGO_MANANA
+            "Tarde" -> RECARGO_TARDE
+            "Noche" -> RECARGO_NOCHE
+            else -> 0.0
+        }
+
+        val montoRecargoTurno = subtotalCursos * porcentajeTurno
+        val totalPagar = subtotalCursos + montoRecargoTurno
+
         val cuotas = if (totalPagar > LIMITE_PAGO_TRES_CUOTAS) 3 else 2
         val montoCuota = totalPagar / cuotas
 
@@ -122,8 +138,11 @@ fun main() {
 
         mostrarResultado(
             nombreEstudiante = nombreEstudiante,
+            turno = turno,
             cantidadCursos = cantidadCursos,
             totalCreditos = totalCreditos,
+            subtotalCursos = subtotalCursos,
+            montoRecargoTurno = montoRecargoTurno,
             totalPagar = totalPagar,
             cargaAcademica = cargaAcademica,
             cuotas = cuotas,
@@ -137,6 +156,18 @@ fun main() {
                 println("\nSaliendo del sistema de matricula. ¡Hasta luego!")
                 break
             }
+        }
+    }
+}
+
+fun pedirTurno(mensaje: String): String {
+    while (true) {
+        print(mensaje)
+        when (readln().trim().uppercase()) {
+            "M", "MANANA", "MAÑANA" -> return "Manana"
+            "T", "TARDE" -> return "Tarde"
+            "N", "NOCHE" -> return "Noche"
+            else -> println("Turno invalido. Ingrese M (Manana), T (Tarde) o N (Noche).")
         }
     }
 }
@@ -172,8 +203,11 @@ fun pedirRespuestaSiNo(mensaje: String): Boolean {
 
 fun mostrarResultado(
     nombreEstudiante: String,
+    turno: String,
     cantidadCursos: Int,
     totalCreditos: Int,
+    subtotalCursos: Double,
+    montoRecargoTurno: Double,
     totalPagar: Double,
     cargaAcademica: String,
     cuotas: Int,
@@ -181,13 +215,16 @@ fun mostrarResultado(
     detalleCursos: StringBuilder
 ) {
     println("\n================ RESULTADO FINAL ================")
-    println("Estudiante: $nombreEstudiante\n")
+    println("Estudiante          : $nombreEstudiante")
+    println("Turno               : $turno\n")
     println(String.format("%-25s %-10s %-10s", "Curso", "Creditos", "Costo"))
     println("-------------------------------------------------------")
     print(detalleCursos)
     println("-------------------------------------------------------")
     println("Cursos matriculados : $cantidadCursos")
     println("Total de creditos   : $totalCreditos")
+    println("Subtotal cursos     : S/ ${String.format(Locale.US, "%.2f", subtotalCursos)}")
+    println("Recargo por turno   : S/ ${String.format(Locale.US, "%.2f", montoRecargoTurno)}")
     println("Total a pagar       : S/ ${String.format(Locale.US, "%.2f", totalPagar)}")
     println("Carga academica     : $cargaAcademica")
     println("Forma de pago       : $cuotas cuotas de S/ ${String.format(Locale.US, "%.2f", montoCuota)}")
