@@ -2,19 +2,21 @@ package com.alvarez.consola
 
 import java.util.Locale
 
-// Constante fija de la institución
 const val NOMBRE_INSTITUCION = "UNIVERSIDAD TECNOLÓGICA"
 
-// Constantes de matrícula
 const val MAX_CREDITOS_SIN_PERMISO = 18
 const val LIMITE_CARGA_PARCIAL = 12
 const val LIMITE_PAGO_TRES_CUOTAS = 2500.0
+
+// Constantes de recargos por turno
+const val RECARGO_MANANA = 0.10
+const val RECARGO_TARDE = 0.15
+const val RECARGO_NOCHE = 0.20
 
 fun main() {
 
     println("===== SISTEMA DE MATRICULA - $NOMBRE_INSTITUCION =====")
 
-    // Entrada del aforo máximo por consola
     val aforoMaximo = pedirEntero(
         mensaje = "Ingrese el aforo maximo de la institucion: ",
         min = 1
@@ -24,7 +26,6 @@ fun main() {
 
     while (true) {
 
-        // Control de aforo
         if (contadorEstudiantes >= aforoMaximo) {
             println("-------------------------------------------------------")
             println("¡ALERTA DE AFORO! Se ha alcanzado el limite maximo de $aforoMaximo estudiantes.")
@@ -35,9 +36,10 @@ fun main() {
 
         println("\n>>> REGISTRO DE ESTUDIANTE #${contadorEstudiantes + 1} (Disponibles: ${aforoMaximo - contadorEstudiantes}) <<<")
 
-        // Datos del estudiante
         print("Nombre del estudiante: ")
         val nombreEstudiante = readln().trim().ifEmpty { "Estudiante" }
+
+        val turno = pedirTurno("Turno (M: Manana [+10%], T: Tarde [+15%], N: Noche [+20%]): ")
 
         val cantidadCursos = pedirEntero(
             mensaje = "Cantidad de cursos a matricular: ",
@@ -50,11 +52,10 @@ fun main() {
         )
 
         var totalCreditos = 0
-        var totalPagar = 0.0
+        var subtotalCursos = 0.0
 
         val detalleCursos = StringBuilder()
 
-        // Registro de cursos
         for (i in 1..cantidadCursos) {
 
             println("\n--- Curso $i ---")
@@ -72,7 +73,7 @@ fun main() {
             val costoCurso = creditos * valorCredito
 
             totalCreditos += creditos
-            totalPagar += costoCurso
+            subtotalCursos += costoCurso
 
             detalleCursos.append(
                 String.format(
@@ -85,7 +86,6 @@ fun main() {
             )
         }
 
-        // Determinar carga académica
         val cargaAcademica = when {
 
             totalCreditos <= LIMITE_CARGA_PARCIAL -> {
@@ -122,18 +122,28 @@ fun main() {
             }
         }
 
-        // Determinar número de cuotas y monto
+        val porcentajeTurno = when (turno) {
+            "Manana" -> RECARGO_MANANA
+            "Tarde" -> RECARGO_TARDE
+            "Noche" -> RECARGO_NOCHE
+            else -> 0.0
+        }
+
+        val montoRecargoTurno = subtotalCursos * porcentajeTurno
+        val totalPagar = subtotalCursos + montoRecargoTurno
+
         val cuotas = if (totalPagar > LIMITE_PAGO_TRES_CUOTAS) 3 else 2
         val montoCuota = totalPagar / cuotas
 
-        // Se incrementa el contador del aforo consumido
         contadorEstudiantes++
 
-        // Mostrar resultado
         mostrarResultado(
             nombreEstudiante = nombreEstudiante,
+            turno = turno,
             cantidadCursos = cantidadCursos,
             totalCreditos = totalCreditos,
+            subtotalCursos = subtotalCursos,
+            montoRecargoTurno = montoRecargoTurno,
             totalPagar = totalPagar,
             cargaAcademica = cargaAcademica,
             cuotas = cuotas,
@@ -141,13 +151,24 @@ fun main() {
             detalleCursos = detalleCursos
         )
 
-        // Consultar si desea seguir matriculando dentro del aforo
         if (contadorEstudiantes < aforoMaximo) {
             val continuar = pedirRespuestaSiNo("\n¿Desea registrar a otro estudiante? (S/N): ")
             if (!continuar) {
                 println("\nSaliendo del sistema de matricula. ¡Hasta luego!")
                 break
             }
+        }
+    }
+}
+
+fun pedirTurno(mensaje: String): String {
+    while (true) {
+        print(mensaje)
+        when (readln().trim().uppercase()) {
+            "M", "MANANA", "MAÑANA" -> return "Manana"
+            "T", "TARDE" -> return "Tarde"
+            "N", "NOCHE" -> return "Noche"
+            else -> println("Turno invalido. Ingrese M (Manana), T (Tarde) o N (Noche).")
         }
     }
 }
@@ -183,8 +204,11 @@ fun pedirRespuestaSiNo(mensaje: String): Boolean {
 
 fun mostrarResultado(
     nombreEstudiante: String,
+    turno: String,
     cantidadCursos: Int,
     totalCreditos: Int,
+    subtotalCursos: Double,
+    montoRecargoTurno: Double,
     totalPagar: Double,
     cargaAcademica: String,
     cuotas: Int,
@@ -192,13 +216,16 @@ fun mostrarResultado(
     detalleCursos: StringBuilder
 ) {
     println("\n================ RESULTADO FINAL ================")
-    println("Estudiante: $nombreEstudiante\n")
+    println("Estudiante          : $nombreEstudiante")
+    println("Turno               : $turno\n")
     println(String.format("%-25s %-10s %-10s", "Curso", "Creditos", "Costo"))
     println("-------------------------------------------------------")
     print(detalleCursos)
     println("-------------------------------------------------------")
     println("Cursos matriculados : $cantidadCursos")
     println("Total de creditos   : $totalCreditos")
+    println("Subtotal cursos     : S/ ${String.format(Locale.US, "%.2f", subtotalCursos)}")
+    println("Recargo por turno   : S/ ${String.format(Locale.US, "%.2f", montoRecargoTurno)}")
     println("Total a pagar       : S/ ${String.format(Locale.US, "%.2f", totalPagar)}")
     println("Carga academica     : $cargaAcademica")
     println("Forma de pago       : $cuotas cuotas de S/ ${String.format(Locale.US, "%.2f", montoCuota)}")
