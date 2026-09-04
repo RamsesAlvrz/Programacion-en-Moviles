@@ -103,6 +103,18 @@ fun main() {
     }
 
     val montoCuota = totalPagar / cuotas
+
+    // Mostrar resultado
+    mostrarResultado(
+        nombreEstudiante = nombreEstudiante,
+        cantidadCursos = cantidadCursos,
+        totalCreditos = totalCreditos,
+        totalPagar = totalPagar,
+        cargaAcademica = cargaAcademica,
+        cuotas = cuotas,
+        montoCuota = montoCuota,
+        detalleCursos = detalleCursos
+    )
 }
 
 
@@ -171,4 +183,58 @@ fun pedirRespuestaSiNo(mensaje: String): Boolean {
             }
         }
     }
+}
+
+
+/**
+ * Muestra el resumen final de la matrícula.
+ */
+fun mostrarResultado(
+    nombreEstudiante: String,
+    cantidadCursos: Int,
+    totalCreditos: Int,
+    totalPagar: Double,
+    cargaAcademica: String,
+    cuotas: Int,
+    montoCuota: Double,
+    detalleCursos: StringBuilder
+) {
+
+    println("\n================ RESULTADO FINAL ================")
+
+    println("Estudiante: $nombreEstudiante\n")
+
+    println(
+        String.format(
+            "%-25s %-10s %-10s",
+            "Curso",
+            "Creditos",
+            "Costo"
+        )
+    )
+
+    println("-------------------------------------------------------")
+
+    print(detalleCursos)
+
+    println("-------------------------------------------------------")
+
+    println("Cursos matriculados : $cantidadCursos")
+    println("Total de creditos   : $totalCreditos")
+
+    println(
+        "Total a pagar       : S/ ${
+            String.format(Locale.US, "%.2f", totalPagar)
+        }"
+    )
+
+    println("Carga academica     : $cargaAcademica")
+
+    println(
+        "Forma de pago       : $cuotas cuotas de S/ ${
+            String.format(Locale.US, "%.2f", montoCuota)
+        }"
+    )
+
+    println("=======================================================")
 }
