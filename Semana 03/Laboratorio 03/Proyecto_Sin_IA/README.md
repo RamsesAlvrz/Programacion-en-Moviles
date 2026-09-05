@@ -22,6 +22,13 @@ Aplicación móvil desarrollada en **Android Studio** utilizando **Kotlin** y **
 
 ---
 
+## ✨ Remember
+Es una función de Jetpack Compose que guarda un valor en memoria para que no se borre ni se vuelva a calcular desde cero cada vez que la pantalla se redibuja (recomposición).
+---
+
 ## 📷 Resultado en Emulador
 
-![img.png](img.png)
+<img width="288" height="613" alt="image" src="https://github.com/user-attachments/assets/a0e724af-13be-4a8d-a7fa-57f79a9bea65" />
+
+
+<img width="926" height="443" alt="image" src="https://github.com/user-attachments/assets/22514ba8-7e17-4a08-a5cf-cafe18c6ec9f" />
