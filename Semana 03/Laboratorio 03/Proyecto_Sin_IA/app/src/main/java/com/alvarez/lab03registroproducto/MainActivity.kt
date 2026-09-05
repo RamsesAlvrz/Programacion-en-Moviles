@@ -135,7 +135,7 @@ fun PantallaRegistro(modifier: Modifier = Modifier) {
             Button(
                 onClick = {
                     if (nombre.isBlank() || precio.isBlank() || cantidad.isBlank()) {
-                        mensajeError = "Por favor, completa todos los campos vacíos."
+                        mensajeError = "⚠️ Debes completar todos los campos obligatorios."
                         mostrarResumen = false
                     } else {
                         mensajeError = ""
