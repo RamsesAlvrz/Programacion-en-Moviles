@@ -118,240 +118,265 @@ fun PantallaRegistroNotas(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Notas del ciclo",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Desliza para asignar cada nota (0 a 20)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ItemCurso(
-                nombre = "Fundamentos de Programación",
-                peso = "(20%)",
-                nota = nota1,
-                onNotaChange = {
-                    nota1 = it
-                    mostrarResultado = false
-                }
-            )
-
-            ItemCurso(
-                nombre = "Programación Orientada a Objetos",
-                peso = "(25%)",
-                nota = nota2,
-                onNotaChange = {
-                    nota2 = it
-                    mostrarResultado = false
-                }
-            )
-
-            ItemCurso(
-                nombre = "Programación en Móviles",
-                peso = "(30%)",
-                nota = nota3,
-                onNotaChange = {
-                    nota3 = it
-                    mostrarResultado = false
-                }
-            )
-
-            ItemCurso(
-                nombre = "Base de Datos",
-                peso = "(25%)",
-                nota = nota4,
-                onNotaChange = {
-                    nota4 = it
-                    mostrarResultado = false
-                }
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column {
                 Text(
-                    text = "Redondear promedio final",
-                    style = MaterialTheme.typography.bodyLarge
+                    text = "Notas del ciclo",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
-                Switch(
-                    checked = redondear,
-                    onCheckedChange = {
-                        redondear = it
+                Text(
+                    text = "Desliza para asignar cada nota (0 a 20)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ItemCurso(
+                    nombre = "Fundamentos de Programación",
+                    peso = "(20%)",
+                    nota = nota1,
+                    onNotaChange = {
+                        nota1 = it
                         mostrarResultado = false
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFF5E4B8B)
+                    }
+                )
+
+                ItemCurso(
+                    nombre = "Programación Orientada a Objetos",
+                    peso = "(25%)",
+                    nota = nota2,
+                    onNotaChange = {
+                        nota2 = it
+                        mostrarResultado = false
+                    }
+                )
+
+                ItemCurso(
+                    nombre = "Programación en Móviles",
+                    peso = "(30%)",
+                    nota = nota3,
+                    onNotaChange = {
+                        nota3 = it
+                        mostrarResultado = false
+                    }
+                )
+
+                ItemCurso(
+                    nombre = "Base de Datos",
+                    peso = "(25%)",
+                    nota = nota4,
+                    onNotaChange = {
+                        nota4 = it
+                        mostrarResultado = false
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Redondear promedio final",
+                        style = MaterialTheme.typography.bodyLarge
                     )
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = confirmado,
-                    onCheckedChange = {
-                        confirmado = it
-                        if (!it) mostrarResultado = false
-                    },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = Color(0xFF5E4B8B)
+                    Switch(
+                        checked = redondear,
+                        onCheckedChange = {
+                            redondear = it
+                            mostrarResultado = false
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF5E4B8B)
+                        )
                     )
-                )
-                Text(
-                    text = "Confirmo que las notas son correctas",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = confirmado,
+                        onCheckedChange = {
+                            confirmado = it
+                            if (!it) mostrarResultado = false
+                        },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Color(0xFF5E4B8B)
+                        )
+                    )
+                    Text(
+                        text = "Confirmo que las notas son correctas",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
 
-            Button(
-                onClick = {
-                    val n1 = nota1.toInt()
-                    val n2 = nota2.toInt()
-                    val n3 = nota3.toInt()
-                    val n4 = nota4.toInt()
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    val pond = (n1 * 0.20) + (n2 * 0.25) + (n3 * 0.30) + (n4 * 0.25)
-                    promedioPonderado = pond
+                Button(
+                    onClick = {
+                        val n1 = nota1.toInt()
+                        val n2 = nota2.toInt()
+                        val n3 = nota3.toInt()
+                        val n4 = nota4.toInt()
 
-                    val valFinalNum: Double
-                    if (redondear) {
-                        val finalInt = pond.roundToInt()
-                        valFinalNum = finalInt.toDouble()
-                        promedioFinalStr = "$finalInt"
-                    } else {
-                        valFinalNum = pond
-                        promedioFinalStr = String.format(Locale.US, "%.2f", pond)
+                        val pond = (n1 * 0.20) + (n2 * 0.25) + (n3 * 0.30) + (n4 * 0.25)
+                        promedioPonderado = pond
+
+                        val valFinalNum: Double
+                        if (redondear) {
+                            val finalInt = pond.roundToInt()
+                            valFinalNum = finalInt.toDouble()
+                            promedioFinalStr = "$finalInt"
+                        } else {
+                            valFinalNum = pond
+                            promedioFinalStr = String.format(Locale.US, "%.2f", pond)
+                        }
+
+                        when {
+                            valFinalNum >= 17.0 -> {
+                                observacion = "EXCELENTE"
+                                chipBgColor = Color(0xFFDCEDC8)
+                                chipTextColor = Color(0xFF1B5E20)
+                            }
+                            valFinalNum >= 13.0 -> {
+                                observacion = "APROBADO"
+                                chipBgColor = Color(0xFFE8F5E9)
+                                chipTextColor = Color(0xFF2E7D32)
+                            }
+                            valFinalNum >= 10.0 -> {
+                                observacion = "EN RECUPERACIÓN"
+                                chipBgColor = Color(0xFFFFF3E0)
+                                chipTextColor = Color(0xFFE65100)
+                            }
+                            else -> {
+                                observacion = "DESAPROBADO"
+                                chipBgColor = Color(0xFFFFEBEE)
+                                chipTextColor = Color(0xFFC62828)
+                            }
+                        }
+
+                        mostrarResultado = true
+                    },
+                    enabled = confirmado,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5E4B8B),
+                        disabledContainerColor = Color(0xFFC5CAE9)
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text(
+                        text = "CALCULAR PROMEDIO",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (!mostrarResultado) {
+                    Text(
+                        text = "Asigna las notas y confirma para calcular",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFFE0E0E0))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row {
+                                Text(
+                                    text = "Promedio ponderado:  ",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = String.format(Locale.US, "%.2f", promedioPonderado),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text(
+                                    text = "Promedio final:  ",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF5E4B8B)
+                                )
+                                Text(
+                                    text = promedioFinalStr,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF5E4B8B)
+                                )
+                            }
+
+                            if (redondear) {
+                                Text(
+                                    text = "(redondeado)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = chipBgColor
+                            ) {
+                                Text(
+                                    text = observacion,
+                                    color = chipTextColor,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
                     }
 
-                    when {
-                        valFinalNum >= 17.0 -> {
-                            observacion = "EXCELENTE"
-                            chipBgColor = Color(0xFFDCEDC8)
-                            chipTextColor = Color(0xFF1B5E20)
-                        }
-                        valFinalNum >= 13.0 -> {
-                            observacion = "APROBADO"
-                            chipBgColor = Color(0xFFE8F5E9)
-                            chipTextColor = Color(0xFF2E7D32)
-                        }
-                        valFinalNum >= 10.0 -> {
-                            observacion = "EN RECUPERACIÓN"
-                            chipBgColor = Color(0xFFFFF3E0)
-                            chipTextColor = Color(0xFFE65100)
-                        }
-                        else -> {
-                            observacion = "DESAPROBADO"
-                            chipBgColor = Color(0xFFFFEBEE)
-                            chipTextColor = Color(0xFFC62828)
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    mostrarResultado = true
-                },
-                enabled = confirmado,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5E4B8B),
-                    disabledContainerColor = Color(0xFFC5CAE9)
-                ),
+                    Text(
+                        text = "✓ Promedio calculado correctamente",
+                        color = Color(0xFF2E7D32),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .padding(top = 24.dp, bottom = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "CALCULAR PROMEDIO",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color.White
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (!mostrarResultado) {
-                Text(
-                    text = "Asigna las notas y confirma para calcular",
+                    text = "Desarrollado por: Ramses Alvarez",
                     color = Color.Gray,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 4.dp)
+                    fontSize = 12.sp
                 )
-            } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    border = BorderStroke(1.dp, Color(0xFFE0E0E0))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row {
-                            Text(
-                                text = "Promedio ponderado:  ",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = String.format(Locale.US, "%.2f", promedioPonderado),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                text = "Promedio final:  ",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF5E4B8B)
-                            )
-                            Text(
-                                text = promedioFinalStr,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF5E4B8B)
-                            )
-                        }
-
-                        if (redondear) {
-                            Text(
-                                text = "(redondeado)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = chipBgColor
-                        ) {
-                            Text(
-                                text = observacion,
-                                color = chipTextColor,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-                }
             }
         }
     }
