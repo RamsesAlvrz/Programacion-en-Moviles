@@ -24,6 +24,7 @@ Aplicación móvil desarrollada en **Android Studio** utilizando **Kotlin** y **
 
 ## ✨ Remember
 Es una función de Jetpack Compose que guarda un valor en memoria para que no se borre ni se vuelva a calcular desde cero cada vez que la pantalla se redibuja (recomposición).
+
 ---
 
 ## 📷 Resultado en Emulador
