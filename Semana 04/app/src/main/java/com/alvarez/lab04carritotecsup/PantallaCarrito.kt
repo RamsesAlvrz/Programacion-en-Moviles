@@ -77,7 +77,7 @@ fun PantallaCarrito() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- LAZYCOLUMN INICIAL (Paso 3) ---
+        // --- LAZYCOLUMN CON TARJETAPRODUCTO Y ELIMINACIÓN (Paso 4) ---
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -85,7 +85,10 @@ fun PantallaCarrito() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(productos) { producto ->
-                Text("Producto: ${producto.nombre} - S/ ${producto.precio} x ${producto.cantidad}")
+                TarjetaProducto(
+                    producto = producto,
+                    onEliminar = { productos.remove(producto) }
+                )
             }
         }
     }
