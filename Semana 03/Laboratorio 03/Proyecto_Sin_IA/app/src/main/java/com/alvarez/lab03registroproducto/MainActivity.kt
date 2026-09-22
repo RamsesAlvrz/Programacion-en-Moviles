@@ -15,16 +15,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.alvarez.lab03registroproducto.ui.theme.Lab03RegistroProductoTheme
 
@@ -34,11 +39,27 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Lab03RegistroProductoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    PantallaRegistro(modifier = Modifier.padding(innerPadding))
-                }
+                PantallaPrincipal()
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PantallaPrincipal() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Registro de Producto") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+    ) { innerPadding ->
+        PantallaRegistro(modifier = Modifier.padding(innerPadding))
     }
 }
 
@@ -56,7 +77,8 @@ fun PantallaRegistro(modifier: Modifier = Modifier) {
     ) {
         Text(
             text = "Nuevo producto",
-            style = MaterialTheme.typography.headlineSmall
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
         )
         Text(
             text = "Completa los datos y presiona Agregar",
@@ -123,6 +145,18 @@ fun PantallaRegistro(modifier: Modifier = Modifier) {
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "✓ Producto registrado correctamente",
+                color = Color(0xFF2E7D32)
+            )
+        } else {
+            Text(
+                text = "Aún no has registrado ningún producto",
+                color = MaterialTheme.colorScheme.outline
+            )
         }
     }
 }
