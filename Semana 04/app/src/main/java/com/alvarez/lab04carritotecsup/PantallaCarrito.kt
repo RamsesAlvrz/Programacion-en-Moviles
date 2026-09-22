@@ -1,6 +1,8 @@
 package com.alvarez.lab04carritotecsup
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,6 +17,7 @@ fun PantallaCarrito() {
     var precio by remember { mutableStateOf("") }
     var cantidad by remember { mutableStateOf("") }
 
+    // Lista observable de productos
     val productos = remember { mutableStateListOf<Producto>() }
 
     Column(
@@ -74,6 +77,16 @@ fun PantallaCarrito() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Productos agregados: ${productos.size}")
+        // --- LAZYCOLUMN INICIAL (Paso 3) ---
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(productos) { producto ->
+                Text("Producto: ${producto.nombre} - S/ ${producto.precio} x ${producto.cantidad}")
+            }
+        }
     }
 }
