@@ -29,7 +29,7 @@ Es una función de Jetpack Compose que guarda un valor en memoria para que no se
 
 ## 📷 Resultado en Emulador
 
-<img width="288" height="613" alt="image" src="https://github.com/user-attachments/assets/a0e724af-13be-4a8d-a7fa-57f79a9bea65" />
+<img width="373" height="832" alt="image" src="https://github.com/user-attachments/assets/8bcca9c0-6602-4b2a-8bf1-a82f9ae8add8" />
 
 
-<img width="926" height="443" alt="image" src="https://github.com/user-attachments/assets/22514ba8-7e17-4a08-a5cf-cafe18c6ec9f" />
+<img width="950" height="427" alt="image" src="https://github.com/user-attachments/assets/532eb329-915c-43f3-abe8-0f85fdcd913f" />
