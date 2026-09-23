@@ -12,17 +12,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.alvarez.navlabia.components.UserAvatar
 import com.alvarez.navlabia.model.DummyData
 import com.alvarez.navlabia.navigation.Screen
 import com.alvarez.navlabia.ui.theme.CardBackground
+import com.alvarez.navlabia.ui.theme.PurplePrimary
 import com.alvarez.navlabia.ui.theme.SurfaceLavender
-import com.alvarez.navlabia.ui.theme.TextGray
 import com.alvarez.navlabia.ui.theme.TextPrimary
 import com.alvarez.navlabia.ui.theme.TextSecondaryPurple
+import com.alvarez.navlabia.ui.theme.TopBarLavender
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +38,8 @@ fun ListScreen(navController: NavController) {
                     Text(
                         text = "Directorio de Alumnos",
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        fontSize = 20.sp,
+                        color = PurplePrimary
                     )
                 },
                 navigationIcon = {
@@ -43,12 +47,12 @@ fun ListScreen(navController: NavController) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = TextPrimary
+                            tint = PurplePrimary
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceLavender
+                    containerColor = TopBarLavender
                 )
             )
         }
@@ -60,7 +64,7 @@ fun ListScreen(navController: NavController) {
                 start = 16.dp,
                 end = 16.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(DummyData.alumnos, key = { it.id }) { alumno ->
                 Card(
@@ -69,20 +73,20 @@ fun ListScreen(navController: NavController) {
                         .clickable {
                             navController.navigate(Screen.Detail.createRoute(alumno.id))
                         },
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = CardBackground),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         UserAvatar(
                             fotoUrl = alumno.fotoUrl,
                             nombre = alumno.nombre,
-                            size = 48.dp
+                            size = 52.dp
                         )
 
                         Spacer(modifier = Modifier.width(16.dp))
@@ -98,14 +102,16 @@ fun ListScreen(navController: NavController) {
                             Text(
                                 text = alumno.carrera,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondaryPurple
+                                color = TextSecondaryPurple,
+                                fontWeight = FontWeight.Medium
                             )
                         }
 
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = TextGray
+                            contentDescription = "Ver detalle",
+                            tint = Color(0xFF8E8E93),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

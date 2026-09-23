@@ -32,6 +32,7 @@ import com.alvarez.navlabia.ui.theme.SurfaceLavender
 import com.alvarez.navlabia.ui.theme.TextGray
 import com.alvarez.navlabia.ui.theme.TextPrimary
 import com.alvarez.navlabia.ui.theme.TextSecondaryPurple
+import com.alvarez.navlabia.ui.theme.TopBarLavender
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +61,7 @@ fun DetailScreen(navController: NavController, alumnoId: Int) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceLavender
+                    containerColor = TopBarLavender
                 )
             )
         }
@@ -124,62 +125,63 @@ fun DetailScreen(navController: NavController, alumnoId: Int) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Card con la información académica
+            // Tarjeta unificada con datos académicos + biografía + división
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = CardBackground),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(20.dp)
                 ) {
-                    DetailInfoRow(
-                        icon = Icons.Default.Badge,
-                        label = "ID Estudiante",
-                        value = formattedId
+                    // Filas de información académica
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        DetailInfoRow(
+                            icon = Icons.Default.Badge,
+                            label = "ID Estudiante",
+                            value = formattedId
+                        )
+                        DetailInfoRow(
+                            icon = Icons.Default.Email,
+                            label = "Correo Electrónico",
+                            value = alumno.correo
+                        )
+                        DetailInfoRow(
+                            icon = Icons.Default.School,
+                            label = "Facultad",
+                            value = alumno.facultad
+                        )
+                    }
+
+                    // Línea divisora
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 18.dp),
+                        thickness = 1.dp,
+                        color = Color(0xFFE0E0E0)
                     )
-                    DetailInfoRow(
-                        icon = Icons.Default.Email,
-                        label = "Correo institucional",
-                        value = alumno.correo
+
+                    // Sección Biografía
+                    Text(
+                        text = "Biografía",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
                     )
-                    DetailInfoRow(
-                        icon = Icons.Default.School,
-                        label = "Facultad",
-                        value = alumno.facultad
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = alumno.biografia,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextGray,
+                        lineHeight = 20.sp
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Sección Biografía
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Text(
-                    text = "Biografía",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = alumno.biografia,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextGray,
-                    lineHeight = 20.sp
-                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))

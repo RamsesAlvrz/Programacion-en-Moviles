@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,9 +32,9 @@ import com.alvarez.navlabia.ui.theme.HeaderGradientEnd
 import com.alvarez.navlabia.ui.theme.HeaderGradientStart
 import com.alvarez.navlabia.ui.theme.LogoutBackground
 import com.alvarez.navlabia.ui.theme.LogoutText
-import com.alvarez.navlabia.ui.theme.PurplePrimary
 import com.alvarez.navlabia.ui.theme.TextGray
 import com.alvarez.navlabia.ui.theme.TextPrimary
+import com.alvarez.navlabia.ui.theme.TextSecondaryPurple
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +71,7 @@ fun ProfileScreen(navController: NavController) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Banner superior con avatar y nombre del usuario logueado
+            // Banner superior RECTANGULAR (sin esquinas redondeadas en la parte inferior)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -79,7 +80,7 @@ fun ProfileScreen(navController: NavController) {
                         brush = Brush.horizontalGradient(
                             colors = listOf(HeaderGradientStart, HeaderGradientEnd)
                         ),
-                        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                        shape = RectangleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -116,7 +117,7 @@ fun ProfileScreen(navController: NavController) {
                     text = "INFORMACIÓN PERSONAL",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextGray,
+                    color = TextSecondaryPurple,
                     letterSpacing = 1.2.sp
                 )
 
@@ -151,7 +152,7 @@ fun ProfileScreen(navController: NavController) {
                     text = "ACADÉMICO",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextGray,
+                    color = TextSecondaryPurple,
                     letterSpacing = 1.2.sp
                 )
 
@@ -173,7 +174,7 @@ fun ProfileScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(36.dp))
 
-                // Botón Cerrar Sesión
+                // Botón Cerrar Sesión con bordes redondeados tipo píldora
                 Button(
                     onClick = {
                         navController.navigate(Screen.Login.route) {
@@ -183,7 +184,7 @@ fun ProfileScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = LogoutBackground)
                 ) {
                     Row(
@@ -222,16 +223,17 @@ private fun ProfileInfoRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Contenedor plomo suave para el ícono
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .background(Color(0xFFE8DEF8), shape = RoundedCornerShape(10.dp)),
+                .size(42.dp)
+                .background(Color(0xFFEFEBF5), shape = RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = PurplePrimary,
+                tint = Color(0xFF1C1B1F),
                 modifier = Modifier.size(20.dp)
             )
         }
