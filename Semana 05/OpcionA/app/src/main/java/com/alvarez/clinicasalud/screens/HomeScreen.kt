@@ -1,25 +1,53 @@
 package com.alvarez.clinicasalud.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color // Asegúrate de importar Color
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.alvarez.clinicasalud.model.Doctor
 
 val sampleDoctors = listOf(
-    Doctor(1, "Dr. Carlos Pérez", "Cardiología", 4.8),
-    Doctor(2, "Dra. Ana Gómez", "Pediatría", 4.9),
-    Doctor(3, "Dr. Luis Torres", "Medicina General", 4.7)
+    Doctor(
+        id = 1,
+        name = "Dra. Ana Torres",
+        specialty = "Cardióloga",
+        rating = 4.9,
+        experience = "12 años exp.",
+        reviews = "128 reseñas",
+        bio = "Especialista en arritmias e hipertensión, formación en la Clínica Mayo."
+    ),
+    Doctor(
+        id = 2,
+        name = "Dr. Luis Vega",
+        specialty = "Pediatra",
+        rating = 4.7,
+        experience = "8 años exp.",
+        reviews = "95 reseñas",
+        bio = "Atención integral para niños y adolescentes con enfoque preventivo."
+    ),
+    Doctor(
+        id = 3,
+        name = "Dra. Rosa Díaz",
+        specialty = "Dermatóloga",
+        rating = 4.8,
+        experience = "10 años exp.",
+        reviews = "110 reseñas",
+        bio = "Especialista en dermatología clínica y estética."
+    )
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,29 +56,38 @@ fun HomeScreen(
     onOpenDrawer: () -> Unit,
     onDoctorClick: (Int) -> Unit
 ) {
-    var selectedCategory by remember { mutableStateOf("Todos") }
-    val categories = listOf("Todos", "Cardiología", "Pediatría", "Medicina General")
+    var selectedCategory by remember { mutableStateOf("Cardiología") }
+    val categories = listOf("Cardiología", "Pediatría", "Dermatología")
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Clínica Salud+ ",
-                        color = Color.White // Texto en blanco para que contraste con el fondo morado
-                    )
+                    Column {
+                        Text(
+                            text = "Clínica Salud+",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Hola, Juan",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.85f)
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(
-                            Icons.Default.Menu,
+                            imageVector = Icons.Default.Menu,
                             contentDescription = "Menú",
-                            tint = Color.White // Icono en blanco
+                            tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF512DA8) // Color morado/violeta personalizado
+                    containerColor = Color(0xFF512DA8)
                 )
             )
         }
@@ -61,50 +98,98 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            Text("Especialidades", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // LazyRow para filtros/chips
+            // Chips de especialidades
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(categories) { category ->
-                    FilterChip(
-                        selected = selectedCategory == category,
+                    val isSelected = selectedCategory == category
+                    Surface(
                         onClick = { selectedCategory = category },
-                        label = { Text(category) }
-                    )
+                        shape = RoundedCornerShape(50),
+                        color = if (isSelected) Color(0xFF512DA8) else Color(0xFFF3F4F6)
+                    ) {
+                        Text(
+                            text = category,
+                            color = if (isSelected) Color.White else Color(0xFF374151),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Médicos Disponibles", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Médicos disponibles",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // LazyColumn para la lista de médicos
-            val filteredDoctors = if (selectedCategory == "Todos") {
-                sampleDoctors
-            } else {
-                sampleDoctors.filter { it.specialty == selectedCategory }
-            }
+            // Lista de médicos
+            val filteredDoctors = sampleDoctors.filter {
+                (it.specialty.contains(selectedCategory, ignoreCase = true)) || selectedCategory == "Todos"
+            }.ifEmpty { sampleDoctors }
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(filteredDoctors) { doctor ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onDoctorClick(doctor.id) },
-                        elevation = CardDefaults.cardElevation(4.dp)
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FAFB)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(doctor.name, style = MaterialTheme.typography.titleLarge)
-                                Text(doctor.specialty, style = MaterialTheme.typography.bodyMedium)
+                            // Caja con '+' morado
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .background(Color(0xFFF3E8FF), shape = RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color(0xFF512DA8),
+                                    modifier = Modifier.size(28.dp)
+                                )
                             }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = doctor.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = doctor.specialty,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            }
+
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                Text("${doctor.rating}")
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFC107),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = doctor.rating.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }

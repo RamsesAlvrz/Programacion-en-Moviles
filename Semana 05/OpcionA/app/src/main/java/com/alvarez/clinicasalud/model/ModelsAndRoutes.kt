@@ -6,7 +6,10 @@ data class Doctor(
     val name: String,
     val specialty: String,
     val rating: Double,
-    val imageRes: String = "Dr."
+    val imageRes: String = "Dr.",
+    val experience: String = "12 años exp.",
+    val reviews: String = "128 reseñas",
+    val bio: String = "Especialista en arritmias e hipertensión, formación en la Clínica Mayo."
 )
 
 // Modelo para las citas agendadas (Sección Mis Citas)
@@ -16,7 +19,7 @@ data class Appointment(
     val specialty: String,
     val date: String,
     val time: String,
-    val status: String // "Confirmada" o "Completada"
+    val status: String // "Confirmada", "Completada" o "Cancelada"
 )
 
 // Rutas de Navegación de la App
@@ -34,5 +37,5 @@ sealed class Screen(val route: String) {
     }
     object MyAppointments : Screen("my_appointments")
     object MedicalHistory : Screen("medical_history")
-    object UserProfile : Screen("user_profile") // <--- Nueva ruta añadida para el perfil del menú lateral
+    object UserProfile : Screen("user_profile")
 }
