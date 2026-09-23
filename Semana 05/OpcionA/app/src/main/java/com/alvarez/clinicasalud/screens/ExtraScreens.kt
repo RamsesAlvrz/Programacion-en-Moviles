@@ -4,11 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -87,17 +88,28 @@ fun MyAppointmentsScreen(onOpenDrawer: () -> Unit) {
             ) {
                 items(appointments, key = { it.id }) { app ->
                     Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(app.doctorName, style = MaterialTheme.typography.titleMedium)
-                            Text("${app.specialty} - ${app.date} a las ${app.time}")
-                            Text("Estado: ${app.status}", color = if(app.status == "Confirmada") Color.Blue else Color.Gray)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(app.doctorName, style = MaterialTheme.typography.titleMedium)
+                                Text("${app.specialty} - ${app.date} a las ${app.time}")
+                                Text("Estado: ${app.status}", color = if(app.status == "Confirmada") Color.Blue else Color.Gray)
+                            }
                             if (app.status == "Confirmada") {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                OutlinedButton(
-                                    onClick = { appointmentToCancel = app }
-                                ) {
-                                    Text("Cancelar Cita")
+                                IconButton(onClick = { appointmentToCancel = app }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Cancelar cita",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
                                 }
+                            } else {
+                                Spacer(modifier = Modifier.size(48.dp))
                             }
                         }
                     }
