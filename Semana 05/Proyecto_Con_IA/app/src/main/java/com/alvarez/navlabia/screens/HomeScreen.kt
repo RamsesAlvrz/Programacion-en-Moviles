@@ -3,11 +3,10 @@ package com.alvarez.navlabia.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -73,7 +72,7 @@ fun HomeScreen(navController: NavController) {
             OptionCard(
                 title = "Directorio de Alumnos",
                 subtitle = "Ver y gestionar estudiantes",
-                icon = Icons.Default.People,
+                icon = Icons.Default.Groups,
                 onClick = { navController.navigate(Screen.List.route) }
             )
 
