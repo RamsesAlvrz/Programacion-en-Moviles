@@ -7,7 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -58,6 +59,9 @@ fun ConfirmationScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyAppointmentsScreen(onOpenDrawer: () -> Unit) {
+    val appointments = remember { sampleAppointments.toMutableStateList() }
+    var appointmentToCancel by remember { mutableStateOf<Appointment?>(null) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,21 +74,59 @@ fun MyAppointmentsScreen(onOpenDrawer: () -> Unit) {
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(sampleAppointments) { app ->
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(app.doctorName, style = MaterialTheme.typography.titleMedium)
-                        Text("${app.specialty} - ${app.date} a las ${app.time}")
-                        Text("Estado: ${app.status}", color = if(app.status == "Confirmada") Color.Blue else Color.Gray)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(appointments, key = { it.id }) { app ->
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(app.doctorName, style = MaterialTheme.typography.titleMedium)
+                            Text("${app.specialty} - ${app.date} a las ${app.time}")
+                            Text("Estado: ${app.status}", color = if(app.status == "Confirmada") Color.Blue else Color.Gray)
+                            if (app.status == "Confirmada") {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = { appointmentToCancel = app }
+                                ) {
+                                    Text("Cancelar Cita")
+                                }
+                            }
+                        }
                     }
                 }
+            }
+
+            if (appointmentToCancel != null) {
+                val cita = appointmentToCancel!!
+                AlertDialog(
+                    onDismissRequest = { appointmentToCancel = null },
+                    title = { Text("Cancelar cita") },
+                    text = { Text("¿Deseas cancelar tu cita con ${cita.doctorName} el ${cita.date} a las ${cita.time}?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            val index = appointments.indexOfFirst { it.id == cita.id }
+                            if (index != -1) {
+                                appointments[index] = appointments[index].copy(status = "Cancelada")
+                            }
+                            appointmentToCancel = null
+                        }) {
+                            Text("Sí, cancelar", color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { appointmentToCancel = null }) {
+                            Text("No")
+                        }
+                    }
+                )
             }
         }
     }
