@@ -45,21 +45,22 @@
 
 ## 4. Estructura del Proyecto (`com.alvarez.navlab`)
 
-
+<img width="492" height="840" alt="image" src="https://github.com/user-attachments/assets/1f80d3c0-b895-43a4-802e-2e9ec9008940" />
 
 ---
 
 ## 5. Capturas del resultado final
 
-
-
----
-
-
+<img width="367" height="795" alt="image" src="https://github.com/user-attachments/assets/cb2009cd-df31-495f-a1da-6d31ce8b7954" />
 
 ---
 
-
+<img width="356" height="796" alt="image" src="https://github.com/user-attachments/assets/4f7ddc87-9c22-4168-beaf-a732d52589f7" />
 
 ---
 
+<img width="357" height="791" alt="image" src="https://github.com/user-attachments/assets/a7b9082e-40ff-48b4-a939-6e6d83e88762" />
+
+---
+
+<img width="361" height="797" alt="image" src="https://github.com/user-attachments/assets/653397f4-afd5-4f8a-9cef-651a5f121719" />
