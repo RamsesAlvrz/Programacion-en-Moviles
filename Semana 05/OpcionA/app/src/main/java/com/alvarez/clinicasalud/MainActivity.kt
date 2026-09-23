@@ -22,6 +22,7 @@ import com.alvarez.clinicasalud.screens.MedicalHistoryScreen
 import com.alvarez.clinicasalud.screens.MyAppointmentsScreen
 import com.alvarez.clinicasalud.screens.ProfileScreen
 import com.alvarez.clinicasalud.screens.ScheduleScreen
+import com.alvarez.clinicasalud.screens.UserProfileScreen // Asegúrate de importar tu nueva pantalla o archivo correspondiente
 import com.alvarez.clinicasalud.ui.*
 import kotlinx.coroutines.launch
 
@@ -74,6 +75,15 @@ fun MainApp() {
                     onClick = {
                         scope.launch { drawerState.close() }
                         navController.navigate(Screen.MedicalHistory.route)
+                    }
+                )
+                // Opción añadida para el perfil del usuario en el menú lateral
+                NavigationDrawerItem(
+                    label = { Text("Perfil") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        navController.navigate(Screen.UserProfile.route)
                     }
                 )
             }
@@ -145,6 +155,12 @@ fun MainApp() {
             }
             composable(Screen.MedicalHistory.route) {
                 MedicalHistoryScreen(
+                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                )
+            }
+            // Destino añadido para la pantalla de perfil del usuario
+            composable(Screen.UserProfile.route) {
+                UserProfileScreen(
                     onOpenDrawer = { scope.launch { drawerState.open() } }
                 )
             }
