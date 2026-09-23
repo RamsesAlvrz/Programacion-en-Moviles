@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color // Asegúrate de importar Color
 import androidx.compose.ui.unit.dp
 import com.alvarez.clinicasalud.model.Doctor
 
@@ -33,12 +34,24 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Clínica Salud+ - Inicio") },
+                title = {
+                    Text(
+                        "Clínica Salud+ ",
+                        color = Color.White // Texto en blanco para que contraste con el fondo morado
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menú")
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Menú",
+                            tint = Color.White // Icono en blanco
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF512DA8) // Color morado/violeta personalizado
+                )
             )
         }
     ) { paddingValues ->
