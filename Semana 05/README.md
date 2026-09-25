@@ -1,4 +1,4 @@
-# Semana 5: [Nombre del Proyecto / Laboratorio]
+# Semana 5: 
 
 Bienvenido al apartado correspondiente a la **Semana 5**. En esta sección se aborda la solución de un proyecto desarrollado mediante diferentes enfoques, comparando la metodología tradicional de programación con el desarrollo asistido por **Inteligencia Artificial (IA)**.
 
