@@ -34,5 +34,5 @@ sealed class Screen(val route: String) {
     }
     object MyAppointments : Screen("my_appointments")
     object MedicalHistory : Screen("medical_history")
-    object UserProfile : Screen("user_profile") // <--- Nueva ruta añadida para el perfil del menú lateral
+    object UserProfile : Screen("user_profile")
 }
