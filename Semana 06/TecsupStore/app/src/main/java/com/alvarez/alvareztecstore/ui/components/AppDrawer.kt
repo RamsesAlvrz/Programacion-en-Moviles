@@ -1,8 +1,10 @@
 package com.alvarez.alvareztecstore.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,14 +15,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-data class ItemNavegacion(val titulo: String)
+data class NavigationItem(
+    val titulo: String
+)
 
-val opcionesDrawer = listOf(
-    ItemNavegacion("Inicio"),
-    ItemNavegacion("Mis pedidos"),
-    ItemNavegacion("Favoritos"),
-    ItemNavegacion("Perfil"),
-    ItemNavegacion("Cerrar sesion")
+val itemsDrawer = listOf(
+    NavigationItem("Inicio"),
+    NavigationItem("Mis pedidos"),
+    NavigationItem("Favoritos"),
+    NavigationItem("Perfil"),
+    NavigationItem("Cerrar sesion")
 )
 
 @Composable
@@ -34,7 +38,7 @@ fun AppDrawer(
     ModalDrawerSheet(
         drawerContainerColor = Color.White
     ) {
-        // 1. Encabezado de usuario (Avatar, Nombre y Correo)
+        // Encabezado de usuario
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -45,7 +49,7 @@ fun AppDrawer(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(56.dp)
                         .clip(CircleShape)
                         .background(colorFondoSeleccionado),
                     contentAlignment = Alignment.Center
@@ -75,10 +79,10 @@ fun AppDrawer(
         }
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color(0xFFEEEEEE))
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // 2. Lista de opciones con resaltado activo
-        opcionesDrawer.forEach { item ->
+        // Lista de opciones con íconos circulares
+        itemsDrawer.forEach { item ->
             val isSelected = item.titulo == destinoSeleccionado
 
             NavigationDrawerItem(
@@ -86,16 +90,30 @@ fun AppDrawer(
                     Text(
                         text = item.titulo,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) colorMorado else Color(0xFF333333)
+                        color = if (isSelected) colorMorado else Color(0xFF333333),
+                        fontSize = 16.sp
                     )
                 },
                 selected = isSelected,
                 onClick = { onDestinoSeleccionado(item.titulo) },
+                icon = {
+                    // Círculo como ícono
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .border(
+                                width = 2.dp,
+                                color = if (isSelected) colorMorado else Color(0xFF444444),
+                                shape = CircleShape
+                            )
+                    )
+                },
                 colors = NavigationDrawerItemDefaults.colors(
                     selectedContainerColor = colorFondoSeleccionado,
                     unselectedContainerColor = Color.Transparent
                 ),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
             )
         }
     }
