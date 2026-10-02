@@ -15,7 +15,6 @@ fun TarjetaProducto(
     producto: Producto,
     modifier: Modifier = Modifier
 ) {
-    // 1. Estado expanded para controlar la apertura del menú
     var expanded by remember { mutableStateOf(false) }
 
     Card(
@@ -41,12 +40,33 @@ fun TarjetaProducto(
                 )
             }
 
-            // 2. Ícono de 3 puntos que cambia el estado expanded al hacer clic
-            IconButton(onClick = { expanded = !expanded }) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Opciones de producto"
-                )
+            // Box para vincular el DropdownMenu con el boton de 3 puntos
+            Box {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Opciones de producto"
+                    )
+                }
+
+                // DropdownMenu basico con 3 opciones
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Favoritos") },
+                        onClick = { expanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Compartir") },
+                        onClick = { expanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Reportar") },
+                        onClick = { expanded = false }
+                    )
+                }
             }
         }
     }
