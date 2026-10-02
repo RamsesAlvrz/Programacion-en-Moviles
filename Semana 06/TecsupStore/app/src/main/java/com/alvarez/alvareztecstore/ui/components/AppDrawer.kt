@@ -30,6 +30,7 @@ val itemsDrawer = listOf(
 @Composable
 fun AppDrawer(
     destinoSeleccionado: String,
+    contadorFavoritos: Int = 0, // 1. PARÁMETRO AÑADIDO
     onDestinoSeleccionado: (String) -> Unit
 ) {
     val colorMorado = Color(0xFF522175)
@@ -107,6 +108,21 @@ fun AppDrawer(
                                 shape = CircleShape
                             )
                     )
+                },
+                badge = {
+                    // 2. BADGE AÑADIDO ÚNICAMENTE PARA LA OPCIÓN FAVORITOS
+                    if (item.titulo == "Favoritos" && contadorFavoritos > 0) {
+                        Badge(
+                            containerColor = colorMorado,
+                            contentColor = Color.White
+                        ) {
+                            Text(
+                                text = "$contadorFavoritos",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 },
                 colors = NavigationDrawerItemDefaults.colors(
                     selectedContainerColor = colorFondoSeleccionado,
