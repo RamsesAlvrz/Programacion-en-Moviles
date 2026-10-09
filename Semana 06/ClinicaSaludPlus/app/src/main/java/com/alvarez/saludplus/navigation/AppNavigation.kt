@@ -65,10 +65,9 @@ fun AppNavigation() {
                     onDestino = { destino ->
                         nav.navigate(destino) {
                             popUpTo(Rutas.HOME) {
-                                saveState = true
+                                inclusive = false
                             }
                             launchSingleTop = true
-                            restoreState = true
                         }
                     }
                 )
