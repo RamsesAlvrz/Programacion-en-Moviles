@@ -282,7 +282,26 @@ object Repositorio {
         medicoId: Int,
         fecha: String
     ): List<String> {
-        return emptyList()
+
+        if (
+            obtenerMedico(medicoId) == null ||
+            fecha.isBlank()
+        ) {
+            return emptyList()
+        }
+
+        val horariosOcupados = citas
+            .filter {
+                it.medicoId == medicoId &&
+                        it.fecha == fecha
+            }
+            .map {
+                it.hora
+            }
+
+        return horariosBase.filter {
+            it !in horariosOcupados
+        }
     }
 
     fun agendarCita(
