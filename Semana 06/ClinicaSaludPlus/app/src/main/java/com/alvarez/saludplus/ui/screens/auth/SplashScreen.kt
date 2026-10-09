@@ -1,94 +1,119 @@
 package com.alvarez.saludplus.ui.screens.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.alvarez.saludplus.ui.components.BotonPrimario
+import androidx.compose.ui.unit.sp
+import com.alvarez.saludplus.R
 
 @Composable
 fun SplashScreen(
     onRegistro: () -> Unit,
     onLogin: () -> Unit
 ) {
+    val azul = Color(0xFF2378C9)
+    val textoOscuro = Color(0xFF17324F)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        Spacer(
-            modifier = Modifier.height(48.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .size(140.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "+",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.primary
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF0F8FF),
+                        Color(0xFFE3F3F9),
+                        Color(0xFFD7EDF4)
+                    )
+                )
             )
-        }
+            .padding(horizontal = 20.dp)
+            .padding(top = 16.dp, bottom = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(R.drawable.logo_saludplus),
+            contentDescription = "Logo de Clínica SaludPlus",
+            modifier = Modifier
+                .weight(0.8f)
+                .fillMaxWidth(),
+            contentScale = ContentScale.Fit
+        )
 
         Text(
-            text = "Clínica SaludPlus",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary,
+            text = "Clínica\nSaludPlus",
+            color = textoOscuro,
+            fontSize = 30.sp,
+            lineHeight = 32.sp,
+            fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Tu salud, nuestra prioridad",
-            style = MaterialTheme.typography.titleMedium,
+            color = textoOscuro,
+            style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center
         )
 
-        Text(
-            text = "Encuentra tu especialidad y reserva una cita médica de forma sencilla.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Image(
+            painter = painterResource(R.drawable.medico_splash),
+            contentDescription = "Médico de Clínica SaludPlus",
+            modifier = Modifier
+                .weight(2.5f)
+                .fillMaxWidth(),
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.BottomCenter
         )
 
-        Spacer(
-            modifier = Modifier.height(24.dp)
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
-        BotonPrimario(
-            texto = "Crear cuenta",
-            onClick = onRegistro
-        )
+        Button(
+            onClick = onRegistro,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = azul,
+                contentColor = Color.White
+            )
+        ) {
+            Text(
+                text = "Registrarme",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
 
-        OutlinedButton(
+        TextButton(
             onClick = onLogin,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Ya tengo una cuenta")
+            Text(
+                text = "Ya tengo una cuenta",
+                color = Color(0xFF205A8D),
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }

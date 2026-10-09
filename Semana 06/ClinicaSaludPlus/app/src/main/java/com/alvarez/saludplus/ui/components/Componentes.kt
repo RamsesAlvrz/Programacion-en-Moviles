@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import com.alvarez.saludplus.navigation.Rutas
 
 @Composable
@@ -181,42 +183,74 @@ fun BarraInferior(
     onDestino: (String) -> Unit
 ) {
     val destinos = listOf(
-        Rutas.HOME to "Inicio",
-        Rutas.CITAS to "Citas",
-        Rutas.RESULTADOS to "Resultados",
-        Rutas.PERFIL to "Perfil"
-    )
-
-    val simbolos = listOf(
-        "⌂",
-        "+",
-        "≡",
-        "○"
+        Triple(
+            com.alvarez.saludplus.navigation.Rutas.HOME,
+            "Inicio",
+            "inicio"
+        ),
+        Triple(
+            com.alvarez.saludplus.navigation.Rutas.CITAS,
+            "Citas",
+            "calendario"
+        ),
+        Triple(
+            com.alvarez.saludplus.navigation.Rutas.RESULTADOS,
+            "Resultados",
+            "documento"
+        ),
+        Triple(
+            com.alvarez.saludplus.navigation.Rutas.PERFIL,
+            "Perfil",
+            "persona"
+        )
     )
 
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = androidx.compose.ui.graphics.Color(0xFFF5FAFC),
+        tonalElevation = 0.dp
     ) {
-        destinos.forEachIndexed { indice, destino ->
-
-            val ruta = destino.first
-            val titulo = destino.second
+        destinos.forEach { (ruta, titulo, tipo) ->
+            val seleccionado = rutaActual == ruta
 
             NavigationBarItem(
-                selected = rutaActual == ruta,
+                selected = seleccionado,
                 onClick = {
                     onDestino(ruta)
                 },
                 icon = {
-                    Text(
-                        text = simbolos[indice],
-                        style = MaterialTheme.typography.titleLarge
+                    IconoSaludPlus(
+                        tipo = tipo,
+                        color = if (seleccionado) {
+                            androidx.compose.ui.graphics.Color(0xFF2378C9)
+                        } else {
+                            androidx.compose.ui.graphics.Color(0xFF85919A)
+                        },
+                        modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {
-                    Text(titulo)
+                    Text(
+                        text = titulo,
+                        fontWeight = if (seleccionado) {
+                            androidx.compose.ui.text.font.FontWeight.Bold
+                        } else {
+                            androidx.compose.ui.text.font.FontWeight.Normal
+                        }
+                    )
                 },
-                alwaysShowLabel = true
+                alwaysShowLabel = true,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor =
+                        androidx.compose.ui.graphics.Color(0xFF2378C9),
+                    selectedTextColor =
+                        androidx.compose.ui.graphics.Color(0xFF2378C9),
+                    unselectedIconColor =
+                        androidx.compose.ui.graphics.Color(0xFF85919A),
+                    unselectedTextColor =
+                        androidx.compose.ui.graphics.Color(0xFF85919A),
+                    indicatorColor =
+                        androidx.compose.ui.graphics.Color.Transparent
+                )
             )
         }
     }

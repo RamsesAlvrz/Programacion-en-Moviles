@@ -94,7 +94,9 @@ fun AppNavigation() {
 
             composable(Rutas.REGISTRO) {
                 RegistroScreen(
-                    onVolver = volver,
+                    onVolver = {
+                        nav.popBackStack()
+                    },
                     onRegistrado = {
                         nav.navigate(Rutas.LOGIN) {
                             popUpTo(Rutas.REGISTRO) {
@@ -105,6 +107,14 @@ fun AppNavigation() {
                     },
                     onTerminos = {
                         nav.navigate(Rutas.TERMINOS)
+                    },
+                    onLogin = {
+                        nav.navigate(Rutas.LOGIN) {
+                            popUpTo(Rutas.REGISTRO) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
