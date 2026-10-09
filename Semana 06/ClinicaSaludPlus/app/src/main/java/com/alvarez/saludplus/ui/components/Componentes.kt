@@ -25,6 +25,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import com.alvarez.saludplus.navigation.Rutas
 
 @Composable
 fun BotonPrimario(
@@ -177,5 +180,44 @@ fun BarraInferior(
     rutaActual: String?,
     onDestino: (String) -> Unit
 ) {
-    // NavigationBar
+    val destinos = listOf(
+        Rutas.HOME to "Inicio",
+        Rutas.CITAS to "Citas",
+        Rutas.RESULTADOS to "Resultados",
+        Rutas.PERFIL to "Perfil"
+    )
+
+    val simbolos = listOf(
+        "⌂",
+        "+",
+        "≡",
+        "○"
+    )
+
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        destinos.forEachIndexed { indice, destino ->
+
+            val ruta = destino.first
+            val titulo = destino.second
+
+            NavigationBarItem(
+                selected = rutaActual == ruta,
+                onClick = {
+                    onDestino(ruta)
+                },
+                icon = {
+                    Text(
+                        text = simbolos[indice],
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                label = {
+                    Text(titulo)
+                },
+                alwaysShowLabel = true
+            )
+        }
+    }
 }
