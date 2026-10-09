@@ -8,6 +8,10 @@ import com.alvarez.saludplus.model.Cita
 import com.alvarez.saludplus.model.Especialidad
 import com.alvarez.saludplus.model.Medico
 import com.alvarez.saludplus.model.Usuario
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 object Repositorio {
 
@@ -60,56 +64,72 @@ object Repositorio {
             especialidadId = 1,
             nombre = "Dra. Ana Torres",
             experiencia = 12,
-            precio = 80.00
+            precio = 80.00,
+            calificacion = 4.7,
+            cantidadOpiniones = 109
         ),
         Medico(
             id = 2,
             especialidadId = 1,
             nombre = "Dr. Luis Ramos",
             experiencia = 8,
-            precio = 75.00
+            precio = 75.00,
+            calificacion = 4.7,
+            cantidadOpiniones = 50
         ),
         Medico(
             id = 3,
             especialidadId = 2,
             nombre = "Dr. Carlos Medina",
             experiencia = 15,
-            precio = 120.00
+            precio = 120.00,
+            calificacion = 4.8,
+            cantidadOpiniones = 86
         ),
         Medico(
             id = 4,
             especialidadId = 2,
             nombre = "Dra. Elena Rojas",
             experiencia = 10,
-            precio = 110.00
+            precio = 110.00,
+            calificacion = 4.7,
+            cantidadOpiniones = 64
         ),
         Medico(
             id = 5,
             especialidadId = 3,
             nombre = "Dra. María Vega",
             experiencia = 9,
-            precio = 100.00
+            precio = 100.00,
+            calificacion = 4.8,
+            cantidadOpiniones = 72
         ),
         Medico(
             id = 6,
             especialidadId = 4,
             nombre = "Dr. José Salas",
             experiencia = 11,
-            precio = 90.00
+            precio = 90.00,
+            calificacion = 4.9,
+            cantidadOpiniones = 95
         ),
         Medico(
             id = 7,
             especialidadId = 5,
             nombre = "Dr. Pedro Castillo",
             experiencia = 14,
-            precio = 115.00
+            precio = 115.00,
+            calificacion = 4.8,
+            cantidadOpiniones = 81
         ),
         Medico(
             id = 8,
             especialidadId = 6,
             nombre = "Dra. Lucía Flores",
             experiencia = 7,
-            precio = 95.00
+            precio = 95.00,
+            calificacion = 4.7,
+            cantidadOpiniones = 48
         )
     )
 
@@ -372,6 +392,39 @@ object Repositorio {
                     it.hora
                 }
             )
+    }
+
+    fun medicoTieneCitaEnCurso(
+        medicoId: Int,
+        ahora: ZonedDateTime = ZonedDateTime.now(
+            ZoneId.of("America/Lima")
+        )
+    ): Boolean {
+        val ahoraLima = ahora.withZoneSameInstant(
+            ZoneId.of("America/Lima")
+        )
+
+        val momentoActual = ahoraLima.toLocalDateTime()
+
+        return citas.any { cita ->
+            if (cita.medicoId != medicoId) {
+                false
+            } else {
+                val inicio = runCatching {
+                    LocalDate.parse(cita.fecha)
+                        .atTime(LocalTime.parse(cita.hora))
+                }.getOrNull()
+
+                if (inicio == null) {
+                    false
+                } else {
+                    val fin = inicio.plusMinutes(30)
+
+                    !momentoActual.isBefore(inicio) &&
+                            momentoActual.isBefore(fin)
+                }
+            }
+        }
     }
 
     fun cancelarCita(

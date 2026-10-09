@@ -1,11 +1,8 @@
 package com.alvarez.saludplus.ui.screens.agendamiento
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -13,34 +10,16 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.alvarez.saludplus.R
+import androidx.compose.ui.unit.sp
 import com.alvarez.saludplus.repository.Repositorio
-import com.alvarez.saludplus.ui.components.DatosConsulta
-import com.alvarez.saludplus.ui.components.Encabezado
+import com.alvarez.saludplus.ui.components.*
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.Locale
-
-private val AzulConfirmacion = Color(0xFF2378C9)
-private val CelesteConfirmacion = Color(0xFFE3F1F7)
-private val FondoConfirmacion = Color(0xFFF5FAFC)
-
-private fun esFechaReservable(fecha: LocalDate?): Boolean {
-    return fecha != null &&
-            !fecha.isBefore(LocalDate.now()) &&
-            fecha.dayOfWeek != DayOfWeek.SATURDAY &&
-            fecha.dayOfWeek != DayOfWeek.SUNDAY
-}
 
 @Composable
 fun ConfirmarCitaScreen(
@@ -50,15 +29,7 @@ fun ConfirmarCitaScreen(
     onVolver: () -> Unit,
     onConfirmada: (Int) -> Unit
 ) {
-    val usuario = Repositorio.usuarioActual
     val medico = Repositorio.obtenerMedico(medicoId)
-    val especialidad = medico?.let {
-        Repositorio.obtenerEspecialidad(it.especialidadId)
-    }
-
-    val fechaLocal = remember(fecha) {
-        runCatching { LocalDate.parse(fecha) }.getOrNull()
-    }
 
     var motivo by rememberSaveable(medicoId, fecha, hora) {
         mutableStateOf("")
@@ -72,397 +43,259 @@ fun ConfirmarCitaScreen(
         mutableStateOf("")
     }
 
-    val fechaValida = esFechaReservable(fechaLocal)
+    val fechaLocal = runCatching {
+        LocalDate.parse(fecha)
+    }.getOrNull()
 
-    val disponibles = if (medico != null && fechaValida) {
-        Repositorio.horariosDisponibles(medicoId, fecha)
-    } else {
-        emptyList()
-    }
+    val fechaValida = fechaLocal != null &&
+            !fechaLocal.isBefore(LocalDate.now()) &&
+            fechaLocal.dayOfWeek != DayOfWeek.SATURDAY &&
+            fechaLocal.dayOfWeek != DayOfWeek.SUNDAY
 
-    val puedeConfirmar =
-        usuario != null &&
-                medico != null &&
-                fechaValida &&
-                hora in disponibles &&
-                !enviando
+    val horarioDisponible = hora in Repositorio.horariosDisponibles(
+        medicoId,
+        fecha
+    )
 
-    Column(
+    val puedeConfirmar = medico != null &&
+            Repositorio.usuarioActual != null &&
+            fechaValida &&
+            horarioDisponible &&
+            !enviando
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoConfirmacion)
+            .background(FondoAgendamiento)
             .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Encabezado(
-            titulo = "Confirmar cita",
-            onVolver = onVolver
-        )
+        val altoDato = ((maxHeight - 390.dp) / 4f)
+            .coerceIn(76.dp, 115.dp)
 
-        if (medico != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = CelesteConfirmacion
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            EncabezadoAgendamiento(
+                titulo = "Confirmar cita",
+                onVolver = onVolver
+            )
+
+            if (medico != null) {
+                ResumenMedico(medico)
+            } else {
+                Text(
+                    text = "Médico no encontrado.",
+                    color = MaterialTheme.colorScheme.error
                 )
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (medico.id == 1) {
-                        Image(
-                            painter = painterResource(R.drawable.medico_ana),
-                            contentDescription = "Fotografía de ${medico.nombre}",
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .background(AzulConfirmacion, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = medico.nombre
-                                    .split(" ")
-                                    .filter {
-                                        it.isNotBlank() &&
-                                                it != "Dr." &&
-                                                it != "Dra."
-                                    }
-                                    .take(2)
-                                    .joinToString("") {
-                                        it.first().uppercaseChar().toString()
-                                    },
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Text(
-                            text = medico.nombre,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Text(
-                            text = especialidad?.nombre.orEmpty(),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-
-                        Text(
-                            text = "${medico.experiencia} años de experiencia",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
             }
-        }
 
-        Column(modifier = Modifier.fillMaxWidth()) {
-            DatoConfirmacion(
-                tipo = "fecha",
-                titulo = "Fecha",
-                contenido = if (fechaLocal != null) {
-                    DatosConsulta.fechaEnEspanol(fecha)
-                } else {
-                    "Fecha no válida"
-                }
-            )
+            Column {
+                DatoConfirmacion(
+                    titulo = "Fecha",
+                    valor = DatosConsulta.fechaEnEspanol(fecha),
+                    simbolo = "▦",
+                    alto = altoDato
+                )
 
-            HorizontalDivider(color = Color(0xFFDDE8EE))
+                DatoConfirmacion(
+                    titulo = "Hora",
+                    valor = hora,
+                    simbolo = "◷",
+                    alto = altoDato
+                )
 
-            DatoConfirmacion(
-                tipo = "hora",
-                titulo = "Hora",
-                contenido = hora
-            )
+                DatoConfirmacion(
+                    titulo = "Tipo de atención",
+                    valor = DatosConsulta.TIPO_ATENCION,
+                    simbolo = "✚",
+                    alto = altoDato
+                )
 
-            HorizontalDivider(color = Color(0xFFDDE8EE))
+                DatoConfirmacion(
+                    titulo = "Dirección",
+                    valor = DatosConsulta.DIRECCION,
+                    simbolo = "⌖",
+                    alto = altoDato
+                )
+            }
 
-            DatoConfirmacion(
-                tipo = "consulta",
-                titulo = "Tipo de atención",
-                contenido = DatosConsulta.TIPO_ATENCION
-            )
-
-            HorizontalDivider(color = Color(0xFFDDE8EE))
-
-            DatoConfirmacion(
-                tipo = "direccion",
-                titulo = "Dirección",
-                contenido = DatosConsulta.DIRECCION
-            )
-        }
-
-        Text(
-            text = "Motivo de consulta (opcional)",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold
-        )
-
-        OutlinedTextField(
-            value = motivo,
-            onValueChange = {
-                motivo = it
-            },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {
-                Text("Motivo de consulta...")
-            },
-            enabled = !enviando,
-            minLines = 2,
-            maxLines = 4,
-            shape = RoundedCornerShape(12.dp)
-        )
-
-        Text(
-            text = medico?.let {
-                "Costo de consulta: S/ ${
-                    String.format(Locale.US, "%.2f", it.precio)
-                }"
-            } ?: "Costo no disponible",
-            style = MaterialTheme.typography.bodySmall
-        )
-
-        val mensaje = when {
-            error.isNotBlank() -> error
-            usuario == null -> "Inicia sesión para reservar."
-            medico == null -> "No se encontró el médico."
-            !fechaValida -> "Selecciona una fecha hábil desde hoy."
-            hora !in disponibles && !enviando ->
-                "El horario ya no está disponible. Selecciona otro."
-            else -> ""
-        }
-
-        if (mensaje.isNotBlank()) {
             Text(
-                text = mensaje,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
+                text = "Motivo de consulta (opcional)",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextoAgendamiento
             )
-        }
 
-        Button(
-            onClick = {
-                if (!enviando) {
+            OutlinedTextField(
+                value = motivo,
+                onValueChange = {
+                    motivo = it
                     error = ""
+                },
+                enabled = !enviando,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = {
+                    Text("Motivo de consulta...")
+                },
+                minLines = 2,
+                maxLines = 4,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AzulAgendamiento,
+                    unfocusedBorderColor = Color(0xFFBCCFD9),
+                    cursorColor = AzulAgendamiento
+                )
+            )
 
-                    val sigueDisponible =
-                        esFechaReservable(fechaLocal) &&
-                                hora in Repositorio.horariosDisponibles(
+            if (medico != null) {
+                Text(
+                    text = String.format(
+                        Locale.US,
+                        "Costo de consulta: S/ %.2f",
+                        medico.precio
+                    ),
+                    fontSize = 14.sp,
+                    color = TextoAgendamiento
+                )
+            }
+
+            val mensaje = when {
+                error.isNotBlank() -> error
+                Repositorio.usuarioActual == null ->
+                    "Inicia sesión para confirmar la cita."
+                !fechaValida ->
+                    "Selecciona una fecha hábil que no haya pasado."
+                !horarioDisponible ->
+                    "Este horario ya no está disponible. Vuelve y elige otro."
+                else -> ""
+            }
+
+            if (mensaje.isNotBlank()) {
+                Text(
+                    text = mensaje,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Button(
+                enabled = puedeConfirmar,
+                onClick = {
+                    val fechaSigueValida = fechaLocal != null &&
+                            !fechaLocal.isBefore(LocalDate.now()) &&
+                            fechaLocal.dayOfWeek != DayOfWeek.SATURDAY &&
+                            fechaLocal.dayOfWeek != DayOfWeek.SUNDAY
+
+                    val horaSigueDisponible =
+                        hora in Repositorio.horariosDisponibles(
                             medicoId,
                             fecha
                         )
 
-                    if (!sigueDisponible) {
-                        error = "El horario ya no está disponible."
-                    } else {
+                    if (!fechaSigueValida || !horaSigueDisponible) {
+                        error = "La fecha o el horario ya no están disponibles."
+                    } else if (Repositorio.usuarioActual == null) {
+                        error = "Inicia sesión para confirmar la cita."
+                    } else if (!enviando) {
                         enviando = true
 
                         val cita = Repositorio.agendarCita(
                             medicoId = medicoId,
                             fecha = fecha,
                             hora = hora,
-                            motivoConsulta = motivo
+                            motivoConsulta = motivo.trim()
                         )
 
                         if (cita != null) {
                             onConfirmada(cita.id)
                         } else {
                             enviando = false
-                            error = "No se pudo reservar. Revisa tu sesión y el horario."
+                            error = "No se pudo agendar la cita. Revisa el horario."
                         }
                     }
-                }
-            },
-            enabled = puedeConfirmar,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 52.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AzulConfirmacion
-            )
-        ) {
-            Text(
-                text = if (enviando) {
-                    "Confirmando..."
-                } else {
-                    "Confirmar cita"
-                }
-            )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AzulAgendamiento
+                )
+            ) {
+                Text(
+                    text = if (enviando) {
+                        "Confirmando..."
+                    } else {
+                        "Confirmar cita"
+                    },
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun DatoConfirmacion(
-    tipo: String,
     titulo: String,
-    contenido: String
+    valor: String,
+    simbolo: String,
+    alto: Dp
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
+    Column {
+        Row(
             modifier = Modifier
-                .size(36.dp)
-                .background(
-                    CelesteConfirmacion,
-                    RoundedCornerShape(10.dp)
-                ),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .heightIn(min = alto)
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            IconoConfirmacion(tipo)
-        }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = contenido,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-private fun IconoConfirmacion(tipo: String) {
-    Canvas(modifier = Modifier.size(24.dp)) {
-        val grosor = 2.dp.toPx()
-        val trazo = Stroke(grosor)
-        val ancho = size.width
-        val alto = size.height
-
-        when (tipo) {
-            "fecha" -> {
-                drawRoundRect(
-                    color = AzulConfirmacion,
-                    topLeft = Offset(ancho * 0.15f, alto * 0.22f),
-                    size = Size(ancho * 0.70f, alto * 0.63f),
-                    style = trazo
-                )
-
-                drawLine(
-                    color = AzulConfirmacion,
-                    start = Offset(ancho * 0.15f, alto * 0.42f),
-                    end = Offset(ancho * 0.85f, alto * 0.42f),
-                    strokeWidth = grosor
-                )
-
-                listOf(0.32f, 0.68f).forEach { posicion ->
-                    drawLine(
-                        color = AzulConfirmacion,
-                        start = Offset(ancho * posicion, alto * 0.12f),
-                        end = Offset(ancho * posicion, alto * 0.30f),
-                        strokeWidth = grosor
+            Surface(
+                color = CelesteAgendamiento,
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier.size(46.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = simbolo,
+                        fontSize = 29.sp,
+                        color = AzulAgendamiento
                     )
                 }
             }
 
-            "hora" -> {
-                drawCircle(
-                    color = AzulConfirmacion,
-                    radius = ancho * 0.36f,
-                    style = trazo
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Text(
+                    text = titulo,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextoAgendamiento
                 )
 
-                drawLine(
-                    color = AzulConfirmacion,
-                    start = center,
-                    end = Offset(ancho * 0.50f, alto * 0.28f),
-                    strokeWidth = grosor
-                )
-
-                drawLine(
-                    color = AzulConfirmacion,
-                    start = center,
-                    end = Offset(ancho * 0.68f, alto * 0.58f),
-                    strokeWidth = grosor
-                )
-            }
-
-            "consulta" -> {
-                drawRoundRect(
-                    color = AzulConfirmacion,
-                    topLeft = Offset(ancho * 0.18f, alto * 0.18f),
-                    size = Size(ancho * 0.64f, alto * 0.64f),
-                    style = trazo
-                )
-
-                drawLine(
-                    color = AzulConfirmacion,
-                    start = Offset(ancho * 0.50f, alto * 0.32f),
-                    end = Offset(ancho * 0.50f, alto * 0.68f),
-                    strokeWidth = grosor
-                )
-
-                drawLine(
-                    color = AzulConfirmacion,
-                    start = Offset(ancho * 0.32f, alto * 0.50f),
-                    end = Offset(ancho * 0.68f, alto * 0.50f),
-                    strokeWidth = grosor
-                )
-            }
-
-            "direccion" -> {
-                val pin = Path().apply {
-                    moveTo(ancho * 0.50f, alto * 0.90f)
-
-                    cubicTo(
-                        ancho * 0.12f, alto * 0.52f,
-                        ancho * 0.10f, alto * 0.12f,
-                        ancho * 0.50f, alto * 0.12f
-                    )
-
-                    cubicTo(
-                        ancho * 0.90f, alto * 0.12f,
-                        ancho * 0.88f, alto * 0.52f,
-                        ancho * 0.50f, alto * 0.90f
-                    )
-
-                    close()
-                }
-
-                drawPath(
-                    path = pin,
-                    color = AzulConfirmacion,
-                    style = trazo
-                )
-
-                drawCircle(
-                    color = AzulConfirmacion,
-                    radius = ancho * 0.10f,
-                    center = Offset(ancho * 0.50f, alto * 0.36f),
-                    style = trazo
+                Text(
+                    text = valor,
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    color = TextoAgendamiento
                 )
             }
         }
+
+        HorizontalDivider(
+            color = Color(0xFFDCE7EC)
+        )
     }
 }

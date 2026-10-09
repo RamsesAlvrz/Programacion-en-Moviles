@@ -1,15 +1,11 @@
-// COMMIT 1 — Reemplaza todo el contenido de:
-// app/src/main/java/com/alvarez/saludplus/ui/screens/agendamiento/FechaHoraScreen.kt
-
 package com.alvarez.saludplus.ui.screens.agendamiento
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -17,51 +13,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.alvarez.saludplus.repository.Repositorio
-import com.alvarez.saludplus.ui.components.Encabezado
+import com.alvarez.saludplus.ui.components.*
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val AzulCalendario = Color(0xFF2378C9)
-private val FondoCalendario = Color(0xFFF5FAFC)
-private val CelesteCalendario = Color(0xFFE3F1F7)
-private val BordeCalendario = Color(0xFFD4E1E8)
-
-private fun siguientesDiasHabiles(
-    desde: LocalDate,
-    cantidad: Int = 5
-): List<LocalDate> {
+private fun generarDiasHabiles(desde: LocalDate): List<LocalDate> {
     val dias = mutableListOf<LocalDate>()
     var fecha = desde
 
-    while (dias.size < cantidad) {
+    while (dias.size < 5) {
         if (
             fecha.dayOfWeek != DayOfWeek.SATURDAY &&
             fecha.dayOfWeek != DayOfWeek.SUNDAY
         ) {
             dias.add(fecha)
         }
+
         fecha = fecha.plusDays(1)
     }
 
     return dias
-}
-
-private fun tituloPeriodo(
-    dias: List<LocalDate>,
-    locale: Locale
-): String {
-    val formato = DateTimeFormatter.ofPattern("MMMM yyyy", locale)
-    val primero = dias.first().format(formato)
-        .replaceFirstChar { it.titlecase(locale) }
-    val ultimo = dias.last().format(formato)
-        .replaceFirstChar { it.titlecase(locale) }
-
-    return if (primero == ultimo) primero else "$primero / $ultimo"
 }
 
 @Composable
@@ -70,10 +46,22 @@ fun FechaHoraScreen(
     onVolver: () -> Unit,
     onContinuar: (String, String) -> Unit
 ) {
-    val locale = remember { Locale("es", "PE") }
-    val hoy = LocalDate.now()
+    val medico = Repositorio.obtenerMedico(medicoId)
 
-    var semanasAdelante by rememberSaveable(medicoId) {
+    if (medico == null) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(FondoAgendamiento)
+                .padding(20.dp)
+        ) {
+            EncabezadoAgendamiento("Fecha y hora", onVolver)
+            Text("Médico no encontrado.")
+        }
+        return
+    }
+
+    var semanas by rememberSaveable(medicoId) {
         mutableStateOf(0)
     }
 
@@ -85,31 +73,37 @@ fun FechaHoraScreen(
         mutableStateOf("")
     }
 
-    val dias = remember(hoy, semanasAdelante) {
-        siguientesDiasHabiles(
-            desde = hoy.plusWeeks(semanasAdelante.toLong())
-        )
+    var error by rememberSaveable(medicoId) {
+        mutableStateOf("")
     }
 
+    val hoy = LocalDate.now()
+    val dias = generarDiasHabiles(hoy.plusWeeks(semanas.toLong()))
     val fechasVisibles = dias.map { it.toString() }
 
-    val medico = Repositorio.obtenerMedico(medicoId)
-    val especialidad = medico?.let {
-        Repositorio.obtenerEspecialidad(it.especialidadId)
-    }
-
-    // Se consulta directamente el repositorio para mantener
-    // la reacción a las citas agregadas o canceladas.
-    val horarios = if (
-        medico != null &&
-        fechaSeleccionada in fechasVisibles
-    ) {
+    val horarios = if (fechaSeleccionada in fechasVisibles) {
         Repositorio.horariosDisponibles(
             medicoId,
             fechaSeleccionada
         )
     } else {
         emptyList()
+    }
+
+    val formatoMes = DateTimeFormatter.ofPattern(
+        "MMMM yyyy",
+        Locale("es", "PE")
+    )
+
+    val primerMes = dias.first().format(formatoMes)
+    val ultimoMes = dias.last().format(formatoMes)
+
+    val periodo = if (primerMes == ultimoMes) {
+        primerMes.replaceFirstChar { it.titlecase() }
+    } else {
+        primerMes.replaceFirstChar { it.titlecase() } +
+                " / " +
+                ultimoMes.replaceFirstChar { it.titlecase() }
     }
 
     LaunchedEffect(fechasVisibles) {
@@ -125,112 +119,86 @@ fun FechaHoraScreen(
         }
     }
 
-    val puedeContinuar =
-        medico != null &&
-                fechaSeleccionada in fechasVisibles &&
-                horaSeleccionada in horarios
-
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCalendario)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .background(FondoAgendamiento)
     ) {
-        Encabezado(
-            titulo = "Seleccionar fecha y hora",
-            onVolver = onVolver
-        )
+        val filasHorarios = ((horarios.size + 2) / 3)
+            .coerceAtLeast(1)
 
-        if (medico == null) {
-            Text(
-                text = "No se encontró el médico seleccionado.",
-                color = MaterialTheme.colorScheme.error
+        val altoHorario = ((maxHeight - 430.dp) / filasHorarios.toFloat())
+            .coerceIn(48.dp, 78.dp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            EncabezadoAgendamiento(
+                titulo = "Seleccionar fecha y hora",
+                onVolver = onVolver
             )
-        } else {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = CelesteCalendario
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = medico.nombre,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
 
-                    Text(
-                        text = especialidad?.nombre.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
+            ResumenMedico(medico)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(
-                    enabled = semanasAdelante > 0,
+                    enabled = semanas > 0,
                     onClick = {
-                        if (semanasAdelante > 0) {
-                            semanasAdelante--
+                        if (semanas > 0) {
+                            semanas--
                             fechaSeleccionada = ""
                             horaSeleccionada = ""
+                            error = ""
                         }
-                    },
-                    modifier = Modifier.width(48.dp)
+                    }
                 ) {
-                    Text(
-                        text = "‹",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
+                    Text("‹", fontSize = 30.sp)
                 }
 
                 Text(
-                    text = tituloPeriodo(dias, locale),
+                    text = periodo,
                     modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextoAgendamiento,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
 
                 TextButton(
                     onClick = {
-                        semanasAdelante++
+                        semanas++
                         fechaSeleccionada = ""
                         horaSeleccionada = ""
-                    },
-                    modifier = Modifier.width(48.dp)
+                        error = ""
+                    }
                 ) {
-                    Text(
-                        text = "›",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
+                    Text("›", fontSize = 30.sp)
                 }
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 dias.forEach { dia ->
-                    val seleccionada =
-                        fechaSeleccionada == dia.toString()
+                    val seleccionada = fechaSeleccionada == dia.toString()
 
                     val nombreDia = when (dia.dayOfWeek) {
                         DayOfWeek.MONDAY -> "LUN"
                         DayOfWeek.TUESDAY -> "MAR"
                         DayOfWeek.WEDNESDAY -> "MIÉ"
                         DayOfWeek.THURSDAY -> "JUE"
-                        DayOfWeek.FRIDAY -> "VIE"
-                        else -> ""
+                        else -> "VIE"
                     }
 
                     Card(
@@ -239,38 +207,44 @@ fun FechaHoraScreen(
                                 fechaSeleccionada = dia.toString()
                                 horaSeleccionada = ""
                             }
+                            error = ""
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(82.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (seleccionada) {
-                                AzulCalendario
+                                AzulAgendamiento
                             } else {
-                                CelesteCalendario
-                            },
-                            contentColor = if (seleccionada) {
-                                Color.White
-                            } else {
-                                Color(0xFF263746)
+                                CelesteAgendamiento
                             }
                         )
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp),
+                            modifier = Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                            verticalArrangement = Arrangement.Center
                         ) {
+                            val color = if (seleccionada) {
+                                Color.White
+                            } else {
+                                TextoAgendamiento
+                            }
+
                             Text(
                                 text = nombreDia,
-                                style = MaterialTheme.typography.labelSmall
+                                fontSize = 12.sp,
+                                color = color
                             )
+
+                            Spacer(Modifier.height(8.dp))
 
                             Text(
                                 text = dia.dayOfMonth.toString(),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = color
                             )
                         }
                     }
@@ -279,79 +253,81 @@ fun FechaHoraScreen(
 
             Text(
                 text = "Horarios disponibles",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextoAgendamiento
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) {
-                when {
-                    fechaSeleccionada !in fechasVisibles -> {
-                        Text(
-                            text = "Selecciona un día para consultar los horarios.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+            when {
+                fechaSeleccionada.isBlank() -> {
+                    Text(
+                        text = "Selecciona un día para consultar sus horarios.",
+                        color = Color(0xFF536672),
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
 
-                    horarios.isEmpty() -> {
-                        Text(
-                            text = "No hay horarios disponibles para este día.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                horarios.isEmpty() -> {
+                    Text(
+                        text = "No quedan horarios disponibles para este día.",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
 
-                    else -> {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(3),
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(bottom = 8.dp)
-                        ) {
-                            items(
-                                items = horarios,
-                                key = { it }
-                            ) { hora ->
-                                val seleccionada =
-                                    horaSeleccionada == hora
+                else -> {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        horarios.chunked(3).forEach { fila ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                fila.forEach { hora ->
+                                    val seleccionada = horaSeleccionada == hora
 
-                                OutlinedButton(
-                                    onClick = {
-                                        horaSeleccionada = hora
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(min = 48.dp),
-                                    shape = RoundedCornerShape(10.dp),
-                                    contentPadding = PaddingValues(4.dp),
-                                    border = BorderStroke(
-                                        width = 1.dp,
-                                        color = if (seleccionada) {
-                                            AzulCalendario
-                                        } else {
-                                            BordeCalendario
-                                        }
-                                    ),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (seleccionada) {
-                                            AzulCalendario
-                                        } else {
-                                            Color.White
+                                    OutlinedButton(
+                                        onClick = {
+                                            horaSeleccionada = hora
+                                            error = ""
                                         },
-                                        contentColor = if (seleccionada) {
-                                            Color.White
-                                        } else {
-                                            Color(0xFF263746)
-                                        }
-                                    )
-                                ) {
-                                    Text(
-                                        text = hora,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(altoHorario),
+                                        shape = RoundedCornerShape(11.dp),
+                                        contentPadding = PaddingValues(4.dp),
+                                        border = BorderStroke(
+                                            1.dp,
+                                            if (seleccionada) {
+                                                AzulAgendamiento
+                                            } else {
+                                                Color(0xFFCDDDE6)
+                                            }
+                                        ),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            containerColor = if (seleccionada) {
+                                                AzulAgendamiento
+                                            } else {
+                                                CelesteAgendamiento
+                                            },
+                                            contentColor = if (seleccionada) {
+                                                Color.White
+                                            } else {
+                                                TextoAgendamiento
+                                            }
+                                        )
+                                    ) {
+                                        Text(
+                                            text = hora,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+
+                                repeat(3 - fila.size) {
+                                    Spacer(Modifier.weight(1f))
                                 }
                             }
                         }
@@ -359,23 +335,19 @@ fun FechaHoraScreen(
                 }
             }
 
-            if (puedeContinuar) {
+            if (error.isNotBlank()) {
                 Text(
-                    text = "Seleccionado: $fechaSeleccionada · $horaSeleccionada",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AzulCalendario
+                    text = error,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
 
             Button(
                 onClick = {
-                    // Revalidación para impedir continuar con
-                    // un horario que ya no esté disponible.
-                    val disponibles =
-                        Repositorio.horariosDisponibles(
-                            medicoId,
-                            fechaSeleccionada
-                        )
+                    val disponibles = Repositorio.horariosDisponibles(
+                        medicoId,
+                        fechaSeleccionada
+                    )
 
                     if (
                         fechaSeleccionada in fechasVisibles &&
@@ -387,18 +359,24 @@ fun FechaHoraScreen(
                         )
                     } else {
                         horaSeleccionada = ""
+                        error = "El horario ya no está disponible. Elige otro."
                     }
                 },
-                enabled = puedeContinuar,
+                enabled = fechaSeleccionada in fechasVisibles &&
+                        horaSeleccionada in horarios,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 50.dp),
+                    .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AzulCalendario
+                    containerColor = AzulAgendamiento
                 )
             ) {
-                Text(text = "Continuar")
+                Text(
+                    text = "Continuar",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

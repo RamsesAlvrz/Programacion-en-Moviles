@@ -835,3 +835,461 @@ No considerar una prueba aprobada hasta ejecutarla.
 - Comprobar el desplazamiento cuando sea necesario.
 - Verificar que el calendario dinámico y el agendamiento
   continúan funcionando.
+
+## Avance 4: rediseño del agendamiento, médicos y pantallas del paciente
+
+### Objetivo
+
+Mejorar las pantallas Médicos, Fecha y hora, Confirmar cita,
+Cita exitosa, Mi perfil, Mis resultados y Mis citas.
+
+Mantener el estilo visual de Clínica SaludPlus y conservar
+la navegación, las validaciones, el repositorio en memoria
+y el calendario dinámico.
+
+Los prompts siguientes están estructurados para reproducir
+las modificaciones realizadas; no son una transcripción literal
+de todos los mensajes de la conversación.
+
+---
+
+### 1. Componentes compartidos del agendamiento
+
+**Prompt:**
+
+Crea ComponentesAgendamiento.kt utilizando Kotlin y Jetpack Compose.
+
+Incluye colores compartidos para fondo claro, azul principal,
+texto oscuro y tarjetas celestes.
+
+Crea EncabezadoAgendamiento con flecha para volver y título.
+Crea FotoMedico con fotografía circular de 64 dp.
+Crea ResumenMedico con fotografía, nombre, especialidad
+y años de experiencia.
+
+Utiliza los modelos y el repositorio existentes.
+Conserva los callbacks de navegación.
+
+**Respuesta aplicada:**
+
+Se creó ComponentesAgendamiento.kt para compartir colores,
+encabezados, fotografías y resúmenes entre las pantallas.
+
+---
+
+### 2. Rediseño de Médicos
+
+**Prompt:**
+
+Rediseña MedicosScreen.kt siguiendo la referencia de la guía.
+
+Conserva especialidadId, onVolver y onMedico.
+Mantén la búsqueda mediante Repositorio.buscarMedicos.
+
+Presenta tarjetas compactas con:
+
+- Fotografía del médico.
+- Nombre.
+- Especialidad.
+- Estrella, calificación y cantidad de opiniones.
+- Etiqueta Disponible ahora o Cita en curso.
+
+Toda la tarjeta debe ejecutar onMedico con el identificador
+del médico y abrir Seleccionar fecha y hora.
+
+No muestres precio ni años de experiencia en esta lista.
+Conserva esos datos en el modelo para las otras pantallas.
+
+No estires las tarjetas para llenar la pantalla cuando existan
+pocos médicos. Permite desplazamiento cuando sea necesario.
+
+**Respuesta aplicada:**
+
+Se reemplazaron las tarjetas anteriores por tarjetas con
+fotografía, especialidad, calificación y estado.
+
+Se retiró el precio y la experiencia de esta vista.
+Se conservaron la búsqueda y la selección de toda la tarjeta.
+
+---
+
+### 3. Calificaciones de demostración
+
+**Prompt:**
+
+Añade al modelo Medico los campos calificacion y cantidadOpiniones,
+con valores por defecto para conservar la compatibilidad.
+
+Actualiza el catálogo existente con calificaciones y cantidades
+de opiniones de demostración.
+
+Conserva los identificadores, nombres, especialidades,
+experiencia y precios.
+
+Estos datos no deben presentarse como opiniones obtenidas
+de usuarios reales.
+
+**Respuesta aplicada:**
+
+Se añadieron los campos al modelo y los valores de demostración
+al catálogo de ocho médicos.
+
+---
+
+### 4. Estado dinámico de los médicos
+
+**Prompt:**
+
+Añade al repositorio la función medicoTieneCitaEnCurso.
+
+Consulta las citas registradas de cada médico y considera
+una duración de 30 minutos por consulta.
+
+Utiliza la zona horaria America/Lima.
+El intervalo debe incluir la hora de inicio y excluir
+la hora de finalización.
+
+Si existe una cita en ese intervalo, muestra Cita en curso.
+En caso contrario, muestra Disponible ahora.
+
+Actualiza el estado cada 15 segundos mientras MedicosScreen
+esté abierta.
+
+Ambos estados deben permitir abrir el calendario y reservar
+otro horario disponible.
+
+Conserva el bloqueo de horarios ocupados y evita mostrar
+datos personales de otros pacientes.
+
+**Respuesta aplicada:**
+
+Se añadió medicoTieneCitaEnCurso al repositorio.
+MedicosScreen consulta el estado y actualiza la hora periódicamente.
+
+**Alcance:**
+
+Disponible ahora significa que no existe una cita registrada
+en curso. No representa la presencia física del médico ni
+su horario laboral.
+
+Las reservas permanecen en memoria.
+
+**Corrección para la prueba:**
+
+Se propuso utilizar temporalmente una hora simulada dentro
+del intervalo de una reserva para comprobar Cita en curso.
+
+Antes del commit debe restaurarse ahora = ahora para utilizar
+la hora real. La simulación no forma parte de la versión final.
+
+---
+
+### 5. Seleccionar fecha y hora
+
+**Prompt:**
+
+Rediseña FechaHoraScreen.kt con fotografía del médico,
+tarjeta celeste, encabezado del periodo, flechas semanales,
+cinco días hábiles y horarios en filas de tres.
+
+Conserva la generación mediante java.time.LocalDate:
+
+- Próximos cinco días hábiles desde hoy.
+- Exclusión de sábados, domingos y días pasados.
+- Avance o retroceso de una semana.
+- Bloqueo del retroceso antes del periodo actual.
+- Actualización del mes y año.
+- Recálculo de horarios al cambiar de día.
+- Reinicio de la hora seleccionada.
+- Exclusión de horarios ocupados.
+
+Utiliza BoxWithConstraints para adaptar la altura de los
+botones de horario al espacio disponible.
+
+Mantén desplazamiento vertical en pantallas pequeñas.
+Revalida el horario antes de ejecutar onContinuar.
+Conserva los callbacks existentes.
+
+**Respuesta aplicada:**
+
+Se incorporaron fotografía y componentes compartidos.
+Se ampliaron los días y horarios conservando el calendario
+dinámico y las comprobaciones de disponibilidad.
+
+---
+
+### 6. Confirmar cita
+
+**Prompt:**
+
+Rediseña ConfirmarCitaScreen.kt con el estilo del agendamiento.
+
+Incluye:
+
+- Resumen del médico con fotografía.
+- Fecha en español.
+- Hora.
+- Tipo de atención.
+- Dirección de la clínica.
+- Motivo de consulta opcional.
+- Costo de consulta.
+- Botón Confirmar cita.
+
+Adapta la altura de las filas al espacio disponible mediante
+BoxWithConstraints. Permite desplazamiento y adapta
+la pantalla a la aparición del teclado.
+
+Conserva la comprobación de sesión, médico, fecha hábil
+y horario disponible.
+
+Revalida fecha y horario antes de guardar.
+Conserva motivoConsulta en Repositorio.agendarCita y evita
+confirmaciones repetidas mediante el estado enviando.
+
+Ejecuta onConfirmada únicamente cuando la reserva se cree.
+
+**Respuesta aplicada:**
+
+Se reorganizaron los datos y se adaptaron sus alturas.
+Se conservaron el motivo opcional, el precio y las validaciones
+antes de registrar la cita.
+
+---
+
+### 7. Cita exitosa
+
+**Prompt:**
+
+Rediseña CitaExitosaScreen.kt con una confirmación visual
+destacada y consistente con Clínica SaludPlus.
+
+Incluye un círculo con una marca de confirmación,
+el título Cita agendada y un mensaje breve.
+
+Presenta una tarjeta con número de reserva, fotografía
+del médico, nombre, especialidad, fecha en español,
+hora y dirección.
+
+Conserva onMisCitas y onInicio.
+Consulta la reserva mediante Repositorio.obtenerCita para
+mantener el control del usuario actual.
+
+Presenta un mensaje cuando la cita no exista.
+Centra el contenido cuando haya espacio y permite desplazamiento
+en pantallas pequeñas.
+
+**Respuesta aplicada:**
+
+Se rediseñó la confirmación y se incorporó un resumen
+de reserva con fotografía y fecha en español.
+
+---
+
+### 8. Mi perfil
+
+**Prompt:**
+
+Rediseña PerfilScreen.kt con una tarjeta de presentación
+que muestre las iniciales del paciente, nombre completo
+y etiqueta Paciente.
+
+Agrupa nombre, correo y teléfono en una tarjeta con filas
+y separadores.
+
+Añade una tarjeta con la cantidad de citas registradas.
+Obtén los datos de usuarioActual y citasDelUsuario.
+
+Conserva Repositorio.cerrarSesion y onCerrarSesion.
+Permite desplazamiento y mantén la barra inferior existente.
+
+**Respuesta aplicada:**
+
+Se reorganizaron los datos del paciente, se añadió un avatar
+de iniciales y un resumen de sus citas.
+
+Se conservó el cierre de sesión.
+
+---
+
+### 9. Mis resultados
+
+**Prompt:**
+
+Rediseña ResultadosScreen.kt manteniendo su estado vacío.
+
+No inventes resultados médicos, exámenes ni descargas.
+Presenta un icono grande de documento, título,
+mensaje explicativo y tarjeta informativa.
+
+Utiliza los colores y componentes compartidos.
+Centra el estado vacío en el espacio disponible y permite
+desplazamiento en pantallas pequeñas.
+
+Conserva la barra inferior.
+
+**Respuesta aplicada:**
+
+Se mejoró el estado vacío sin añadir resultados ficticios
+ni nuevas funciones.
+
+---
+
+### 10. Mis citas
+
+**Prompt:**
+
+Rediseña MisCitasScreen.kt con tarjetas que incluyan:
+
+- Fotografía del médico.
+- Nombre y especialidad.
+- Fecha en español.
+- Hora.
+- Número de reserva.
+- Indicación Ver detalle.
+
+Consulta únicamente las citas del usuario actual.
+Mantén el orden cronológico por fecha y hora.
+
+Toda la tarjeta debe abrir el detalle mediante onDetalle.
+Conserva onAgendar y el botón Agendar otra cita.
+
+Añade un estado vacío cuando no existan reservas.
+Mantén la barra inferior y el desplazamiento vertical.
+
+**Respuesta aplicada:**
+
+Se actualizaron las tarjetas con fotografías y fechas
+en español. Se conservaron el orden, el filtro del usuario
+y los callbacks de navegación.
+
+---
+
+### 11. Generación de los retratos faltantes
+
+**Prompt base para reproducir cada imagen:**
+
+Genera un retrato fotográfico cuadrado de un profesional médico
+ficticio para una aplicación móvil llamada Clínica SaludPlus.
+
+Presenta una sola persona mirando a cámara, con expresión amable,
+bata blanca, ropa clínica turquesa y estetoscopio.
+
+Utiliza un fondo azul muy claro, iluminación suave y encuadre
+de cabeza y parte superior del torso.
+
+Deja margen alrededor de la cabeza para permitir recorte circular.
+Mantén un estilo consistente entre todos los retratos.
+
+No incluyas texto, logotipos, marcas de agua ni varias personas.
+
+**Características de cada retrato:**
+
+- Luis Ramos: hombre de unos 38 años, cabello negro corto,
+  sin barba.
+- Carlos Medina: hombre de unos 48 años, cabello entrecano
+  y lentes rectangulares.
+- Elena Rojas: mujer de unos 40 años, cabello oscuro lacio
+  hasta los hombros.
+- María Vega: mujer de unos 35 años, cabello castaño oscuro
+  ondulado hasta los hombros.
+- José Salas: hombre de unos 42 años, cabello oscuro rizado
+  corto y barba cuidada.
+- Pedro Castillo: hombre de unos 47 años, cabello negro
+  con canas en las sienes, sin barba.
+- Lucía Flores: mujer de unos 33 años, cabello oscuro recogido.
+
+**Respuesta aplicada:**
+
+Se generaron siete retratos ficticios para completar el catálogo.
+Se conservó el retrato existente de Ana Torres.
+
+---
+
+### 12. Integración de fotografías
+
+**Prompt:**
+
+Actualiza FotoMedico en ComponentesAgendamiento.kt para asociar
+cada identificador con su recurso:
+
+1. medico_ana
+2. medico_luis
+3. medico_carlos
+4. medico_elena
+5. medico_maria
+6. medico_jose
+7. medico_pedro
+8. medico_lucia
+
+Conserva el tamaño de 64 dp, CircleShape y ContentScale.Crop.
+Mantén iniciales como alternativa para identificadores desconocidos.
+
+Utiliza el componente compartido en las pantallas que ya lo llaman.
+
+**Respuesta aplicada:**
+
+Se actualizaron las asociaciones de imágenes en FotoMedico.
+Las fotografías se muestran en Médicos, Fecha y hora,
+Confirmar cita, Cita exitosa y Mis citas.
+
+### Archivos involucrados
+
+Dentro de app/src/main/java/com/alvarez/saludplus/:
+
+- model/Medico.kt
+- repository/Repositorio.kt
+- ui/components/ComponentesAgendamiento.kt
+- ui/screens/agendamiento/MedicosScreen.kt
+- ui/screens/agendamiento/FechaHoraScreen.kt
+- ui/screens/agendamiento/ConfirmarCitaScreen.kt
+- ui/screens/agendamiento/CitaExitosaScreen.kt
+- ui/screens/perfil/PerfilScreen.kt
+- ui/screens/resultados/ResultadosScreen.kt
+- ui/screens/citas/MisCitasScreen.kt
+
+Dentro de app/src/main/res/drawable-nodpi/:
+
+- medico_luis.png
+- medico_carlos.png
+- medico_elena.png
+- medico_maria.png
+- medico_jose.png
+- medico_pedro.png
+- medico_lucia.png
+
+Documentación:
+
+- PROMPTS.md
+
+### Alcance y limitaciones
+
+Las calificaciones son datos de demostración.
+Los retratos representan personas ficticias generadas con IA.
+
+El estado del médico depende de reservas en memoria y consultas
+de 30 minutos. No representa un sistema real de presencia médica.
+
+El precio se retiró de la lista de médicos, pero permanece
+en el modelo y en las pantallas que todavía lo utilizan.
+
+No se incorporaron resultados médicos ni persistencia de datos.
+
+### Validación pendiente
+
+Registrar como aprobadas únicamente las comprobaciones realizadas.
+
+- Compilar y ejecutar.
+- Comprobar la fotografía de cada médico.
+- Buscar médicos y abrir sus calendarios.
+- Verificar calificaciones y etiquetas.
+- Comprobar el estado antes, durante y después de una cita.
+- Restaurar la hora real si se utilizó una simulación.
+- Verificar días hábiles y navegación semanal.
+- Comprobar el reinicio de hora al cambiar de día.
+- Comprobar el bloqueo de horarios ocupados.
+- Confirmar citas con motivo y sin motivo.
+- Revisar Cita exitosa y sus botones.
+- Revisar datos del perfil y cierre de sesión.
+- Revisar el estado vacío de Resultados.
+- Revisar el orden de Mis citas y abrir sus detalles.
+- Comprobar la barra inferior, teclado y desplazamiento.
