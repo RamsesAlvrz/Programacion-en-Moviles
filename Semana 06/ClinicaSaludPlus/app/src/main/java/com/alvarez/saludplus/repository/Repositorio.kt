@@ -377,6 +377,9 @@ object Repositorio {
     fun cancelarCita(
         id: Int
     ): Boolean {
-        return false
+
+        val cita = obtenerCita(id) ?: return false
+
+        return citas.remove(cita)
     }
 }
