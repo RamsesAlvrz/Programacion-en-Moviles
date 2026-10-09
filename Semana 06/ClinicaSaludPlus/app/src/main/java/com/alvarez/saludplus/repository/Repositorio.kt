@@ -41,17 +41,88 @@ object Repositorio {
         contrasena: String,
         telefono: String
     ): Boolean {
-        return false
+
+        val correoLimpio = correo.trim().lowercase()
+        val telefonoLimpio = telefono.trim()
+
+        // Comprobar datos obligatorios.
+        if (nombre.isBlank() || apellido.isBlank()) {
+            return false
+        }
+
+        // Comprobar el formato del correo.
+        val correoValido = android.util.Patterns.EMAIL_ADDRESS
+            .matcher(correoLimpio)
+            .matches()
+
+        if (!correoValido) {
+            return false
+        }
+
+        // Comprobar que el teléfono tenga nueve dígitos.
+        if (
+            telefonoLimpio.length != 9 ||
+            !telefonoLimpio.all { it.isDigit() }
+        ) {
+            return false
+        }
+
+        // Comprobar la longitud mínima de la contraseña.
+        if (contrasena.length < 6) {
+            return false
+        }
+
+        // Evitar registrar dos pacientes con el mismo correo.
+        val correoRegistrado = usuarios.any {
+            it.correo.equals(
+                correoLimpio,
+                ignoreCase = true
+            )
+        }
+
+        if (correoRegistrado) {
+            return false
+        }
+
+        // Crear al paciente.
+        val nuevoUsuario = Usuario(
+            id = siguienteUsuarioId,
+            nombre = nombre.trim(),
+            apellido = apellido.trim(),
+            correo = correoLimpio,
+            contrasena = contrasena,
+            telefono = telefonoLimpio
+        )
+
+        // Guardarlo en la colección.
+        usuarios.add(nuevoUsuario)
+
+        siguienteUsuarioId++
+
+        return true
     }
 
     fun iniciarSesion(
         correo: String,
         contrasena: String
     ): Boolean {
-        return false
+
+        val correoLimpio = correo.trim()
+
+        val usuarioEncontrado = usuarios.find {
+            it.correo.equals(
+                correoLimpio,
+                ignoreCase = true
+            ) && it.contrasena == contrasena
+        }
+
+        usuarioActual = usuarioEncontrado
+
+        return usuarioEncontrado != null
     }
 
     fun cerrarSesion() {
+        usuarioActual = null
     }
 
     fun buscarEspecialidades(
