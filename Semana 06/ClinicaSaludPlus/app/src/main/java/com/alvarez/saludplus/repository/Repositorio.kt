@@ -309,19 +309,69 @@ object Repositorio {
         fecha: String,
         hora: String
     ): Cita? {
-        return null
+
+        val usuario = usuarioActual ?: return null
+
+        if (
+            obtenerMedico(medicoId) == null ||
+            fecha.isBlank() ||
+            hora !in horariosBase
+        ) {
+            return null
+        }
+
+        val horarioOcupado = citas.any {
+            it.medicoId == medicoId &&
+                    it.fecha == fecha &&
+                    it.hora == hora
+        }
+
+        if (horarioOcupado) {
+            return null
+        }
+
+        val nuevaCita = Cita(
+            id = siguienteCitaId,
+            usuarioId = usuario.id,
+            medicoId = medicoId,
+            fecha = fecha,
+            hora = hora
+        )
+
+        citas.add(nuevaCita)
+
+        siguienteCitaId++
+
+        return nuevaCita
     }
 
     fun obtenerCita(
         id: Int
     ): Cita? {
-        return null
+
+        val usuario = usuarioActual ?: return null
+
+        return citas.find {
+            it.id == id &&
+                    it.usuarioId == usuario.id
+        }
     }
 
     fun citasDelUsuario(
         usuarioId: Int
     ): List<Cita> {
-        return emptyList()
+
+        return citas
+            .filter {
+                it.usuarioId == usuarioId
+            }
+            .sortedWith(
+                compareBy<Cita> {
+                    it.fecha
+                }.thenBy {
+                    it.hora
+                }
+            )
     }
 
     fun cancelarCita(
