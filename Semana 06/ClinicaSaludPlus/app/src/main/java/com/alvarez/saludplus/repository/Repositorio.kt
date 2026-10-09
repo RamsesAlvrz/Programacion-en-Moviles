@@ -21,9 +21,97 @@ object Repositorio {
     var usuarioActual by mutableStateOf<Usuario?>(null)
         private set
 
-    private val especialidades = listOf<Especialidad>()
+    private val especialidades = listOf(
+        Especialidad(
+            id = 1,
+            nombre = "Medicina general",
+            descripcion = "Atención y prevención para toda la familia"
+        ),
+        Especialidad(
+            id = 2,
+            nombre = "Cardiología",
+            descripcion = "Cuidado y prevención de enfermedades del corazón"
+        ),
+        Especialidad(
+            id = 3,
+            nombre = "Dermatología",
+            descripcion = "Atención de la piel, cabello y uñas"
+        ),
+        Especialidad(
+            id = 4,
+            nombre = "Pediatría",
+            descripcion = "Atención para niños y adolescentes"
+        ),
+        Especialidad(
+            id = 5,
+            nombre = "Traumatología",
+            descripcion = "Cuidado de huesos y articulaciones"
+        ),
+        Especialidad(
+            id = 6,
+            nombre = "Oftalmología",
+            descripcion = "Cuidado de la visión y salud de los ojos"
+        )
+    )
 
-    private val medicos = listOf<Medico>()
+    private val medicos = listOf(
+        Medico(
+            id = 1,
+            especialidadId = 1,
+            nombre = "Dra. Ana Torres",
+            experiencia = 12,
+            precio = 80.00
+        ),
+        Medico(
+            id = 2,
+            especialidadId = 1,
+            nombre = "Dr. Luis Ramos",
+            experiencia = 8,
+            precio = 75.00
+        ),
+        Medico(
+            id = 3,
+            especialidadId = 2,
+            nombre = "Dr. Carlos Medina",
+            experiencia = 15,
+            precio = 120.00
+        ),
+        Medico(
+            id = 4,
+            especialidadId = 2,
+            nombre = "Dra. Elena Rojas",
+            experiencia = 10,
+            precio = 110.00
+        ),
+        Medico(
+            id = 5,
+            especialidadId = 3,
+            nombre = "Dra. María Vega",
+            experiencia = 9,
+            precio = 100.00
+        ),
+        Medico(
+            id = 6,
+            especialidadId = 4,
+            nombre = "Dr. José Salas",
+            experiencia = 11,
+            precio = 90.00
+        ),
+        Medico(
+            id = 7,
+            especialidadId = 5,
+            nombre = "Dr. Pedro Castillo",
+            experiencia = 14,
+            precio = 115.00
+        ),
+        Medico(
+            id = 8,
+            especialidadId = 6,
+            nombre = "Dra. Lucía Flores",
+            experiencia = 7,
+            precio = 95.00
+        )
+    )
 
     private val horariosBase = listOf(
         "08:00", "08:30",
@@ -128,37 +216,66 @@ object Repositorio {
     fun buscarEspecialidades(
         texto: String
     ): List<Especialidad> {
-        return emptyList()
+
+        val textoLimpio = texto.trim()
+
+        return especialidades.filter {
+            it.nombre.contains(
+                textoLimpio,
+                ignoreCase = true
+            )
+        }
     }
 
     fun especialidadesDestacadas(): List<Especialidad> {
-        return emptyList()
+        return especialidades.take(4)
     }
 
     fun obtenerEspecialidad(
         id: Int
     ): Especialidad? {
-        return null
+
+        return especialidades.find {
+            it.id == id
+        }
     }
 
     fun obtenerMedico(
         id: Int
     ): Medico? {
 
-        return null
+        return medicos.find {
+            it.id == id
+        }
     }
 
     fun medicosPorEspecialidad(
         especialidadId: Int
     ): List<Medico> {
-        return emptyList()
+
+        return medicos
+            .filter {
+                it.especialidadId == especialidadId
+            }
+            .sortedByDescending {
+                it.experiencia
+            }
     }
 
     fun buscarMedicos(
         especialidadId: Int,
         texto: String
     ): List<Medico> {
-        return emptyList()
+
+        val textoLimpio = texto.trim()
+
+        return medicosPorEspecialidad(especialidadId)
+            .filter {
+                it.nombre.contains(
+                    textoLimpio,
+                    ignoreCase = true
+                )
+            }
     }
 
     fun horariosDisponibles(
