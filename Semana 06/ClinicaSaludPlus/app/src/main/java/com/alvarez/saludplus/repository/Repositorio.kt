@@ -307,9 +307,9 @@ object Repositorio {
     fun agendarCita(
         medicoId: Int,
         fecha: String,
-        hora: String
+        hora: String,
+        motivoConsulta: String = ""
     ): Cita? {
-
         val usuario = usuarioActual ?: return null
 
         if (
@@ -335,11 +335,11 @@ object Repositorio {
             usuarioId = usuario.id,
             medicoId = medicoId,
             fecha = fecha,
-            hora = hora
+            hora = hora,
+            motivoConsulta = motivoConsulta.trim()
         )
 
         citas.add(nuevaCita)
-
         siguienteCitaId++
 
         return nuevaCita
