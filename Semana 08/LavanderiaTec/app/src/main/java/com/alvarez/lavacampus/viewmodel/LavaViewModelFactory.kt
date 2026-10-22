@@ -48,6 +48,13 @@ class LavaViewModelFactory(
             ) as T
         }
 
+        // COMMIT 11: ViewModel para pedidos activos e historial
+        if (modelClass.isAssignableFrom(MisPedidosViewModel::class.java)) {
+            return MisPedidosViewModel(
+                repository = repository
+            ) as T
+        }
+
         throw IllegalArgumentException(
             "ViewModel no reconocido: ${modelClass.name}"
         )

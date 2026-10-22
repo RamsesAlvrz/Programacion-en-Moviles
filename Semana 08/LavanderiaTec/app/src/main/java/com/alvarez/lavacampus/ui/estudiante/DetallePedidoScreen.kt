@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus.ui.estudiante
 
 import androidx.compose.foundation.BorderStroke

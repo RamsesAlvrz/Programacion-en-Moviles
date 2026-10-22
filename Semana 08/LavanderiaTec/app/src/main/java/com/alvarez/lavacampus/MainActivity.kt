@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus
 
 import android.os.Bundle
@@ -22,11 +21,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alvarez.lavacampus.ui.estudiante.DetallePedidoScreen
 import com.alvarez.lavacampus.ui.estudiante.InicioScreen
 import com.alvarez.lavacampus.ui.estudiante.LoginScreen
+import com.alvarez.lavacampus.ui.estudiante.MisPedidosScreen
 import com.alvarez.lavacampus.ui.estudiante.NuevoPedidoScreen
+import com.alvarez.lavacampus.ui.estudiante.TarifasScreen
 import com.alvarez.lavacampus.ui.theme.LavaCampusTheme
 import com.alvarez.lavacampus.viewmodel.DetallePedidoViewModel
 import com.alvarez.lavacampus.viewmodel.InicioViewModel
 import com.alvarez.lavacampus.viewmodel.LavaViewModelFactory
+import com.alvarez.lavacampus.viewmodel.MisPedidosViewModel
 import com.alvarez.lavacampus.viewmodel.NuevoPedidoViewModel
 import com.alvarez.lavacampus.viewmodel.SesionViewModel
 
@@ -46,6 +48,7 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
+
             val sesionViewModel: SesionViewModel = viewModel(
                 factory = factory
             )
@@ -58,8 +61,13 @@ class MainActivity : ComponentActivity() {
                 factory = factory
             )
 
-            // COMMIT 10: ViewModel del detalle del pedido
+            // COMMIT 10: Detalle y cancelación del pedido.
             val detallePedidoViewModel: DetallePedidoViewModel = viewModel(
+                factory = factory
+            )
+
+            // COMMIT 11: Pedidos activos e historial.
+            val misPedidosViewModel: MisPedidosViewModel = viewModel(
                 factory = factory
             )
 
@@ -70,9 +78,18 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf("INICIO")
             }
 
-            // Guarda el identificador del pedido seleccionado.
             var pedidoSeleccionadoId by rememberSaveable {
                 mutableIntStateOf(0)
+            }
+
+            // Permite volver a Inicio o Mis pedidos desde el detalle.
+            var pantallaOrigenDetalle by rememberSaveable {
+                mutableStateOf("INICIO")
+            }
+
+            // Permite volver a la pantalla anterior tras crear un pedido.
+            var pantallaOrigenNuevoPedido by rememberSaveable {
+                mutableStateOf("INICIO")
             }
 
             var sesionVerificada by remember {
@@ -87,10 +104,14 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(usuarioActual?.id) {
                 pantallaEstudiante = "INICIO"
                 pedidoSeleccionadoId = 0
+                pantallaOrigenDetalle = "INICIO"
+                pantallaOrigenNuevoPedido = "INICIO"
             }
 
             LavaCampusTheme {
+
                 when {
+
                     !sesionVerificada -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -108,6 +129,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     usuarioActual?.rol == "CLIENTE" -> {
+
                         val estudianteId = usuarioActual!!.id
 
                         when (pantallaEstudiante) {
@@ -117,24 +139,27 @@ class MainActivity : ComponentActivity() {
                                     viewModel = nuevoPedidoViewModel,
                                     usuarioId = estudianteId,
                                     onVolver = {
-                                        pantallaEstudiante = "INICIO"
+                                        pantallaEstudiante =
+                                            pantallaOrigenNuevoPedido
                                     },
                                     onPedidoRegistrado = {
-                                        pantallaEstudiante = "INICIO"
+                                        pantallaEstudiante = "PEDIDOS"
                                     }
                                 )
                             }
 
-                            // COMMIT 10: Detalle del pedido seleccionado.
                             "DETALLE_PEDIDO" -> {
                                 if (pedidoSeleccionadoId > 0) {
+
                                     DetallePedidoScreen(
                                         pedidoId = pedidoSeleccionadoId,
                                         viewModel = detallePedidoViewModel,
                                         onVolver = {
-                                            pantallaEstudiante = "INICIO"
+                                            pantallaEstudiante =
+                                                pantallaOrigenDetalle
                                         }
                                     )
+
                                 } else {
                                     LaunchedEffect(Unit) {
                                         pantallaEstudiante = "INICIO"
@@ -143,13 +168,17 @@ class MainActivity : ComponentActivity() {
                             }
 
                             else -> {
+
                                 Scaffold(
                                     containerColor = Color(0xFFF7FAFC),
+
                                     bottomBar = {
+
                                         NavigationBar(
                                             containerColor = Color.White,
                                             tonalElevation = 3.dp
                                         ) {
+
                                             val opciones = listOf(
                                                 Triple(
                                                     "INICIO",
@@ -174,78 +203,136 @@ class MainActivity : ComponentActivity() {
                                             )
 
                                             opciones.forEach { (ruta, nombre, icono) ->
+
                                                 NavigationBarItem(
-                                                    selected = pantallaEstudiante == ruta,
+                                                    selected =
+                                                        pantallaEstudiante == ruta,
+
                                                     onClick = {
                                                         pantallaEstudiante = ruta
                                                     },
+
                                                     icon = {
                                                         Icon(
                                                             imageVector = icono,
                                                             contentDescription = nombre
                                                         )
                                                     },
+
                                                     label = {
                                                         Text(nombre)
                                                     },
+
                                                     alwaysShowLabel = true,
-                                                    colors = NavigationBarItemDefaults.colors(
-                                                        selectedIconColor = ColorNavegacion,
-                                                        selectedTextColor = ColorNavegacion,
-                                                        indicatorColor = Color(0xFFD8F7FB),
-                                                        unselectedIconColor = Color.Gray,
-                                                        unselectedTextColor = Color.Gray
-                                                    )
+
+                                                    colors =
+                                                        NavigationBarItemDefaults.colors(
+                                                            selectedIconColor =
+                                                                ColorNavegacion,
+                                                            selectedTextColor =
+                                                                ColorNavegacion,
+                                                            indicatorColor =
+                                                                Color(0xFFD8F7FB),
+                                                            unselectedIconColor =
+                                                                Color.Gray,
+                                                            unselectedTextColor =
+                                                                Color.Gray
+                                                        )
                                                 )
                                             }
                                         }
                                     }
+
                                 ) { paddingValues ->
+
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(paddingValues)
                                     ) {
+
                                         when (pantallaEstudiante) {
 
                                             "INICIO" -> {
+
                                                 InicioScreen(
                                                     viewModel = inicioViewModel,
                                                     usuarioId = estudianteId,
+
                                                     onNuevoPedido = {
-                                                        pantallaEstudiante = "NUEVO_PEDIDO"
+                                                        pantallaOrigenNuevoPedido =
+                                                            "INICIO"
+                                                        pantallaEstudiante =
+                                                            "NUEVO_PEDIDO"
                                                     },
 
-                                                    // Abre el detalle del pedido pulsado.
                                                     onVerDetalle = { pedidoId ->
-                                                        pedidoSeleccionadoId = pedidoId
-                                                        pantallaEstudiante = "DETALLE_PEDIDO"
+                                                        pedidoSeleccionadoId =
+                                                            pedidoId
+                                                        pantallaOrigenDetalle =
+                                                            "INICIO"
+                                                        pantallaEstudiante =
+                                                            "DETALLE_PEDIDO"
                                                     },
 
                                                     onMisPedidos = {
-                                                        pantallaEstudiante = "PEDIDOS"
+                                                        pantallaEstudiante =
+                                                            "PEDIDOS"
                                                     }
                                                 )
                                             }
 
+                                            // COMMIT 11: Activos e Historial.
                                             "PEDIDOS" -> {
-                                                PantallaPendiente(
-                                                    titulo = "Mis pedidos",
-                                                    descripcion = "Aquí podrás consultar todos tus pedidos."
+
+                                                MisPedidosScreen(
+                                                    viewModel =
+                                                        misPedidosViewModel,
+                                                    usuarioId = estudianteId,
+
+                                                    onVolver = {
+                                                        pantallaEstudiante =
+                                                            "INICIO"
+                                                    },
+
+                                                    onNuevoPedido = {
+                                                        pantallaOrigenNuevoPedido =
+                                                            "PEDIDOS"
+                                                        pantallaEstudiante =
+                                                            "NUEVO_PEDIDO"
+                                                    },
+
+                                                    onVerDetalle = { pedidoId ->
+                                                        pedidoSeleccionadoId =
+                                                            pedidoId
+                                                        pantallaOrigenDetalle =
+                                                            "PEDIDOS"
+                                                        pantallaEstudiante =
+                                                            "DETALLE_PEDIDO"
+                                                    }
                                                 )
                                             }
 
+                                            // COMMIT 11: Tarifas vigentes.
                                             "TARIFAS" -> {
-                                                PantallaPendiente(
-                                                    titulo = "Tarifas",
-                                                    descripcion = "Aquí podrás consultar los servicios y sus precios."
+
+                                                TarifasScreen(
+                                                    repository =
+                                                        app.repository,
+
+                                                    onVolver = {
+                                                        pantallaEstudiante =
+                                                            "INICIO"
+                                                    }
                                                 )
                                             }
 
                                             "PERFIL" -> {
+
                                                 PantallaPendiente(
                                                     titulo = "Mi perfil",
-                                                    descripcion = "Aquí podrás consultar tus datos personales."
+                                                    descripcion =
+                                                        "Aquí podrás consultar tus datos personales."
                                                 )
                                             }
                                         }
@@ -256,24 +343,33 @@ class MainActivity : ComponentActivity() {
                     }
 
                     usuarioActual?.rol == "ADMIN" -> {
+
                         Scaffold { paddingValues ->
+
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(paddingValues)
                                     .padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+
+                                horizontalAlignment =
+                                    Alignment.CenterHorizontally,
+
+                                verticalArrangement =
+                                    Arrangement.Center
                             ) {
+
                                 Text(
                                     text = "Panel de administrador",
-                                    style = MaterialTheme.typography.headlineSmall
+                                    style =
+                                        MaterialTheme.typography.headlineSmall
                                 )
 
                                 Spacer(Modifier.height(12.dp))
 
                                 Text(
-                                    text = "Bienvenido, ${usuarioActual?.nombre}"
+                                    text =
+                                        "Bienvenido, ${usuarioActual?.nombre}"
                                 )
 
                                 Spacer(Modifier.height(24.dp))
@@ -292,6 +388,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     else -> {
+
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -314,9 +411,11 @@ private fun PantallaPendiente(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
+
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
         Text(
             text = titulo,
             style = MaterialTheme.typography.headlineMedium
