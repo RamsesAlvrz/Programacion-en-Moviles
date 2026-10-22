@@ -6,6 +6,7 @@ import androidx.room.Room
 import com.alvarez.lavacampus.data.local.LavaDatabase
 import com.alvarez.lavacampus.data.local.entity.Servicio
 import com.alvarez.lavacampus.data.local.entity.Usuario
+import com.alvarez.lavacampus.data.prefs.PreferenciasStore
 import com.alvarez.lavacampus.data.repository.LavaRepository
 import com.alvarez.lavacampus.data.repository.LavaRepositoryRoom
 import kotlinx.coroutines.CoroutineScope
@@ -16,12 +17,16 @@ import kotlinx.coroutines.launch
 // Clase principal de la aplicación LavaCampus
 class LavaApp : Application() {
 
-    // Base de datos Room disponible para toda la aplicación
+    // Base de datos Room
     lateinit var database: LavaDatabase
         private set
 
-    // Repositorio que utilizarán los ViewModel
+    // Repositorio para acceder a los datos
     lateinit var repository: LavaRepository
+        private set
+
+    // Preferencias para gestionar la sesión
+    lateinit var preferenciasStore: PreferenciasStore
         private set
 
     // Alcance para ejecutar operaciones en segundo plano
@@ -32,26 +37,29 @@ class LavaApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Crear la instancia de la base de datos
+        // Inicializar la base de datos Room
         database = Room.databaseBuilder(
             applicationContext,
             LavaDatabase::class.java,
             "lavacampus_database"
         ).build()
 
-        // Conectar el repositorio con la base de datos Room
+        // Inicializar el repositorio
         repository = LavaRepositoryRoom(database)
 
-        // Registrar los datos iniciales de la aplicación
+        // Inicializar las preferencias del usuario
+        preferenciasStore = PreferenciasStore(applicationContext)
+
+        // Registrar los datos iniciales
         applicationScope.launch {
             insertarDatosIniciales()
         }
     }
 
-    // Insertar los registros necesarios para las pruebas
+    // Insertar los registros iniciales de LavaCampus
     private suspend fun insertarDatosIniciales() {
 
-        // Verificar si ya existe el administrador
+        // Comprobar si existe el administrador
         val administrador = database.usuarioDao()
             .obtenerPorCorreo("admin@lavacampus.com")
 
