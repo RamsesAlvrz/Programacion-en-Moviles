@@ -6,6 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.PeopleOutline
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.LocalOffer
 import androidx.compose.material.icons.outlined.PersonOutline
@@ -16,8 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alvarez.lavacampus.ui.administrador.PanelScreen
 import com.alvarez.lavacampus.ui.estudiante.DetallePedidoScreen
 import com.alvarez.lavacampus.ui.estudiante.InicioScreen
 import com.alvarez.lavacampus.ui.estudiante.LoginScreen
@@ -30,6 +38,7 @@ import com.alvarez.lavacampus.viewmodel.InicioViewModel
 import com.alvarez.lavacampus.viewmodel.LavaViewModelFactory
 import com.alvarez.lavacampus.viewmodel.MisPedidosViewModel
 import com.alvarez.lavacampus.viewmodel.NuevoPedidoViewModel
+import com.alvarez.lavacampus.viewmodel.PanelViewModel
 import com.alvarez.lavacampus.viewmodel.SesionViewModel
 
 private val ColorNavegacion = Color(0xFF0895B5)
@@ -71,6 +80,11 @@ class MainActivity : ComponentActivity() {
                 factory = factory
             )
 
+            // COMMIT 12: Indicadores y gráficos del administrador.
+            val panelViewModel: PanelViewModel = viewModel(
+                factory = factory
+            )
+
             val usuarioActual by sesionViewModel.usuarioActual
                 .collectAsStateWithLifecycle()
 
@@ -92,6 +106,11 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf("INICIO")
             }
 
+            // COMMIT 12: navegación del administrador.
+            var pantallaAdministrador by rememberSaveable {
+                mutableStateOf("PANEL")
+            }
+
             var sesionVerificada by remember {
                 mutableStateOf(false)
             }
@@ -106,6 +125,7 @@ class MainActivity : ComponentActivity() {
                 pedidoSeleccionadoId = 0
                 pantallaOrigenDetalle = "INICIO"
                 pantallaOrigenNuevoPedido = "INICIO"
+                pantallaAdministrador = "PANEL"
             }
 
             LavaCampusTheme {
@@ -344,44 +364,112 @@ class MainActivity : ComponentActivity() {
 
                     usuarioActual?.rol == "ADMIN" -> {
 
-                        Scaffold { paddingValues ->
+                        Scaffold(
+                            containerColor = Color(0xFFF5F8FC),
+                            topBar = {
+                                Surface(
+                                    color = Color.White,
+                                    shadowElevation = 1.dp
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                            .padding(horizontal = 14.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "LavaCampus · Admin",
+                                            modifier = Modifier.weight(1f),
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                        TextButton(
+                                            onClick = {
+                                                sesionViewModel.cerrarSesion {
+                                                    pantallaAdministrador = "PANEL"
+                                                    pantallaEstudiante = "INICIO"
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Logout,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(Modifier.width(4.dp))
+                                            Text("Salir")
+                                        }
+                                    }
+                                }
+                            },
+                            bottomBar = {
+                                NavigationBar(
+                                    containerColor = Color.White,
+                                    tonalElevation = 2.dp
+                                ) {
+                                    val opcionesAdmin = listOf(
+                                        Triple("PANEL", "Panel", Icons.Filled.BarChart),
+                                        Triple("PEDIDOS", "Pedidos", Icons.Outlined.ReceiptLong),
+                                        Triple("SERVICIOS", "Servicios", Icons.Outlined.Sell),
+                                        Triple("CLIENTES", "Clientes", Icons.Outlined.PeopleOutline),
+                                        Triple("AJUSTES", "Ajustes", Icons.Filled.Settings)
+                                    )
 
-                            Column(
+                                    opcionesAdmin.forEach { (ruta, nombre, icono) ->
+                                        NavigationBarItem(
+                                            selected = pantallaAdministrador == ruta,
+                                            onClick = { pantallaAdministrador = ruta },
+                                            icon = {
+                                                Icon(
+                                                    imageVector = icono,
+                                                    contentDescription = nombre,
+                                                    modifier = Modifier.size(21.dp)
+                                                )
+                                            },
+                                            label = {
+                                                Text(text = nombre, fontSize = 10.sp)
+                                            },
+                                            alwaysShowLabel = true,
+                                            colors = NavigationBarItemDefaults.colors(
+                                                selectedIconColor = Color(0xFF6D28D9),
+                                                selectedTextColor = Color(0xFF6D28D9),
+                                                indicatorColor = Color.Transparent,
+                                                unselectedIconColor = Color(0xFFADB5C2),
+                                                unselectedTextColor = Color(0xFFADB5C2)
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        ) { paddingValues ->
+                            Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(paddingValues)
-                                    .padding(24.dp),
-
-                                horizontalAlignment =
-                                    Alignment.CenterHorizontally,
-
-                                verticalArrangement =
-                                    Arrangement.Center
                             ) {
-
-                                Text(
-                                    text = "Panel de administrador",
-                                    style =
-                                        MaterialTheme.typography.headlineSmall
-                                )
-
-                                Spacer(Modifier.height(12.dp))
-
-                                Text(
-                                    text =
-                                        "Bienvenido, ${usuarioActual?.nombre}"
-                                )
-
-                                Spacer(Modifier.height(24.dp))
-
-                                Button(
-                                    onClick = {
-                                        sesionViewModel.cerrarSesion {
-                                            pantallaEstudiante = "INICIO"
+                                when (pantallaAdministrador) {
+                                    "PANEL" -> PanelScreen(
+                                        viewModel = panelViewModel,
+                                        onVerPedidosListos = {
+                                            pantallaAdministrador = "PEDIDOS"
                                         }
-                                    }
-                                ) {
-                                    Text("Cerrar sesión")
+                                    )
+                                    "PEDIDOS" -> PantallaPendiente(
+                                        titulo = "Pedidos",
+                                        descripcion = "Gestión de pedidos del administrador."
+                                    )
+                                    "SERVICIOS" -> PantallaPendiente(
+                                        titulo = "Servicios",
+                                        descripcion = "Gestión de servicios y tarifas."
+                                    )
+                                    "CLIENTES" -> PantallaPendiente(
+                                        titulo = "Clientes",
+                                        descripcion = "Listado de clientes registrados."
+                                    )
+                                    "AJUSTES" -> PantallaPendiente(
+                                        titulo = "Ajustes",
+                                        descripcion = "Configuración del administrador."
+                                    )
                                 }
                             }
                         }

@@ -55,6 +55,13 @@ class LavaViewModelFactory(
             ) as T
         }
 
+        // COMMIT 12: ViewModel para el panel del administrador
+        if (modelClass.isAssignableFrom(PanelViewModel::class.java)) {
+            return PanelViewModel(
+                repository = repository
+            ) as T
+        }
+
         throw IllegalArgumentException(
             "ViewModel no reconocido: ${modelClass.name}"
         )
