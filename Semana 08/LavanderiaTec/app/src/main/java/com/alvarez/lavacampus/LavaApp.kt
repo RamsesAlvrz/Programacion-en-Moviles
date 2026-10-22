@@ -1,3 +1,4 @@
+
 package com.alvarez.lavacampus
 
 import android.app.Application
@@ -5,18 +6,25 @@ import androidx.room.Room
 import com.alvarez.lavacampus.data.local.LavaDatabase
 import com.alvarez.lavacampus.data.local.entity.Servicio
 import com.alvarez.lavacampus.data.local.entity.Usuario
+import com.alvarez.lavacampus.data.repository.LavaRepository
+import com.alvarez.lavacampus.data.repository.LavaRepositoryRoom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-// Clase principal encargada de inicializar la base de datos
+// Clase principal de la aplicación LavaCampus
 class LavaApp : Application() {
 
-    // Base de datos disponible para toda la aplicación
+    // Base de datos Room disponible para toda la aplicación
     lateinit var database: LavaDatabase
         private set
 
+    // Repositorio que utilizarán los ViewModel
+    lateinit var repository: LavaRepository
+        private set
+
+    // Alcance para ejecutar operaciones en segundo plano
     private val applicationScope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO
     )
@@ -24,22 +32,26 @@ class LavaApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Crear la instancia de Room
+        // Crear la instancia de la base de datos
         database = Room.databaseBuilder(
             applicationContext,
             LavaDatabase::class.java,
             "lavacampus_database"
         ).build()
 
-        // Registrar los datos iniciales
+        // Conectar el repositorio con la base de datos Room
+        repository = LavaRepositoryRoom(database)
+
+        // Registrar los datos iniciales de la aplicación
         applicationScope.launch {
             insertarDatosIniciales()
         }
     }
 
+    // Insertar los registros necesarios para las pruebas
     private suspend fun insertarDatosIniciales() {
 
-        // Registrar administrador inicial si todavía no existe
+        // Verificar si ya existe el administrador
         val administrador = database.usuarioDao()
             .obtenerPorCorreo("admin@lavacampus.com")
 
@@ -55,7 +67,7 @@ class LavaApp : Application() {
             )
         }
 
-        // Registrar servicios iniciales solo si no existen
+        // Comprobar si existen los servicios iniciales
         val servicioInicial = database.servicioDao().obtenerPorId(1)
 
         if (servicioInicial == null) {
