@@ -1,31 +1,42 @@
+
 package com.alvarez.lavacampus
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alvarez.lavacampus.ui.estudiante.DetallePedidoScreen
 import com.alvarez.lavacampus.ui.estudiante.InicioScreen
 import com.alvarez.lavacampus.ui.estudiante.LoginScreen
 import com.alvarez.lavacampus.ui.estudiante.NuevoPedidoScreen
 import com.alvarez.lavacampus.ui.theme.LavaCampusTheme
+import com.alvarez.lavacampus.viewmodel.DetallePedidoViewModel
 import com.alvarez.lavacampus.viewmodel.InicioViewModel
 import com.alvarez.lavacampus.viewmodel.LavaViewModelFactory
 import com.alvarez.lavacampus.viewmodel.NuevoPedidoViewModel
 import com.alvarez.lavacampus.viewmodel.SesionViewModel
+
+private val ColorNavegacion = Color(0xFF0895B5)
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Obtener las dependencias de la aplicación
         val app = application as LavaApp
 
         val factory = LavaViewModelFactory(
@@ -35,52 +46,51 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-
-            // ViewModel encargado de gestionar la sesión
             val sesionViewModel: SesionViewModel = viewModel(
                 factory = factory
             )
 
-            // ViewModel encargado del inicio del estudiante
             val inicioViewModel: InicioViewModel = viewModel(
                 factory = factory
             )
 
-            // ViewModel encargado del registro de pedidos
             val nuevoPedidoViewModel: NuevoPedidoViewModel = viewModel(
                 factory = factory
             )
 
-            // Observar el usuario que inició sesión
+            // COMMIT 10: ViewModel del detalle del pedido
+            val detallePedidoViewModel: DetallePedidoViewModel = viewModel(
+                factory = factory
+            )
+
             val usuarioActual by sesionViewModel.usuarioActual
                 .collectAsStateWithLifecycle()
 
-            // Pantalla actual del estudiante
-            var pantallaEstudiante by remember {
+            var pantallaEstudiante by rememberSaveable {
                 mutableStateOf("INICIO")
             }
 
-            // Indicar si ya terminó de recuperarse la sesión
+            // Guarda el identificador del pedido seleccionado.
+            var pedidoSeleccionadoId by rememberSaveable {
+                mutableIntStateOf(0)
+            }
+
             var sesionVerificada by remember {
                 mutableStateOf(false)
             }
 
             LaunchedEffect(Unit) {
-                // Recuperación temporal de la sesión
                 kotlinx.coroutines.delay(500)
                 sesionVerificada = true
             }
 
-            // Regresar al inicio cuando cambie la sesión
             LaunchedEffect(usuarioActual?.id) {
                 pantallaEstudiante = "INICIO"
+                pedidoSeleccionadoId = 0
             }
 
             LavaCampusTheme {
-
                 when {
-
-                    // Pantalla temporal de carga
                     !sesionVerificada -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -90,24 +100,18 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Usuario sin sesión: mostrar login
                     usuarioActual == null -> {
                         LoginScreen(
                             viewModel = sesionViewModel,
-                            onLoginExitoso = {
-                                // El StateFlow actualizará la pantalla
-                            }
+                            onLoginExitoso = {}
                         )
                     }
 
-                    // Estudiante
                     usuarioActual?.rol == "CLIENTE" -> {
-
                         val estudianteId = usuarioActual!!.id
 
                         when (pantallaEstudiante) {
 
-                            // Pantalla de registro de pedidos
                             "NUEVO_PEDIDO" -> {
                                 NuevoPedidoScreen(
                                     viewModel = nuevoPedidoViewModel,
@@ -116,34 +120,142 @@ class MainActivity : ComponentActivity() {
                                         pantallaEstudiante = "INICIO"
                                     },
                                     onPedidoRegistrado = {
-                                        // Regresar al inicio después del registro
                                         pantallaEstudiante = "INICIO"
                                     }
                                 )
                             }
 
-                            // Pantalla principal del estudiante
-                            else -> {
-                                InicioScreen(
-                                    viewModel = inicioViewModel,
-                                    usuarioId = estudianteId,
-                                    onNuevoPedido = {
-                                        pantallaEstudiante = "NUEVO_PEDIDO"
-                                    },
-                                    onVerDetalle = {
-                                        // Se conectará en el Commit 10
-                                    },
-                                    onMisPedidos = {
-                                        // Se conectará en el Commit 11
+                            // COMMIT 10: Detalle del pedido seleccionado.
+                            "DETALLE_PEDIDO" -> {
+                                if (pedidoSeleccionadoId > 0) {
+                                    DetallePedidoScreen(
+                                        pedidoId = pedidoSeleccionadoId,
+                                        viewModel = detallePedidoViewModel,
+                                        onVolver = {
+                                            pantallaEstudiante = "INICIO"
+                                        }
+                                    )
+                                } else {
+                                    LaunchedEffect(Unit) {
+                                        pantallaEstudiante = "INICIO"
                                     }
-                                )
+                                }
+                            }
+
+                            else -> {
+                                Scaffold(
+                                    containerColor = Color(0xFFF7FAFC),
+                                    bottomBar = {
+                                        NavigationBar(
+                                            containerColor = Color.White,
+                                            tonalElevation = 3.dp
+                                        ) {
+                                            val opciones = listOf(
+                                                Triple(
+                                                    "INICIO",
+                                                    "Inicio",
+                                                    Icons.Filled.Home
+                                                ),
+                                                Triple(
+                                                    "PEDIDOS",
+                                                    "Pedidos",
+                                                    Icons.Outlined.List
+                                                ),
+                                                Triple(
+                                                    "TARIFAS",
+                                                    "Tarifas",
+                                                    Icons.Outlined.LocalOffer
+                                                ),
+                                                Triple(
+                                                    "PERFIL",
+                                                    "Perfil",
+                                                    Icons.Outlined.PersonOutline
+                                                )
+                                            )
+
+                                            opciones.forEach { (ruta, nombre, icono) ->
+                                                NavigationBarItem(
+                                                    selected = pantallaEstudiante == ruta,
+                                                    onClick = {
+                                                        pantallaEstudiante = ruta
+                                                    },
+                                                    icon = {
+                                                        Icon(
+                                                            imageVector = icono,
+                                                            contentDescription = nombre
+                                                        )
+                                                    },
+                                                    label = {
+                                                        Text(nombre)
+                                                    },
+                                                    alwaysShowLabel = true,
+                                                    colors = NavigationBarItemDefaults.colors(
+                                                        selectedIconColor = ColorNavegacion,
+                                                        selectedTextColor = ColorNavegacion,
+                                                        indicatorColor = Color(0xFFD8F7FB),
+                                                        unselectedIconColor = Color.Gray,
+                                                        unselectedTextColor = Color.Gray
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                ) { paddingValues ->
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(paddingValues)
+                                    ) {
+                                        when (pantallaEstudiante) {
+
+                                            "INICIO" -> {
+                                                InicioScreen(
+                                                    viewModel = inicioViewModel,
+                                                    usuarioId = estudianteId,
+                                                    onNuevoPedido = {
+                                                        pantallaEstudiante = "NUEVO_PEDIDO"
+                                                    },
+
+                                                    // Abre el detalle del pedido pulsado.
+                                                    onVerDetalle = { pedidoId ->
+                                                        pedidoSeleccionadoId = pedidoId
+                                                        pantallaEstudiante = "DETALLE_PEDIDO"
+                                                    },
+
+                                                    onMisPedidos = {
+                                                        pantallaEstudiante = "PEDIDOS"
+                                                    }
+                                                )
+                                            }
+
+                                            "PEDIDOS" -> {
+                                                PantallaPendiente(
+                                                    titulo = "Mis pedidos",
+                                                    descripcion = "Aquí podrás consultar todos tus pedidos."
+                                                )
+                                            }
+
+                                            "TARIFAS" -> {
+                                                PantallaPendiente(
+                                                    titulo = "Tarifas",
+                                                    descripcion = "Aquí podrás consultar los servicios y sus precios."
+                                                )
+                                            }
+
+                                            "PERFIL" -> {
+                                                PantallaPendiente(
+                                                    titulo = "Mi perfil",
+                                                    descripcion = "Aquí podrás consultar tus datos personales."
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
 
-                    // Administrador: pantalla temporal
                     usuarioActual?.rol == "ADMIN" -> {
-
                         Scaffold { paddingValues ->
                             Column(
                                 modifier = Modifier
@@ -179,7 +291,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Rol no reconocido
                     else -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -191,5 +302,32 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PantallaPendiente(
+    titulo: String,
+    descripcion: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = titulo,
+            style = MaterialTheme.typography.headlineMedium
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = descripcion,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
     }
 }

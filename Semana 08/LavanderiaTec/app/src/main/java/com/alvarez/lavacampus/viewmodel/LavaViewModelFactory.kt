@@ -41,6 +41,13 @@ class LavaViewModelFactory(
             ) as T
         }
 
+        // COMMIT 10: ViewModel para detalle, seguimiento y cancelación
+        if (modelClass.isAssignableFrom(DetallePedidoViewModel::class.java)) {
+            return DetallePedidoViewModel(
+                repository = repository
+            ) as T
+        }
+
         throw IllegalArgumentException(
             "ViewModel no reconocido: ${modelClass.name}"
         )

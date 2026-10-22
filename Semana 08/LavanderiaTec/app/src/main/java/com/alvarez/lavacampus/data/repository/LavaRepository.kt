@@ -29,6 +29,8 @@ interface LavaRepository {
     suspend fun actualizarPedido(pedido: Pedido)
     suspend fun buscarPedidoPorId(id: Int): Pedido?
     suspend fun obtenerPedidoConDetalle(id: Int): PedidoConDetalle?
+
+    fun observarPedido(id: Int): Flow<PedidoConDetalle?>
     fun observarPedidos(): Flow<List<Pedido>>
     fun observarPedidosPorUsuario(usuarioId: Int): Flow<List<Pedido>>
     fun observarPedidosPorEstado(estado: String): Flow<List<Pedido>>

@@ -1,26 +1,43 @@
 
 package com.alvarez.lavacampus.ui.estudiante
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Checkroom
+import androidx.compose.material.icons.outlined.DryCleaning
+import androidx.compose.material.icons.outlined.LocalLaundryService
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.lavacampus.model.LineaPedido
 import com.alvarez.lavacampus.viewmodel.NuevoPedidoViewModel
 import java.util.Locale
+import java.text.SimpleDateFormat
+import androidx.compose.ui.graphics.Color
 
-private val TurquesaPedido = Color(0xFF0891B2)
+private val TurquesaPedido = Color(0xFF0895B5)
 private val FondoPedido = Color(0xFFF0FCFF)
+private val TextoPedido = Color(0xFF263341)
+private val GrisPedido = Color(0xFF8B95A2)
+private val BordePedido = Color(0xFFE4E9ED)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,52 +58,57 @@ fun NuevoPedidoScreen(
         viewModel.cargarServicios()
     }
 
-    val total = lineas.sumOf { it.subtotal }
-    val haySeleccion = lineas.any { it.seleccionado }
+    val lineasSeleccionadas = lineas.filter { it.seleccionado }
+    val total = lineasSeleccionadas.sumOf { it.subtotal }
+    val haySeleccion = lineasSeleccionadas.isNotEmpty()
 
     Scaffold(
+        containerColor = FondoPedido,
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
-                    Text("Nuevo pedido")
+                    Text(
+                        text = "Nuevo pedido",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextoPedido
+                    )
                 },
                 navigationIcon = {
-                    TextButton(onClick = onVolver) {
-                        Text(
-                            "Volver",
-                            color = TurquesaPedido
+                    IconButton(onClick = onVolver) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = TextoPedido
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = FondoPedido
                 )
             )
-        },
-        containerColor = FondoPedido
+        }
     ) { paddingValues ->
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 4.dp,
+                bottom = 28.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
             item {
                 Text(
-                    text = "Selecciona tus servicios",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(6.dp))
-
-                Text(
-                    text = "Indica la cantidad de prendas o kilos que deseas enviar.",
-                    color = Color.Gray,
-                    fontSize = 14.sp
+                    text = "¿Qué necesitas?",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextoPedido
                 )
             }
 
@@ -108,7 +130,6 @@ fun NuevoPedidoScreen(
                     items = lineas,
                     key = { it.servicio.id }
                 ) { linea ->
-
                     ServicioSeleccionCard(
                         linea = linea,
                         habilitado = !guardando,
@@ -127,88 +148,176 @@ fun NuevoPedidoScreen(
             }
 
             item {
-                OutlinedTextField(
-                    value = nota,
-                    onValueChange = { nota = it },
-                    label = {
-                        Text("Indicaciones adicionales")
-                    },
-                    placeholder = {
-                        Text("Ejemplo: tratar con cuidado las prendas delicadas")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2,
-                    maxLines = 4,
-                    enabled = !guardando
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Color.White,
+                            RoundedCornerShape(11.dp)
+                        )
+                        .padding(
+                            horizontal = 12.dp,
+                            vertical = 9.dp
+                        )
+                ) {
+                    Text(
+                        text = "Nota (opcional)",
+                        fontSize = 11.sp,
+                        color = GrisPedido
+                    )
+
+                    Spacer(Modifier.height(5.dp))
+
+                    BasicTextField(
+                        value = nota,
+                        onValueChange = { nota = it },
+                        enabled = !guardando,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            fontSize = 13.sp,
+                            color = TextoPedido
+                        ),
+                        minLines = 1,
+                        maxLines = 3,
+                        decorationBox = { innerTextField ->
+                            Box {
+                                innerTextField()
+                            }
+                        }
+                    )
+                }
             }
 
             item {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(16.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Color(0xFFE9FCFF),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(13.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    Text(
+                        text = "Resumen",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TurquesaPedido
+                    )
 
+                    if (lineasSeleccionadas.isEmpty()) {
                         Text(
-                            text = "Resumen del pedido",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp
+                            text = "Selecciona al menos un servicio",
+                            fontSize = 12.sp,
+                            color = GrisPedido
                         )
+                    } else {
+                        lineasSeleccionadas.forEach { linea ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${linea.servicio.nombre}: ${
+                                        if (linea.servicio.unidad == "KG") {
+                                            String.format(
+                                                Locale.US,
+                                                "%.1f kg",
+                                                linea.cantidad
+                                            )
+                                        } else {
+                                            "${linea.cantidad.toInt()} ${
+                                                if (linea.cantidad == 1.0) {
+                                                    "unidad"
+                                                } else {
+                                                    "unidades"
+                                                }
+                                            }"
+                                        }
+                                    }",
+                                    modifier = Modifier.weight(1f),
+                                    fontSize = 11.sp,
+                                    color = GrisPedido,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
 
-                        HorizontalDivider()
+                                Spacer(Modifier.width(8.dp))
 
-                        Text(
-                            text = "Servicios seleccionados: ${
-                                lineas.count { it.seleccionado }
-                            }"
-                        )
-
-                        Text(
-                            text = "Entrega estimada: ${
-                                viewModel.calcularFechaEntrega()
-                            }",
-                            fontSize = 13.sp,
-                            color = Color.DarkGray
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Total",
-                                fontWeight = FontWeight.SemiBold
-                            )
-
-                            Text(
-                                text = "S/ ${
-                                    String.format(
-                                        Locale.US,
-                                        "%.2f",
-                                        total
-                                    )
-                                }",
-                                fontSize = 23.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TurquesaPedido
-                            )
+                                Text(
+                                    text = "S/ ${
+                                        String.format(
+                                            Locale.US,
+                                            "%.2f",
+                                            linea.subtotal
+                                        )
+                                    }",
+                                    fontSize = 11.sp,
+                                    color = TextoPedido,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
+
+                    HorizontalDivider(
+                        color = Color(0xFFD2EAF0)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Total",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextoPedido
+                        )
+
+                        Text(
+                            text = "S/ ${
+                                String.format(
+                                    Locale.US,
+                                    "%.2f",
+                                    total
+                                )
+                            }",
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TurquesaPedido
+                        )
+                    }
                 }
+            }
+
+            item {
+                Text(
+                    text = if (haySeleccion) {
+                        "Entrega estimada: ${
+                            formatearFechaEntrega(
+                                viewModel.calcularFechaEntrega()
+                            )
+                        }"
+                    } else {
+                        "Entrega estimada: Selecciona un servicio"
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 11.sp,
+                    color = GrisPedido
+                )
             }
 
             if (error != null) {
                 item {
                     Text(
                         text = error.orEmpty(),
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -230,11 +339,11 @@ fun NuevoPedidoScreen(
                             !cargando,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .height(49.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = TurquesaPedido
                     ),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(11.dp)
                 ) {
                     if (guardando) {
                         CircularProgressIndicator(
@@ -245,7 +354,8 @@ fun NuevoPedidoScreen(
                     } else {
                         Text(
                             text = "Confirmar pedido",
-                            fontWeight = FontWeight.SemiBold
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -254,7 +364,6 @@ fun NuevoPedidoScreen(
     }
 }
 
-// Tarjeta que permite seleccionar la cantidad de un servicio
 @Composable
 private fun ServicioSeleccionCard(
     linea: LineaPedido,
@@ -262,17 +371,11 @@ private fun ServicioSeleccionCard(
     onAumentar: () -> Unit,
     onDisminuir: () -> Unit
 ) {
+    val servicio = linea.servicio
+    val esKilogramo = servicio.unidad == "KG"
+    val cantidadMaxima = if (esKilogramo) 10.0 else 30.0
+    val seleccionado = linea.seleccionado
 
-    val esKilogramo = linea.servicio.unidad == "KG"
-
-    // Cantidad máxima permitida según la guía
-    val cantidadMaxima = if (esKilogramo) {
-        10.0
-    } else {
-        30.0
-    }
-
-    // Mostrar decimales solamente para los kilogramos
     val cantidadTexto = if (esKilogramo) {
         String.format(
             Locale.US,
@@ -283,94 +386,189 @@ private fun ServicioSeleccionCard(
         linea.cantidad.toInt().toString()
     }
 
+    val icono = when {
+        servicio.nombre.contains(
+            "planch",
+            ignoreCase = true
+        ) -> Icons.Outlined.DryCleaning
+
+        servicio.nombre.contains(
+            "seco",
+            ignoreCase = true
+        ) -> Icons.Outlined.Checkroom
+
+        else -> Icons.Outlined.LocalLaundryService
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(13.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
-        shape = RoundedCornerShape(16.dp)
+        border = BorderStroke(
+            width = if (seleccionado) 1.5.dp else 1.dp,
+            color = if (seleccionado) {
+                TurquesaPedido
+            } else {
+                BordePedido
+            }
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-
-            Text(
-                text = linea.servicio.nombre,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-
-            Text(
-                text = linea.servicio.descripcion,
-                fontSize = 13.sp,
-                color = Color.Gray
-            )
-
-            Text(
-                text = "S/ ${
-                    String.format(
-                        Locale.US,
-                        "%.2f",
-                        linea.servicio.precio
-                    )
-                } por ${linea.servicio.unidad}",
-                color = TurquesaPedido,
-                fontWeight = FontWeight.Medium
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .size(39.dp)
+                    .background(
+                        if (seleccionado) {
+                            Color(0xFFD8F7FB)
+                        } else {
+                            Color(0xFFF2F4F6)
+                        },
+                        RoundedCornerShape(10.dp)
+                    ),
+                contentAlignment = Alignment.Center
             ) {
+                Icon(
+                    imageVector = icono,
+                    contentDescription = null,
+                    tint = if (seleccionado) {
+                        TurquesaPedido
+                    } else {
+                        GrisPedido
+                    },
+                    modifier = Modifier.size(21.dp)
+                )
+            }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    OutlinedButton(
-                        onClick = onDisminuir,
-                        enabled = habilitado &&
-                                linea.cantidad > 0.0,
-                        contentPadding = PaddingValues(
-                            horizontal = 12.dp
-                        )
-                    ) {
-                        Text("−")
-                    }
-
-                    Text(
-                        text = cantidadTexto,
-                        modifier = Modifier.padding(
-                            horizontal = 10.dp
-                        ),
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    OutlinedButton(
-                        onClick = onAumentar,
-                        enabled = habilitado &&
-                                linea.cantidad < cantidadMaxima,
-                        contentPadding = PaddingValues(
-                            horizontal = 12.dp
-                        )
-                    ) {
-                        Text("+")
-                    }
-                }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Text(
+                    text = servicio.nombre,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextoPedido
+                )
 
                 Text(
                     text = "S/ ${
                         String.format(
                             Locale.US,
                             "%.2f",
-                            linea.subtotal
+                            servicio.precio
                         )
-                    }",
-                    fontWeight = FontWeight.Bold
+                    } por ${
+                        when (servicio.unidad) {
+                            "KG" -> "kg"
+                            "PRENDA" -> "prenda"
+                            else -> "unidad"
+                        }
+                    } · ${servicio.horasEntrega} h",
+                    fontSize = 11.sp,
+                    color = GrisPedido
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BotonCantidad(
+                        simbolo = "−",
+                        habilitado = habilitado &&
+                                linea.cantidad > 0.0,
+                        onClick = onDisminuir
+                    )
+
+                    Text(
+                        text = cantidadTexto,
+                        modifier = Modifier
+                            .widthIn(min = 44.dp)
+                            .padding(horizontal = 5.dp),
+                        textAlign = TextAlign.Center,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextoPedido
+                    )
+
+                    BotonCantidad(
+                        simbolo = "+",
+                        habilitado = habilitado &&
+                                linea.cantidad < cantidadMaxima,
+                        onClick = onAumentar
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun BotonCantidad(
+    simbolo: String,
+    habilitado: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(25.dp)
+            .clip(CircleShape)
+            .background(
+                if (habilitado) {
+                    TurquesaPedido
+                } else {
+                    Color(0xFFE5E7EB)
+                }
+            )
+            .clickable(
+                enabled = habilitado,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = simbolo,
+            color = if (habilitado) {
+                Color.White
+            } else {
+                GrisPedido
+            },
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+private fun formatearFechaEntrega(fecha: String): String {
+    return try {
+        val formatoEntrada = SimpleDateFormat(
+            "dd/MM/yyyy HH:mm",
+            Locale("es", "PE")
+        )
+        formatoEntrada.isLenient = false
+
+        val formatoSalida = SimpleDateFormat(
+            "EEE d MMM",
+            Locale("es", "PE")
+        )
+
+        val fechaConvertida = formatoEntrada.parse(fecha)
+
+        if (fechaConvertida != null) {
+            formatoSalida.format(fechaConvertida)
+                .replace(".", "")
+                .lowercase(Locale("es", "PE"))
+        } else {
+            fecha
+        }
+    } catch (e: Exception) {
+        fecha
     }
 }

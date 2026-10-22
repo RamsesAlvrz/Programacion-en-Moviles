@@ -1,23 +1,34 @@
 package com.alvarez.lavacampus.ui.estudiante
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.alvarez.lavacampus.ui.components.PedidoCard
+import com.alvarez.lavacampus.data.local.entity.Pedido
 import com.alvarez.lavacampus.viewmodel.InicioViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-private val Turquesa = Color(0xFF0891B2)
-private val FondoEstudiante = Color(0xFFF0FCFF)
+private val TurquesaInicio = Color(0xFF0895B5)
+private val FondoInicio = Color(0xFFF7FAFC)
+private val TextoPrincipal = Color(0xFF253041)
+private val TextoSecundario = Color(0xFF87909D)
 
 @Composable
 fun InicioScreen(
@@ -36,139 +47,74 @@ fun InicioScreen(
         viewModel.cargarDatos(usuarioId)
     }
 
-    val pedidoReciente = pedidos.maxByOrNull {
-        it.fechaCreacion
-    }
+    val pedidosOrdenados = pedidos.sortedByDescending { it.fechaCreacion }
 
-    val pedidosActivos = pedidos.count {
-        it.estado.uppercase() !in listOf(
-            "ENTREGADO",
-            "CANCELADO"
+    val pedidoActivo = pedidosOrdenados.firstOrNull {
+        it.estado.uppercase() in listOf(
+            "RECIBIDO", "EN_PROCESO", "LISTO"
         )
     }
+
+    val ultimosPedidos = pedidosOrdenados.take(3)
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoEstudiante),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .background(FondoInicio),
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = 22.dp,
+            bottom = 28.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        // Encabezado de bienvenida
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Turquesa,
-                        RoundedCornerShape(20.dp)
-                    )
-                    .padding(22.dp)
-            ) {
-                Text(
-                    text = "LAVACAMPUS · ESTUDIANTE",
-                    color = Color(0xFFCFFAFE),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(Modifier.height(10.dp))
-
-                Text(
-                    text = "¡Hola, ${
-                        estudiante?.nombre?.substringBefore(" ")
-                            ?: "estudiante"
-                    }!",
-                    color = Color.White,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(6.dp))
-
-                Text(
-                    text = "Tu ropa limpia, sin complicaciones.",
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
-            }
-        }
-
-        // Resumen de pedidos
+        // Encabezado como en la guía
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                ResumenPedidoCard(
-                    titulo = "Pedidos activos",
-                    cantidad = pedidosActivos,
-                    modifier = Modifier.weight(1f)
-                )
-
-                ResumenPedidoCard(
-                    titulo = "Total de pedidos",
-                    cantidad = pedidos.size,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        // Botón para registrar un nuevo pedido
-        item {
-            Button(
-                onClick = onNuevoPedido,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Turquesa
-                )
-            ) {
-                Text(
-                    text = "+ Registrar nuevo pedido",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-
-        // Encabezado de pedidos
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Mi pedido reciente",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                TextButton(onClick = onMisPedidos) {
+                Column {
                     Text(
-                        text = "Ver todos",
-                        color = Turquesa
+                        text = "Hola, ${
+                            estudiante?.nombre?.substringBefore(" ")
+                                ?: "estudiante"
+                        }",
+                        fontSize = 23.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextoPrincipal
+                    )
+
+                    Spacer(Modifier.height(3.dp))
+
+                    Text(
+                        text = "${estudiante?.codigo.orEmpty()} · Tecsup",
+                        fontSize = 12.sp,
+                        color = TextoSecundario
                     )
                 }
+
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Notificaciones",
+                    tint = TextoPrincipal,
+                    modifier = Modifier.size(23.dp)
+                )
             }
         }
 
-        // Contenido según el estado de carga
         if (cargando) {
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(30.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        color = Turquesa
-                    )
+                    CircularProgressIndicator(color = TurquesaInicio)
                 }
             }
         } else if (error != null) {
@@ -178,46 +124,156 @@ fun InicioScreen(
                     color = MaterialTheme.colorScheme.error
                 )
             }
-        } else if (pedidoReciente == null) {
+        } else {
+
+            // Tarjeta principal del pedido activo
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                if (pedidoActivo != null) {
+                    TarjetaPedidoActivo(
+                        pedido = pedidoActivo,
+                        onVerDetalle = {
+                            onVerDetalle(pedidoActivo.id)
+                        }
                     )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = TurquesaInicio
+                        )
                     ) {
-                        Text(
-                            text = "Aún no tienes pedidos",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 17.sp
-                        )
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Text(
+                                text = "Tus pedidos",
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontSize = 12.sp
+                            )
 
-                        Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(6.dp))
 
-                        Text(
-                            text = "Registra tu primer pedido para comenzar.",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
+                            Text(
+                                text = "No tienes pedidos activos",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 19.sp
+                            )
+
+                            Spacer(Modifier.height(5.dp))
+
+                            Text(
+                                text = "¡Registra un nuevo pedido para comenzar!",
+                                color = Color.White,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }
-        } else {
+
+            // Nuevo pedido
             item {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Button(
+                    onClick = onNuevoPedido,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TurquesaInicio
+                    )
                 ) {
-                    PedidoCard(
-                        pedido = pedidoReciente,
-                        onVerDetalle = onVerDetalle
+                    Text(
+                        text = "Nuevo pedido",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Accesos rápidos
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    AccesoRapido(
+                        titulo = "Mis pedidos",
+                        descripcion = "Ver estados",
+                        icono = {
+                            Icon(
+                                Icons.Outlined.List,
+                                contentDescription = null,
+                                tint = TurquesaInicio
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        onClick = onMisPedidos
                     )
 
-                    SeguimientoPedido(
-                        estado = pedidoReciente.estado
+                    AccesoRapido(
+                        titulo = "Tarifas",
+                        descripcion = "Precios por kg",
+                        icono = {
+                            Icon(
+                                Icons.Outlined.LocalOffer,
+                                contentDescription = null,
+                                tint = TurquesaInicio
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            // Se conectará a TarifasScreen
+                            // cuando implementemos su navegación.
+                        }
+                    )
+                }
+            }
+
+            // Título de últimos pedidos
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Últimos pedidos",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextoPrincipal
+                    )
+
+                    Text(
+                        text = "Ver todos",
+                        color = TurquesaInicio,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable {
+                            onMisPedidos()
+                        }
+                    )
+                }
+            }
+
+            // Pedidos recientes
+            if (ultimosPedidos.isEmpty()) {
+                item {
+                    Text(
+                        text = "Todavía no tienes pedidos registrados.",
+                        color = TextoSecundario,
+                        fontSize = 13.sp
+                    )
+                }
+            } else {
+                items(ultimosPedidos.size) { indice ->
+                    PedidoRecienteItem(
+                        pedido = ultimosPedidos[indice],
+                        onClick = {
+                            onVerDetalle(ultimosPedidos[indice].id)
+                        }
                     )
                 }
             }
@@ -225,45 +281,72 @@ fun InicioScreen(
     }
 }
 
-// Tarjeta que muestra la cantidad de pedidos
 @Composable
-private fun ResumenPedidoCard(
-    titulo: String,
-    cantidad: Int,
-    modifier: Modifier = Modifier
+private fun TarjetaPedidoActivo(
+    pedido: Pedido,
+    onVerDetalle: () -> Unit
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+    val estado = pedido.estado.uppercase()
+    val nombreEstado = when (estado) {
+        "RECIBIDO" -> "Recibido"
+        "EN_PROCESO" -> "En proceso"
+        "LISTO" -> "Listo"
+        "ENTREGADO" -> "Entregado"
+        else -> estado
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(TurquesaInicio)
+            .clickable(onClick = onVerDetalle)
+            .padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = titulo,
+                text = "Tu pedido activo",
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = Color.White.copy(alpha = 0.85f)
             )
-
-            Spacer(Modifier.height(8.dp))
 
             Text(
-                text = cantidad.toString(),
-                fontSize = 28.sp,
+                text = "#${pedido.id.toString().padStart(3, '0')}",
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Turquesa
+                color = Color.White
             )
         }
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = nombreEstado,
+            fontSize = 23.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Text(
+            text = "Entrega estimada: ${formatearFechaCorta(pedido.fechaEntrega)}",
+            fontSize = 12.sp,
+            color = Color.White.copy(alpha = 0.9f)
+        )
+
+        Spacer(Modifier.height(14.dp))
+
+        SeguimientoEnTarjeta(estado)
     }
 }
 
-// Seguimiento visual de las etapas del pedido
+
 @Composable
-private fun SeguimientoPedido(
-    estado: String
-) {
+private fun SeguimientoEnTarjeta(estado: String) {
     val etapas = listOf(
         "RECIBIDO",
         "EN_PROCESO",
@@ -271,60 +354,309 @@ private fun SeguimientoPedido(
         "ENTREGADO"
     )
 
-    val estadoNormalizado = estado
-        .uppercase()
-        .replace(" ", "_")
+    val etiquetas = listOf(
+        "Recibido",
+        "En proceso",
+        "Listo",
+        "Entregado"
+    )
 
-    val etapaActual = etapas.indexOf(estadoNormalizado)
+    val etapaActual = etapas.indexOf(estado.uppercase())
+    val colorPendiente = Color(0xFFE5E7EB)
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Seguimiento del pedido",
-                fontWeight = FontWeight.SemiBold
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Color.White,
+                RoundedCornerShape(11.dp)
             )
+            .padding(horizontal = 9.dp, vertical = 9.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            etapas.forEachIndexed { indice, _ ->
+                val completado = etapaActual >= 0 &&
+                        indice <= etapaActual
 
-            if (estadoNormalizado == "CANCELADO") {
-                Text(
-                    text = "Este pedido fue cancelado.",
-                    color = Color(0xFFDC2626)
-                )
-            } else {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Box(
+                    modifier = Modifier
+                        .size(21.dp)
+                        .background(
+                            if (completado) TurquesaInicio
+                            else colorPendiente,
+                            RoundedCornerShape(50)
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    etapas.forEachIndexed { index, _ ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(8.dp)
-                                .background(
-                                    color = if (index <= etapaActual) {
-                                        Turquesa
-                                    } else {
-                                        Color(0xFFE2E8F0)
-                                    },
-                                    shape = RoundedCornerShape(8.dp)
-                                )
+                    if (completado) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(13.dp)
                         )
                     }
                 }
 
+                if (indice < etapas.lastIndex) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(2.dp)
+                            .background(
+                                if (etapaActual > indice) {
+                                    TurquesaInicio
+                                } else {
+                                    colorPendiente
+                                }
+                            )
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(6.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            etiquetas.forEachIndexed { indice, etiqueta ->
                 Text(
-                    text = "Recibido → En proceso → Listo → Entregado",
-                    fontSize = 11.sp,
-                    color = Color.Gray
+                    text = etiqueta,
+                    modifier = Modifier.weight(1f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    fontSize = 9.sp,
+                    fontWeight = if (
+                        etapaActual >= 0 && indice <= etapaActual
+                    ) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (
+                        etapaActual >= 0 && indice <= etapaActual
+                    ) TextoPrincipal else TextoSecundario,
+                    maxLines = 1
                 )
             }
         }
     }
 }
+
+@Composable
+private fun AccesoRapido(
+    titulo: String,
+    descripcion: String,
+    icono: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(37.dp)
+                    .background(
+                        Color(0xFFD8F7FB),
+                        RoundedCornerShape(10.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                icono()
+            }
+
+            Column {
+                Text(
+                    text = titulo,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextoPrincipal,
+                    maxLines = 1
+                )
+
+                Text(
+                    text = descripcion,
+                    fontSize = 10.sp,
+                    color = TextoSecundario,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PedidoRecienteItem(
+    pedido: Pedido,
+    onClick: () -> Unit
+) {
+    val estado = pedido.estado.uppercase()
+
+    val estadoTexto = when (estado) {
+        "RECIBIDO" -> "Recibido"
+        "EN_PROCESO" -> "En proceso"
+        "LISTO" -> "Listo"
+        "ENTREGADO" -> "Entregado"
+        "CANCELADO" -> "Cancelado"
+        else -> estado
+    }
+
+    val colorEstado = when (estado) {
+        "RECIBIDO" -> Color(0xFF3B82F6)
+        "EN_PROCESO" -> Color(0xFF0895B5)
+        "LISTO" -> Color(0xFF16A34A)
+        "ENTREGADO" -> Color(0xFF64748B)
+        "CANCELADO" -> Color(0xFFDC2626)
+        else -> Color.Gray
+    }
+
+    val fondoEstado = when (estado) {
+        "RECIBIDO" -> Color(0xFFDBEAFE)
+        "EN_PROCESO" -> Color(0xFFD8F7FB)
+        "LISTO" -> Color(0xFFDCFCE7)
+        "ENTREGADO" -> Color(0xFFE2E8F0)
+        "CANCELADO" -> Color(0xFFFEE2E2)
+        else -> Color(0xFFF3F4F6)
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(13.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(13.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(
+                        fondoEstado,
+                        RoundedCornerShape(10.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Inventory2,
+                    contentDescription = null,
+                    tint = colorEstado,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Pedido #${pedido.id.toString().padStart(3, '0')}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextoPrincipal
+                    )
+
+                    Text(
+                        text = "S/ %.2f".format(pedido.total),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TurquesaInicio
+                    )
+                }
+
+                Text(
+                    text = "Registrado: ${formatearFechaCorta(pedido.fechaRegistro)}",                    fontSize = 11.sp,
+                    color = TextoSecundario
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = estadoTexto,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorEstado
+                    )
+
+                    if (!pedido.casillero.isNullOrBlank()) {
+                        Text(
+                            text = "Casillero ${pedido.casillero}",
+                            fontSize = 10.sp,
+                            color = TurquesaInicio
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Convierte fechas de Room (yyyy-MM-dd) al formato de la guía (mié 21 oct).
+
+private fun formatearFechaCorta(fecha: String): String {
+
+    val idioma = Locale("es", "PE")
+
+    // Reconoce los distintos formatos guardados en Room.
+    val formatosEntrada = listOf(
+        "yyyy-MM-dd",
+        "dd/MM/yyyy HH:mm",
+        "dd/MM/yyyy",
+        "yyyy-MM-dd HH:mm",
+        "yyyy-MM-dd'T'HH:mm:ss"
+    )
+
+    val formatoSalida = SimpleDateFormat(
+        "EEE d MMM",
+        idioma
+    )
+
+    for (formato in formatosEntrada) {
+        try {
+            val entrada = SimpleDateFormat(
+                formato,
+                Locale.US
+            ).apply {
+                isLenient = false
+            }
+
+            val fechaConvertida = entrada.parse(fecha)
+
+            if (fechaConvertida != null) {
+                return formatoSalida
+                    .format(fechaConvertida)
+                    .replace(".", "")
+                    .lowercase(idioma)
+            }
+
+        } catch (e: java.text.ParseException) {
+            // Si el formato no coincide, prueba el siguiente.
+        }
+    }
+
+    return fecha
+}
+
+

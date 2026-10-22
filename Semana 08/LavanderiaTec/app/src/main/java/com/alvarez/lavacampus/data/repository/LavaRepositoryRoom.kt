@@ -92,6 +92,13 @@ class LavaRepositoryRoom(
         return pedidoDao.obtenerConDetalle(id)
     }
 
+    // Observa los cambios de un pedido y sus detalles en tiempo real
+    override fun observarPedido(
+        id: Int
+    ): Flow<PedidoConDetalle?> {
+        return pedidoDao.observarConDetalle(id)
+    }
+
     override fun observarPedidos(): Flow<List<Pedido>> {
         return pedidoDao.obtenerTodos()
     }

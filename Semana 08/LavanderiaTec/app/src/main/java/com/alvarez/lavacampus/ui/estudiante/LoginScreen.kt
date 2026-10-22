@@ -2,9 +2,15 @@
 package com.alvarez.lavacampus.ui.estudiante
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.lavacampus.viewmodel.SesionViewModel
 
-// Pantalla de inicio de sesión de LavaCampus
 @Composable
 fun LoginScreen(
     viewModel: SesionViewModel,
@@ -32,55 +37,56 @@ fun LoginScreen(
     val cargando by viewModel.cargando.collectAsStateWithLifecycle()
     val mensajeError by viewModel.mensajeError.collectAsStateWithLifecycle()
 
-    val colorPrincipal = if (rolSeleccionado == "CLIENTE") {
-        Color(0xFF0891B2)
+    val esEstudiante = rolSeleccionado == "CLIENTE"
+
+    val colorPrincipal = if (esEstudiante) {
+        Color(0xFF0895B5)
     } else {
-        Color(0xFF6D28D9)
+        Color(0xFF7024DF)
     }
 
-    val colorFondo = if (rolSeleccionado == "CLIENTE") {
-        Color(0xFFF0FCFF)
-    } else {
-        Color(0xFFFAF8FF)
-    }
+    val colorTexto = Color(0xFF202938)
+    val colorSecundario = Color(0xFF8A8E98)
+    val colorBorde = Color(0xFFE4E6EA)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colorFondo)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(Color.White)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp)
+            .padding(top = 42.dp, bottom = 24.dp)
     ) {
 
+        // Encabezado
         Text(
-            text = "LavaCampus",
-            fontSize = 32.sp,
+            text = "Bienvenido",
+            fontSize = 27.sp,
             fontWeight = FontWeight.Bold,
-            color = colorPrincipal
+            color = colorTexto
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Lavandería universitaria",
-            fontSize = 16.sp,
-            color = Color.DarkGray
+            text = "Ingresa para continuar",
+            fontSize = 13.sp,
+            color = colorSecundario
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(26.dp))
 
-        Text(
-            text = "Selecciona tu perfil",
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 17.sp
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
+        // Selector de perfil
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(42.dp)
+                .background(
+                    Color(0xFFF3F4F6),
+                    RoundedCornerShape(12.dp)
+                )
+                .padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             listOf(
                 "CLIENTE" to "Estudiante",
@@ -89,59 +95,120 @@ fun LoginScreen(
 
                 val seleccionado = rolSeleccionado == rol
 
-                OutlinedButton(
-                    onClick = {
-                        rolSeleccionado = rol
-                        viewModel.limpiarError()
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (seleccionado) {
-                            colorPrincipal.copy(alpha = 0.12f)
-                        } else {
-                            Color.Transparent
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(
+                            if (seleccionado) colorPrincipal
+                            else Color.Transparent,
+                            RoundedCornerShape(9.dp)
+                        )
+                        .clickable {
+                            rolSeleccionado = rol
+                            viewModel.limpiarError()
                         },
-                        contentColor = colorPrincipal
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        if (seleccionado) 2.dp else 1.dp,
-                        colorPrincipal
-                    )
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = etiqueta,
                         fontSize = 12.sp,
-                        maxLines = 1
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (seleccionado) {
+                            Color.White
+                        } else {
+                            Color(0xFF737987)
+                        }
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(26.dp))
 
+        // Campo de correo
         OutlinedTextField(
             value = correo,
             onValueChange = { correo = it },
-            label = { Text("Correo electrónico") },
+            modifier = Modifier.fillMaxWidth(),
+            label = {
+                Text(
+                    "Correo",
+                    fontSize = 12.sp
+                )
+            },
+            placeholder = {
+                Text(
+                    "correo@ejemplo.com",
+                    fontSize = 13.sp
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Email,
+                    contentDescription = "Correo",
+                    tint = colorPrincipal,
+                    modifier = Modifier.size(19.dp)
+                )
+            },
             singleLine = true,
+            shape = RoundedCornerShape(10.dp),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email
             ),
-            modifier = Modifier.fillMaxWidth()
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colorPrincipal,
+                unfocusedBorderColor = colorBorde,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
+            )
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
+        // Campo de contraseña
         OutlinedTextField(
             value = clave,
             onValueChange = { clave = it },
-            label = { Text("Contraseña") },
+            modifier = Modifier.fillMaxWidth(),
+            label = {
+                Text(
+                    "Contraseña",
+                    fontSize = 12.sp
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = "Contraseña",
+                    tint = colorPrincipal,
+                    modifier = Modifier.size(19.dp)
+                )
+            },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
+            shape = RoundedCornerShape(10.dp),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password
             ),
-            modifier = Modifier.fillMaxWidth()
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colorPrincipal,
+                unfocusedBorderColor = colorBorde,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White
+            )
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Enlace visual de recuperación
+        Text(
+            text = "¿Olvidaste tu contraseña?",
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.End,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colorPrincipal
         )
 
         if (mensajeError != null) {
@@ -151,12 +218,14 @@ fun LoginScreen(
                 text = mensajeError.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 13.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(22.dp))
 
+        // Botón de ingreso
         Button(
             onClick = {
                 viewModel.iniciarSesion(
@@ -174,10 +243,14 @@ fun LoginScreen(
                     clave.isNotBlank(),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
+                .height(50.dp),
+            shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = colorPrincipal
+                containerColor = colorPrincipal,
+                disabledContainerColor = colorPrincipal.copy(
+                    alpha = 0.65f
+                ),
+                disabledContentColor = Color.White
             )
         ) {
             if (cargando) {
@@ -188,8 +261,51 @@ fun LoginScreen(
                 )
             } else {
                 Text(
-                    text = "Iniciar sesión",
-                    fontSize = 16.sp
+                    text = "Ingresar",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (esEstudiante) {
+            // Enlace de registro mostrado en la guía.
+            // Pendiente de conectar con una pantalla de registro.
+            Text(
+                text = "¿No tienes cuenta? Regístrate",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = colorPrincipal,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        } else {
+            // Información exclusiva del administrador
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Color(0xFFF5F1FF),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .padding(14.dp)
+            ) {
+                Text(
+                    text = "Modo práctica",
+                    color = colorPrincipal,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Puedes cambiar tu perfil desde ajustes para probar ambos roles.",
+                    color = colorSecundario,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp
                 )
             }
         }

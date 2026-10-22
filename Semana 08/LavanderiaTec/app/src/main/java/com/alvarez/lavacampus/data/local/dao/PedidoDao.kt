@@ -66,4 +66,11 @@ interface PedidoDao {
     @Transaction
     @Query("SELECT * FROM pedidos WHERE id = :pedidoId LIMIT 1")
     suspend fun obtenerConDetalle(pedidoId: Int): PedidoConDetalle?
+
+    // Observar un pedido y sus detalles en tiempo real
+// Room emitirá nuevos datos cuando cambie el pedido o sus detalles
+    @Transaction
+    @Query("SELECT * FROM pedidos WHERE id = :pedidoId LIMIT 1")
+    fun observarConDetalle(pedidoId: Int): Flow<PedidoConDetalle?>
+
 }
