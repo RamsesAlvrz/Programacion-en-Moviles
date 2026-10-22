@@ -3,15 +3,16 @@ package com.alvarez.lavacampus
 
 import android.app.Application
 import androidx.room.Room
+import androidx.room.withTransaction
+import com.alvarez.lavacampus.data.local.DatosIniciales
 import com.alvarez.lavacampus.data.local.LavaDatabase
-import com.alvarez.lavacampus.data.local.entity.Servicio
-import com.alvarez.lavacampus.data.local.entity.Usuario
 import com.alvarez.lavacampus.data.prefs.PreferenciasStore
 import com.alvarez.lavacampus.data.repository.LavaRepository
 import com.alvarez.lavacampus.data.repository.LavaRepositoryRoom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 // Clase principal de la aplicación LavaCampus
@@ -29,7 +30,7 @@ class LavaApp : Application() {
     lateinit var preferenciasStore: PreferenciasStore
         private set
 
-    // Alcance para ejecutar operaciones en segundo plano
+    // Alcance para operaciones en segundo plano
     private val applicationScope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO
     )
@@ -37,7 +38,7 @@ class LavaApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Inicializar la base de datos Room
+        // Inicializar Room
         database = Room.databaseBuilder(
             applicationContext,
             LavaDatabase::class.java,
@@ -47,66 +48,139 @@ class LavaApp : Application() {
         // Inicializar el repositorio
         repository = LavaRepositoryRoom(database)
 
-        // Inicializar las preferencias del usuario
+        // Inicializar las preferencias
         preferenciasStore = PreferenciasStore(applicationContext)
 
-        // Registrar los datos iniciales
+        // Registrar datos iniciales
         applicationScope.launch {
             insertarDatosIniciales()
         }
     }
 
-    // Insertar los registros iniciales de LavaCampus
+    // Cargar los datos de prueba sin duplicar registros
     private suspend fun insertarDatosIniciales() {
 
-        // Comprobar si existe el administrador
-        val administrador = database.usuarioDao()
-            .obtenerPorCorreo("admin@lavacampus.com")
+        val usuarioDao = database.usuarioDao()
+        val servicioDao = database.servicioDao()
+        val pedidoDao = database.pedidoDao()
+        val detallePedidoDao = database.detallePedidoDao()
 
-        if (administrador == null) {
-            database.usuarioDao().insertar(
-                Usuario(
-                    nombre = "Administrador",
-                    codigo = "",
-                    correo = "admin@lavacampus.com",
-                    clave = "admin123",
-                    rol = "ADMIN"
+        // PASO 1: Insertar usuarios que no existan
+        for (usuario in DatosIniciales.usuarios) {
+            val existente = usuarioDao.obtenerPorCorreo(usuario.correo)
+
+            if (existente == null) {
+                usuarioDao.insertar(usuario)
+            }
+        }
+
+
+        // PASO 2: Sincronizar los servicios con el catálogo de la guía
+        val serviciosGuardados = servicioDao.obtenerTodos().first()
+
+        for (servicioInicial in DatosIniciales.servicios) {
+
+            // Buscar si el servicio ya existe por su nombre
+            val servicioExistente = serviciosGuardados.find {
+                it.nombre.equals(
+                    servicioInicial.nombre,
+                    ignoreCase = true
                 )
+            }
+
+            if (servicioExistente == null) {
+
+                // Insertar el servicio cuando todavía no existe
+                servicioDao.insertar(servicioInicial)
+
+            } else {
+
+                // Actualizar los datos conservando el ID original
+                servicioDao.actualizar(
+                    servicioInicial.copy(
+                        id = servicioExistente.id
+                    )
+                )
+            }
+        }
+
+        // Desactivar el servicio antiguo que no pertenece al catálogo
+        val servicioAnterior = serviciosGuardados.find {
+            it.nombre.equals(
+                "Lavado de prendas",
+                ignoreCase = true
             )
         }
 
-        // Comprobar si existen los servicios iniciales
-        val servicioInicial = database.servicioDao().obtenerPorId(1)
-
-        if (servicioInicial == null) {
-            database.servicioDao().insertarTodos(
-                listOf(
-                    Servicio(
-                        nombre = "Lavado y secado",
-                        descripcion = "Lavado y secado de ropa por kilogramo",
-                        unidad = "KG",
-                        precio = 8.0,
-                        horasEntrega = 24,
-                        icono = "wash"
-                    ),
-                    Servicio(
-                        nombre = "Planchado",
-                        descripcion = "Planchado de prendas de vestir",
-                        unidad = "PRENDA",
-                        precio = 4.0,
-                        horasEntrega = 12,
-                        icono = "iron"
-                    ),
-                    Servicio(
-                        nombre = "Lavado de prendas",
-                        descripcion = "Lavado individual de prendas",
-                        unidad = "PRENDA",
-                        precio = 6.0,
-                        horasEntrega = 24,
-                        icono = "shirt"
-                    )
-                )
+        if (servicioAnterior != null && servicioAnterior.activo) {
+            servicioDao.cambiarDisponibilidad(
+                servicioId = servicioAnterior.id,
+                activo = false
             )
+        }
+
+
+        // PASO 3: Recuperar los identificadores de estudiantes
+        val ana = usuarioDao.obtenerPorCorreo("ana@correo.test")
+        val luis = usuarioDao.obtenerPorCorreo("luis@correo.test")
+        val marta = usuarioDao.obtenerPorCorreo("marta@correo.test")
+
+        if (ana == null || luis == null || marta == null) {
+            return
+        }
+
+        // PASO 4: Recuperar los identificadores de servicios
+        val servicios = servicioDao.obtenerTodos().first()
+
+        val lavado = servicios.find { it.nombre == "Lavado y secado" }
+        val planchado = servicios.find { it.nombre == "Planchado" }
+        val lavadoSeco = servicios.find { it.nombre == "Lavado en seco" }
+        val edredon = servicios.find { it.nombre == "Edredón / frazada" }
+
+        if (
+            lavado == null ||
+            planchado == null ||
+            lavadoSeco == null ||
+            edredon == null
+        ) {
+            return
+        }
+
+        // PASO 5: Evitar insertar los pedidos iniciales más de una vez
+        val pedidosExistentes = pedidoDao.obtenerTodos().first()
+
+        if (pedidosExistentes.isNotEmpty()) {
+            return
+        }
+
+        // PASO 6: Preparar los 10 pedidos de ejemplo
+        val pedidosIniciales = DatosIniciales.obtenerPedidosIniciales(
+            anaId = ana.id,
+            luisId = luis.id,
+            martaId = marta.id
+        )
+
+        // PASO 7: Guardar pedidos y detalles en una transacción
+        database.withTransaction {
+
+            pedidosIniciales.forEachIndexed { indice, pedido ->
+
+                // Insertar el pedido y obtener su ID
+                val pedidoId = pedidoDao.insertar(pedido).toInt()
+
+                // Preparar los detalles asociados al pedido
+                val detalles = DatosIniciales.obtenerDetallesIniciales(
+                    numeroPedido = indice + 1,
+                    pedidoId = pedidoId,
+                    lavadoId = lavado.id,
+                    planchadoId = planchado.id,
+                    lavadoSecoId = lavadoSeco.id,
+                    edredonId = edredon.id
+                )
+
+                // Insertar los detalles
+                detallePedidoDao.insertarTodos(detalles)
+            }
         }
     }
 }

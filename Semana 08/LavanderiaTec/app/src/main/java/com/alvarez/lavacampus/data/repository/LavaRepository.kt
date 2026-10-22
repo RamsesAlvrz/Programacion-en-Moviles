@@ -42,4 +42,8 @@ interface LavaRepository {
     // Operaciones de detalles
     suspend fun registrarDetalles(detalles: List<DetallePedido>)
     suspend fun obtenerDetallesPorPedido(pedidoId: Int): List<DetallePedido>
+    suspend fun registrarPedidoCompleto(
+        pedido: Pedido,
+        detalles: List<DetallePedido>
+    ): Long
 }

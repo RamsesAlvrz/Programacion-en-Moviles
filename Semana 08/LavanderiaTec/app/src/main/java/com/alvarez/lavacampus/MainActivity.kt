@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus
 
 import android.os.Bundle
@@ -14,9 +13,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alvarez.lavacampus.ui.estudiante.InicioScreen
 import com.alvarez.lavacampus.ui.estudiante.LoginScreen
+import com.alvarez.lavacampus.ui.estudiante.NuevoPedidoScreen
 import com.alvarez.lavacampus.ui.theme.LavaCampusTheme
 import com.alvarez.lavacampus.viewmodel.InicioViewModel
 import com.alvarez.lavacampus.viewmodel.LavaViewModelFactory
+import com.alvarez.lavacampus.viewmodel.NuevoPedidoViewModel
 import com.alvarez.lavacampus.viewmodel.SesionViewModel
 
 class MainActivity : ComponentActivity() {
@@ -45,9 +46,19 @@ class MainActivity : ComponentActivity() {
                 factory = factory
             )
 
+            // ViewModel encargado del registro de pedidos
+            val nuevoPedidoViewModel: NuevoPedidoViewModel = viewModel(
+                factory = factory
+            )
+
             // Observar el usuario que inició sesión
             val usuarioActual by sesionViewModel.usuarioActual
                 .collectAsStateWithLifecycle()
+
+            // Pantalla actual del estudiante
+            var pantallaEstudiante by remember {
+                mutableStateOf("INICIO")
+            }
 
             // Indicar si ya terminó de recuperarse la sesión
             var sesionVerificada by remember {
@@ -55,9 +66,14 @@ class MainActivity : ComponentActivity() {
             }
 
             LaunchedEffect(Unit) {
-                // Dar tiempo a recuperar la sesión almacenada
+                // Recuperación temporal de la sesión
                 kotlinx.coroutines.delay(500)
                 sesionVerificada = true
+            }
+
+            // Regresar al inicio cuando cambie la sesión
+            LaunchedEffect(usuarioActual?.id) {
+                pantallaEstudiante = "INICIO"
             }
 
             LavaCampusTheme {
@@ -79,35 +95,56 @@ class MainActivity : ComponentActivity() {
                         LoginScreen(
                             viewModel = sesionViewModel,
                             onLoginExitoso = {
-                                // El StateFlow del ViewModel
-                                // actualizará automáticamente la pantalla
+                                // El StateFlow actualizará la pantalla
                             }
                         )
                     }
 
-                    // Estudiante: mostrar su pantalla de inicio
+                    // Estudiante
                     usuarioActual?.rol == "CLIENTE" -> {
 
-                        InicioScreen(
-                            viewModel = inicioViewModel,
-                            usuarioId = usuarioActual!!.id,
-                            onNuevoPedido = {
-                                // Se conectará en el Commit 9
-                            },
-                            onVerDetalle = {
-                                // Se conectará en el Commit 10
-                            },
-                            onMisPedidos = {
-                                // Se conectará en el Commit 11
+                        val estudianteId = usuarioActual!!.id
+
+                        when (pantallaEstudiante) {
+
+                            // Pantalla de registro de pedidos
+                            "NUEVO_PEDIDO" -> {
+                                NuevoPedidoScreen(
+                                    viewModel = nuevoPedidoViewModel,
+                                    usuarioId = estudianteId,
+                                    onVolver = {
+                                        pantallaEstudiante = "INICIO"
+                                    },
+                                    onPedidoRegistrado = {
+                                        // Regresar al inicio después del registro
+                                        pantallaEstudiante = "INICIO"
+                                    }
+                                )
                             }
-                        )
+
+                            // Pantalla principal del estudiante
+                            else -> {
+                                InicioScreen(
+                                    viewModel = inicioViewModel,
+                                    usuarioId = estudianteId,
+                                    onNuevoPedido = {
+                                        pantallaEstudiante = "NUEVO_PEDIDO"
+                                    },
+                                    onVerDetalle = {
+                                        // Se conectará en el Commit 10
+                                    },
+                                    onMisPedidos = {
+                                        // Se conectará en el Commit 11
+                                    }
+                                )
+                            }
+                        }
                     }
 
                     // Administrador: pantalla temporal
                     usuarioActual?.rol == "ADMIN" -> {
 
                         Scaffold { paddingValues ->
-
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -116,7 +153,6 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-
                                 Text(
                                     text = "Panel de administrador",
                                     style = MaterialTheme.typography.headlineSmall
@@ -133,13 +169,23 @@ class MainActivity : ComponentActivity() {
                                 Button(
                                     onClick = {
                                         sesionViewModel.cerrarSesion {
-                                            // La pantalla volverá al login
+                                            pantallaEstudiante = "INICIO"
                                         }
                                     }
                                 ) {
                                     Text("Cerrar sesión")
                                 }
                             }
+                        }
+                    }
+
+                    // Rol no reconocido
+                    else -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Rol de usuario no reconocido")
                         }
                     }
                 }

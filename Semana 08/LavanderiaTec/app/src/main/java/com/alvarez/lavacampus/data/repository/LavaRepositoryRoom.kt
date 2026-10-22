@@ -151,24 +151,32 @@ class LavaRepositoryRoom(
         return detallePedidoDao.listarPorPedido(pedidoId)
     }
 
+
     // OPERACIÓN TRANSACCIONAL ADICIONAL
 
-    // Registra un pedido y todos sus detalles como una sola operación.
-    // Si ocurre un error, Room revierte la transacción.
-    suspend fun registrarPedidoCompleto(
+    // Registra el pedido y todos sus detalles en una sola transacción.
+    // Si ocurre un error, Room revierte los cambios realizados.
+    override suspend fun registrarPedidoCompleto(
         pedido: Pedido,
         detalles: List<DetallePedido>
     ): Long {
+
         return database.withTransaction {
 
+            // Registrar el pedido y obtener su ID generado
             val pedidoId = pedidoDao.insertar(pedido)
 
+            // Asociar cada detalle con el pedido registrado
             val detallesConPedido = detalles.map { detalle ->
-                detalle.copy(pedidoId = pedidoId.toInt())
+                detalle.copy(
+                    pedidoId = pedidoId.toInt()
+                )
             }
 
+            // Registrar todos los detalles del pedido
             detallePedidoDao.insertarTodos(detallesConPedido)
 
+            // Devolver el ID del pedido registrado
             pedidoId
         }
     }

@@ -34,6 +34,13 @@ class LavaViewModelFactory(
             ) as T
         }
 
+        // ViewModel para seleccionar servicios y registrar pedidos
+        if (modelClass.isAssignableFrom(NuevoPedidoViewModel::class.java)) {
+            return NuevoPedidoViewModel(
+                repository = repository
+            ) as T
+        }
+
         throw IllegalArgumentException(
             "ViewModel no reconocido: ${modelClass.name}"
         )
