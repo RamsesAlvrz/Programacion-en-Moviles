@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus.data.local.entity
 
 import androidx.room.Entity
@@ -25,6 +24,7 @@ import androidx.room.PrimaryKey
 data class Pedido(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+
     val usuarioId: Int,
     val fechaRegistro: String,
     val fechaEntrega: String,
@@ -33,5 +33,12 @@ data class Pedido(
     val casillero: String? = null,
     val pagado: Boolean = false,
     val nota: String = "",
-    val fechaCreacion: Long = System.currentTimeMillis()
+
+    // Fecha y hora en que se creó el pedido
+    val fechaCreacion: Long = System.currentTimeMillis(),
+
+    // Historial de cambios de estado
+    val fechaInicioProceso: Long? = null,
+    val fechaListo: Long? = null,
+    val fechaEntregado: Long? = null
 )

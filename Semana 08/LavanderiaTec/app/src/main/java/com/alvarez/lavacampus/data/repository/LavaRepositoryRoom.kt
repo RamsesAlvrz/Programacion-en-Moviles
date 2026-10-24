@@ -1,3 +1,4 @@
+
 package com.alvarez.lavacampus.data.repository
 
 import androidx.room.withTransaction
@@ -9,18 +10,20 @@ import com.alvarez.lavacampus.data.local.entity.Usuario
 import com.alvarez.lavacampus.data.local.relation.PedidoConDetalle
 import kotlinx.coroutines.flow.Flow
 
-// Implementación del repositorio utilizando Room
+// Implementación del repositorio utilizando Room.
 class LavaRepositoryRoom(
     private val database: LavaDatabase
 ) : LavaRepository {
 
-    // Acceso a los DAO de la base de datos
+    // Acceso a los DAO de la base de datos.
     private val usuarioDao = database.usuarioDao()
     private val servicioDao = database.servicioDao()
     private val pedidoDao = database.pedidoDao()
     private val detallePedidoDao = database.detallePedidoDao()
 
+    // =====================================
     // OPERACIONES DE USUARIOS
+    // =====================================
 
     override suspend fun registrarUsuario(usuario: Usuario): Long {
         return usuarioDao.insertar(usuario)
@@ -46,7 +49,9 @@ class LavaRepositoryRoom(
         return usuarioDao.obtenerClientes()
     }
 
+    // =====================================
     // OPERACIONES DE SERVICIOS
+    // =====================================
 
     override fun observarServicios(): Flow<List<Servicio>> {
         return servicioDao.obtenerTodos()
@@ -72,7 +77,9 @@ class LavaRepositoryRoom(
         servicioDao.actualizar(servicio)
     }
 
+    // =====================================
     // OPERACIONES DE PEDIDOS
+    // =====================================
 
     override suspend fun registrarPedido(pedido: Pedido): Long {
         return pedidoDao.insertar(pedido)
@@ -92,7 +99,7 @@ class LavaRepositoryRoom(
         return pedidoDao.obtenerConDetalle(id)
     }
 
-    // Observa los cambios de un pedido y sus detalles en tiempo real
+    // Observar los cambios de un pedido en tiempo real.
     override fun observarPedido(
         id: Int
     ): Flow<PedidoConDetalle?> {
@@ -115,7 +122,9 @@ class LavaRepositoryRoom(
         return pedidoDao.obtenerPorEstado(estado)
     }
 
+    // =====================================
     // OPERACIONES ADMINISTRATIVAS
+    // =====================================
 
     override suspend fun cambiarEstadoPedido(
         pedidoId: Int,
@@ -144,7 +153,27 @@ class LavaRepositoryRoom(
         return pedidoDao.contarPorEstado(estado)
     }
 
+    // =====================================
+    // CASILLEROS - COMMIT 13
+    // =====================================
+
+    // Consulta los casilleros utilizados por pedidos LISTOS.
+    // Room actualizará la lista cuando cambien los pedidos.
+    override fun observarCasillerosOcupados(): Flow<List<String>> {
+        return pedidoDao.observarCasillerosOcupados()
+    }
+    override suspend fun marcarListoConCasillero(
+        pedidoId: Int,
+        casillero: String
+    ): Int {
+        return pedidoDao.marcarListoConCasillero(
+            pedidoId = pedidoId,
+            casillero = casillero
+        )
+    }
+    // =====================================
     // OPERACIONES DE DETALLES
+    // =====================================
 
     override suspend fun registrarDetalles(
         detalles: List<DetallePedido>
@@ -158,11 +187,12 @@ class LavaRepositoryRoom(
         return detallePedidoDao.listarPorPedido(pedidoId)
     }
 
+    // =====================================
+    // OPERACIÓN TRANSACCIONAL
+    // =====================================
 
-    // OPERACIÓN TRANSACCIONAL ADICIONAL
-
-    // Registra el pedido y todos sus detalles en una sola transacción.
-    // Si ocurre un error, Room revierte los cambios realizados.
+    // Registra el pedido y sus detalles en una sola transacción.
+    // Si ocurre un error, Room revierte los cambios.
     override suspend fun registrarPedidoCompleto(
         pedido: Pedido,
         detalles: List<DetallePedido>
@@ -170,20 +200,20 @@ class LavaRepositoryRoom(
 
         return database.withTransaction {
 
-            // Registrar el pedido y obtener su ID generado
+            // Registrar el pedido y obtener su ID.
             val pedidoId = pedidoDao.insertar(pedido)
 
-            // Asociar cada detalle con el pedido registrado
+            // Asociar los detalles con el pedido registrado.
             val detallesConPedido = detalles.map { detalle ->
                 detalle.copy(
                     pedidoId = pedidoId.toInt()
                 )
             }
 
-            // Registrar todos los detalles del pedido
+            // Registrar los detalles del pedido.
             detallePedidoDao.insertarTodos(detallesConPedido)
 
-            // Devolver el ID del pedido registrado
+            // Devolver el identificador del pedido.
             pedidoId
         }
     }

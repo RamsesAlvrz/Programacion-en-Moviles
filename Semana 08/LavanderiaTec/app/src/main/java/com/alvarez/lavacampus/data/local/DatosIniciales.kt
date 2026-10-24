@@ -9,23 +9,24 @@ import com.alvarez.lavacampus.data.local.entity.DetallePedido
 object DatosIniciales {
 
     // Usuarios que deben existir al iniciar la aplicación
+// Usuarios que deben existir al iniciar la aplicación
     val usuarios = listOf(
         Usuario(
-            nombre = "Ana",
+            nombre = "Ana García",
             codigo = "EST001",
             correo = "ana@correo.test",
             clave = "1234",
             rol = "CLIENTE"
         ),
         Usuario(
-            nombre = "Luis",
+            nombre = "Luis Herrera",
             codigo = "EST002",
             correo = "luis@correo.test",
             clave = "1234",
             rol = "CLIENTE"
         ),
         Usuario(
-            nombre = "Marta",
+            nombre = "Marta Pérez",
             codigo = "EST003",
             correo = "marta@correo.test",
             clave = "1234",
@@ -39,7 +40,6 @@ object DatosIniciales {
             rol = "ADMIN"
         )
     )
-
     // Catálogo de servicios solicitado por la guía
     val servicios = listOf(
         Servicio(

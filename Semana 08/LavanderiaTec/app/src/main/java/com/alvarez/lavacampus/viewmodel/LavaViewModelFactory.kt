@@ -62,6 +62,19 @@ class LavaViewModelFactory(
             ) as T
         }
 
+        // COMMIT 13: ViewModel de la bandeja de pedidos.
+        if (modelClass.isAssignableFrom(BandejaViewModel::class.java)) {
+            return BandejaViewModel(
+                repository = repository
+            ) as T
+        }
+
+        if (modelClass.isAssignableFrom(GestionPedidoViewModel::class.java)) {
+            return GestionPedidoViewModel(
+                repository = repository
+            ) as T
+        }
+
         throw IllegalArgumentException(
             "ViewModel no reconocido: ${modelClass.name}"
         )

@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus
 
 import android.app.Application
@@ -43,7 +42,9 @@ class LavaApp : Application() {
             applicationContext,
             LavaDatabase::class.java,
             "lavacampus_database"
-        ).build()
+        )
+            .addMigrations(LavaDatabase.MIGRATION_1_2)
+            .build()
 
         // Inicializar el repositorio
         repository = LavaRepositoryRoom(database)
@@ -51,7 +52,7 @@ class LavaApp : Application() {
         // Inicializar las preferencias
         preferenciasStore = PreferenciasStore(applicationContext)
 
-        // Registrar datos iniciales
+        // Registrar datos iniciales y actualizar nombres de prueba
         applicationScope.launch {
             insertarDatosIniciales()
         }
@@ -65,15 +66,41 @@ class LavaApp : Application() {
         val pedidoDao = database.pedidoDao()
         val detallePedidoDao = database.detallePedidoDao()
 
-        // PASO 1: Insertar usuarios que no existan
+        // PASO 1: Insertar usuarios iniciales y completar sus apellidos
         for (usuario in DatosIniciales.usuarios) {
+
             val existente = usuarioDao.obtenerPorCorreo(usuario.correo)
 
             if (existente == null) {
+
+                // Registrar el usuario cuando todavía no existe
                 usuarioDao.insertar(usuario)
+
+            } else {
+
+                // Identificar los nombres originales de los estudiantes de prueba
+                val nombreAnterior = when (usuario.correo) {
+                    "ana@correo.test" -> "Ana"
+                    "luis@correo.test" -> "Luis"
+                    "marta@correo.test" -> "Marta"
+                    else -> null
+                }
+
+                // Actualizar solo si el estudiante conserva su nombre original.
+                // Así evitamos sobrescribir nombres personalizados.
+                if (
+                    nombreAnterior != null &&
+                    existente.nombre == nombreAnterior &&
+                    existente.nombre != usuario.nombre
+                ) {
+                    usuarioDao.actualizar(
+                        existente.copy(
+                            nombre = usuario.nombre
+                        )
+                    )
+                }
             }
         }
-
 
         // PASO 2: Sincronizar los servicios con el catálogo de la guía
         val serviciosGuardados = servicioDao.obtenerTodos().first()
@@ -119,7 +146,6 @@ class LavaApp : Application() {
             )
         }
 
-
         // PASO 3: Recuperar los identificadores de estudiantes
         val ana = usuarioDao.obtenerPorCorreo("ana@correo.test")
         val luis = usuarioDao.obtenerPorCorreo("luis@correo.test")
@@ -132,10 +158,21 @@ class LavaApp : Application() {
         // PASO 4: Recuperar los identificadores de servicios
         val servicios = servicioDao.obtenerTodos().first()
 
-        val lavado = servicios.find { it.nombre == "Lavado y secado" }
-        val planchado = servicios.find { it.nombre == "Planchado" }
-        val lavadoSeco = servicios.find { it.nombre == "Lavado en seco" }
-        val edredon = servicios.find { it.nombre == "Edredón / frazada" }
+        val lavado = servicios.find {
+            it.nombre == "Lavado y secado"
+        }
+
+        val planchado = servicios.find {
+            it.nombre == "Planchado"
+        }
+
+        val lavadoSeco = servicios.find {
+            it.nombre == "Lavado en seco"
+        }
+
+        val edredon = servicios.find {
+            it.nombre == "Edredón / frazada"
+        }
 
         if (
             lavado == null ||

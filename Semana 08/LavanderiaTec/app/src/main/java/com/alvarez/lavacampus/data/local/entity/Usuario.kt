@@ -15,3 +15,4 @@ data class Usuario(
     val clave: String,
     val rol: String
 )
+
