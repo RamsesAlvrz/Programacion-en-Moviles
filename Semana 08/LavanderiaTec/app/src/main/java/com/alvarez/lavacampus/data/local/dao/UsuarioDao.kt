@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.alvarez.lavacampus.data.local.entity.Usuario
+import com.alvarez.lavacampus.data.model.ClienteResumen
 import kotlinx.coroutines.flow.Flow
 
 // DAO encargado de gestionar los usuarios registrados
@@ -35,4 +36,22 @@ interface UsuarioDao {
     // Consultar únicamente los estudiantes
     @Query("SELECT * FROM usuarios WHERE rol = 'CLIENTE' ORDER BY nombre ASC")
     fun obtenerClientes(): Flow<List<Usuario>>
+
+    @Query(
+        """
+    SELECT
+        u.id AS id,
+        u.nombre AS nombre,
+        u.codigo AS codigo,
+        COUNT(p.id) AS cantidadPedidos,
+        COALESCE(SUM(p.total), 0.0) AS totalGastado
+    FROM usuarios AS u
+    LEFT JOIN pedidos AS p
+        ON p.usuarioId = u.id
+    WHERE u.rol = 'CLIENTE'
+    GROUP BY u.id, u.nombre, u.codigo
+    ORDER BY u.nombre ASC
+    """
+    )
+    fun obtenerResumenClientes(): Flow<List<ClienteResumen>>
 }

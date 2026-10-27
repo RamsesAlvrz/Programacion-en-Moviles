@@ -147,4 +147,47 @@ interface PedidoDao {
         casillero: String,
         fechaCambio: Long = System.currentTimeMillis()
     ): Int
+
+    @Query(
+        """
+        SELECT COUNT(*)
+        FROM pedidos
+        WHERE usuarioId = :usuarioId
+        """
+    )
+    fun contarPedidosUsuario(
+        usuarioId: Int
+    ): Flow<Int>
+
+    // Contar los pedidos que todavía están activos.
+    @Query(
+        """
+        SELECT COUNT(*)
+        FROM pedidos
+        WHERE usuarioId = :usuarioId
+          AND estado NOT IN ('ENTREGADO', 'CANCELADO')
+        """
+    )
+    fun contarPedidosActivosUsuario(
+        usuarioId: Int
+    ): Flow<Int>
+
+    // Calcular únicamente los kilos de servicios por kilo.
+    @Query(
+        """
+        SELECT COALESCE(SUM(d.cantidad), 0.0)
+        FROM detalles_pedido AS d
+        INNER JOIN pedidos AS p
+            ON p.id = d.pedidoId
+        INNER JOIN servicios AS s
+            ON s.id = d.servicioId
+        WHERE p.usuarioId = :usuarioId
+          AND LOWER(TRIM(s.unidad)) = 'kilo'
+          AND p.estado != 'CANCELADO'
+        """
+    )
+    fun obtenerKilosLavadosUsuario(
+        usuarioId: Int
+    ): Flow<Double>
+
 }

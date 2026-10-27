@@ -1,10 +1,10 @@
-
 package com.alvarez.lavacampus.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alvarez.lavacampus.data.local.entity.DetallePedido
 import com.alvarez.lavacampus.data.local.entity.Pedido
+import com.alvarez.lavacampus.data.prefs.PreferenciasStore
 import com.alvarez.lavacampus.data.repository.LavaRepository
 import com.alvarez.lavacampus.model.LineaPedido
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,10 +16,15 @@ import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-// ViewModel encargado de registrar nuevos pedidos de lavandería
+// ViewModel encargado de registrar nuevos pedidos de lavandería.
 class NuevoPedidoViewModel(
-    private val repository: LavaRepository
+    private val repository: LavaRepository,
+    private val preferenciasStore: PreferenciasStore
 ) : ViewModel() {
+
+    // ==========================================
+    // ESTADOS DEL FORMULARIO
+    // ==========================================
 
     private val _lineas = MutableStateFlow<List<LineaPedido>>(emptyList())
     val lineas: StateFlow<List<LineaPedido>> = _lineas.asStateFlow()
@@ -33,22 +38,32 @@ class NuevoPedidoViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    // COMMIT 14: Estado de recepción de pedidos.
+    val recibirPedidos = preferenciasStore.recibirPedidos
+
     private val formatoFecha = DateTimeFormatter.ofPattern(
         "dd/MM/yyyy HH:mm"
     )
 
-    // Cargar únicamente los servicios activos
+    // ==========================================
+    // CARGAR SERVICIOS ACTIVOS
+    // ==========================================
+
     fun cargarServicios() {
+
         viewModelScope.launch {
+
             _cargando.value = true
             _error.value = null
 
             try {
+
                 val servicios = repository
                     .observarServiciosActivos()
                     .first()
 
                 _lineas.value = servicios.map { servicio ->
+
                     LineaPedido(
                         servicio = servicio,
                         cantidad = 0.0
@@ -56,34 +71,42 @@ class NuevoPedidoViewModel(
                 }
 
             } catch (e: Exception) {
+
                 _error.value =
                     "No se pudieron cargar los servicios: ${e.message}"
 
             } finally {
+
                 _cargando.value = false
             }
         }
     }
 
-    // Aumentar la cantidad según la unidad del servicio
+    // ==========================================
+    // AUMENTAR CANTIDAD
+    // ==========================================
+
     fun aumentarCantidad(servicioId: Int) {
+
         _lineas.value = _lineas.value.map { linea ->
 
             if (linea.servicio.id != servicioId) {
+
                 linea
+
             } else {
 
                 val nuevaCantidad = when {
 
-                    // Al seleccionar KG por primera vez, iniciar en 1 kg
+                    // Al seleccionar KG por primera vez, iniciar en 1 kg.
                     linea.servicio.unidad == "KG" &&
                             linea.cantidad == 0.0 -> 1.0
 
-                    // Los siguientes incrementos son de 0.5 kg
+                    // Los siguientes incrementos son de 0.5 kg.
                     linea.servicio.unidad == "KG" ->
                         linea.cantidad + 0.5
 
-                    // PRENDA y UNIDAD aumentan de uno en uno
+                    // PRENDA y UNIDAD aumentan de uno en uno.
                     else -> linea.cantidad + 1.0
                 }
 
@@ -92,12 +115,18 @@ class NuevoPedidoViewModel(
         }
     }
 
-    // Disminuir la cantidad según la unidad del servicio
+    // ==========================================
+    // DISMINUIR CANTIDAD
+    // ==========================================
+
     fun disminuirCantidad(servicioId: Int) {
+
         _lineas.value = _lineas.value.map { linea ->
 
             if (linea.servicio.id != servicioId) {
+
                 linea
+
             } else {
 
                 val nuevaCantidad = when {
@@ -116,38 +145,55 @@ class NuevoPedidoViewModel(
         }
     }
 
-    // Calcular el importe total del pedido
+    // ==========================================
+    // CALCULAR TOTAL
+    // ==========================================
+
     fun calcularTotal(): Double {
+
         return _lineas.value.sumOf { it.subtotal }
     }
 
-    // Comprobar que exista algún servicio seleccionado
+    // ==========================================
+    // VALIDAR SERVICIOS SELECCIONADOS
+    // ==========================================
+
     fun tieneServiciosSeleccionados(): Boolean {
+
         return _lineas.value.any { it.seleccionado }
     }
 
-    // Obtener las líneas que tienen una cantidad mayor que cero
+    // ==========================================
+    // OBTENER SERVICIOS SELECCIONADOS
+    // ==========================================
+
     fun obtenerLineasSeleccionadas(): List<LineaPedido> {
+
         return _lineas.value.filter { it.seleccionado }
     }
 
-    // Calcular la fecha de entrega omitiendo los domingos
+    // ==========================================
+    // CALCULAR FECHA DE ENTREGA
+    // ==========================================
+
     private fun obtenerFechaEntrega(
         fechaInicio: LocalDateTime,
         horasEntrega: Int
     ): LocalDateTime {
 
-        // Convertir las horas de la guía a días de entrega
+        // Convertir las horas de la guía a días de entrega.
         val diasEntrega = (horasEntrega + 23) / 24
 
         var fecha = fechaInicio
         var diasAgregados = 0
 
         while (diasAgregados < diasEntrega) {
+
             fecha = fecha.plusDays(1)
 
-            // Los domingos no cuentan como día de entrega
+            // Los domingos no cuentan como día de entrega.
             if (fecha.dayOfWeek != DayOfWeek.SUNDAY) {
+
                 diasAgregados++
             }
         }
@@ -155,12 +201,16 @@ class NuevoPedidoViewModel(
         return fecha
     }
 
-    // Mostrar la fecha estimada de entrega
+    // ==========================================
+    // MOSTRAR FECHA ESTIMADA DE ENTREGA
+    // ==========================================
+
     fun calcularFechaEntrega(): String {
 
         val seleccionadas = obtenerLineasSeleccionadas()
 
         if (seleccionadas.isEmpty()) {
+
             return "Selecciona un servicio"
         }
 
@@ -174,24 +224,32 @@ class NuevoPedidoViewModel(
         ).format(formatoFecha)
     }
 
-    // Registrar un pedido junto con sus detalles
+    // ==========================================
+    // REGISTRAR NUEVO PEDIDO
+    // ==========================================
+
     fun registrarPedido(
         usuarioId: Int,
         nota: String,
         onResultado: (Long?) -> Unit
     ) {
 
+        // Evitar registrar dos veces el mismo pedido.
         if (_guardando.value) return
 
         val seleccionadas = obtenerLineasSeleccionadas()
 
+        // Comprobar que exista algún servicio seleccionado.
         if (seleccionadas.isEmpty()) {
+
             _error.value = "Selecciona al menos un servicio"
             onResultado(null)
             return
         }
 
+        // Comprobar que el estudiante sea válido.
         if (usuarioId <= 0) {
+
             _error.value = "No se identificó al estudiante"
             onResultado(null)
             return
@@ -204,24 +262,55 @@ class NuevoPedidoViewModel(
 
             try {
 
-                // Consultar los pedidos actuales del estudiante
+                // ==========================================
+                // COMMIT 14: VALIDAR RECEPCIÓN DE PEDIDOS
+                // ==========================================
+
+                // Consultar la preferencia guardada en DataStore.
+                val aceptaPedidos = preferenciasStore
+                    .recibirPedidos
+                    .first()
+
+                // Si el administrador desactivó la recepción,
+                // no se permite registrar nuevos pedidos.
+                if (!aceptaPedidos) {
+
+                    _error.value =
+                        "La lavandería no está recibiendo nuevos pedidos en este momento."
+
+                    onResultado(null)
+                    return@launch
+                }
+
+                // ==========================================
+                // VALIDAR LÍMITE DE PEDIDOS ACTIVOS
+                // ==========================================
+
+                // Consultar los pedidos actuales del estudiante.
                 val pedidosUsuario = repository
                     .observarPedidosPorUsuario(usuarioId)
                     .first()
 
-                // Contar únicamente los pedidos activos
+                // Contar únicamente los pedidos activos.
                 val pedidosActivos = pedidosUsuario.count {
+
                     it.estado == "RECIBIDO" ||
                             it.estado == "EN_PROCESO" ||
                             it.estado == "LISTO"
                 }
 
-                // La guía permite como máximo tres pedidos activos
+                // La guía permite como máximo tres pedidos activos.
                 if (pedidosActivos >= 3) {
+
                     _error.value = "Ya tienes 3 pedidos activos"
+
                     onResultado(null)
                     return@launch
                 }
+
+                // ==========================================
+                // CALCULAR FECHAS Y TOTAL
+                // ==========================================
 
                 val ahora = LocalDateTime.now()
 
@@ -240,7 +329,10 @@ class NuevoPedidoViewModel(
                     it.subtotal
                 }
 
-                // Crear el pedido principal
+                // ==========================================
+                // CREAR PEDIDO PRINCIPAL
+                // ==========================================
+
                 val pedido = Pedido(
                     usuarioId = usuarioId,
                     fechaRegistro = fechaRegistro,
@@ -252,8 +344,12 @@ class NuevoPedidoViewModel(
                     nota = nota.trim()
                 )
 
-                // Crear los detalles de cada servicio seleccionado
+                // ==========================================
+                // CREAR DETALLES DEL PEDIDO
+                // ==========================================
+
                 val detalles = seleccionadas.map { linea ->
+
                     DetallePedido(
                         pedidoId = 0,
                         servicioId = linea.servicio.id,
@@ -263,13 +359,20 @@ class NuevoPedidoViewModel(
                     )
                 }
 
-                // Guardar pedido y detalles en una transacción
+                // ==========================================
+                // GUARDAR PEDIDO Y DETALLES EN ROOM
+                // ==========================================
+
+                // Registrar todo dentro de una transacción.
                 val pedidoId = repository.registrarPedidoCompleto(
                     pedido = pedido,
                     detalles = detalles
                 )
 
+                // Limpiar el formulario después del registro.
                 limpiarSeleccion()
+
+                // Comunicar el ID del pedido registrado.
                 onResultado(pedidoId)
 
             } catch (e: Exception) {
@@ -280,14 +383,20 @@ class NuevoPedidoViewModel(
                 onResultado(null)
 
             } finally {
+
                 _guardando.value = false
             }
         }
     }
 
-    // Restablecer todas las cantidades a cero
+    // ==========================================
+    // LIMPIAR SELECCIÓN
+    // ==========================================
+
     fun limpiarSeleccion() {
+
         _lineas.value = _lineas.value.map { linea ->
+
             linea.actualizarCantidad(0.0)
         }
 

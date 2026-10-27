@@ -1,6 +1,7 @@
 package com.alvarez.lavacampus.data.prefs
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -11,23 +12,32 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
-// Instancia de DataStore para guardar las preferencias
+// Instancia única de DataStore para las preferencias de LavaCampus.
 private val Context.dataStore by preferencesDataStore(
     name = "lavacampus_preferencias"
 )
 
-// Clase encargada de gestionar la sesión del usuario
 class PreferenciasStore(
     private val context: Context
 ) {
 
     companion object {
+
+        // Datos de la sesión.
         private val USUARIO_ID = intPreferencesKey("usuario_id")
         private val ROL_USUARIO = stringPreferencesKey("rol_usuario")
+
+        // COMMIT 14: Configuraciones de la aplicación.
+        private val MODO_OSCURO = booleanPreferencesKey("modo_oscuro")
+        private val NOTIFICACIONES = booleanPreferencesKey("notificaciones")
+        private val RECIBIR_PEDIDOS = booleanPreferencesKey("recibir_pedidos")
     }
 
-    // Observar el identificador del usuario que inició sesión
-    val usuarioId: Flow<Int?> = context.dataStore.data
+    // =====================================
+    // LECTURA SEGURA DE PREFERENCIAS
+    // =====================================
+
+    private val preferencias = context.dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
@@ -35,17 +45,22 @@ class PreferenciasStore(
                 throw exception
             }
         }
-        .map { preferencias ->
-            preferencias[USUARIO_ID]
-        }
 
-    // Observar el rol del usuario
-    val rolUsuario: Flow<String?> = context.dataStore.data
-        .map { preferencias ->
-            preferencias[ROL_USUARIO]
-        }
+    // =====================================
+    // SESIÓN DEL USUARIO
+    // =====================================
 
-    // Guardar la sesión del estudiante o administrador
+    // Identificador del usuario que inició sesión.
+    val usuarioId: Flow<Int?> = preferencias.map {
+        it[USUARIO_ID]
+    }
+
+    // Rol del usuario.
+    val rolUsuario: Flow<String?> = preferencias.map {
+        it[ROL_USUARIO]
+    }
+
+    // Guardar la sesión del estudiante o administrador.
     suspend fun guardarSesion(
         id: Int,
         rol: String
@@ -56,11 +71,56 @@ class PreferenciasStore(
         }
     }
 
-    // Eliminar los datos de la sesión al cerrar sesión
+    // Cerrar sesión sin eliminar las configuraciones.
     suspend fun cerrarSesion() {
         context.dataStore.edit { preferencias ->
             preferencias.remove(USUARIO_ID)
             preferencias.remove(ROL_USUARIO)
+        }
+    }
+
+    // =====================================
+    // COMMIT 14: MODO OSCURO
+    // =====================================
+
+    // Por defecto, el modo oscuro está desactivado.
+    val modoOscuro: Flow<Boolean> = preferencias.map {
+        it[MODO_OSCURO] ?: false
+    }
+
+    suspend fun guardarModoOscuro(activado: Boolean) {
+        context.dataStore.edit { preferencias ->
+            preferencias[MODO_OSCURO] = activado
+        }
+    }
+
+    // =====================================
+    // COMMIT 14: NOTIFICACIONES
+    // =====================================
+
+    // Por defecto, las notificaciones están activadas.
+    val notificaciones: Flow<Boolean> = preferencias.map {
+        it[NOTIFICACIONES] ?: true
+    }
+
+    suspend fun guardarNotificaciones(activadas: Boolean) {
+        context.dataStore.edit { preferencias ->
+            preferencias[NOTIFICACIONES] = activadas
+        }
+    }
+
+    // =====================================
+    // COMMIT 14: RECEPCIÓN DE PEDIDOS
+    // =====================================
+
+    // Por defecto, la lavandería recibe pedidos.
+    val recibirPedidos: Flow<Boolean> = preferencias.map {
+        it[RECIBIR_PEDIDOS] ?: true
+    }
+
+    suspend fun guardarRecibirPedidos(activado: Boolean) {
+        context.dataStore.edit { preferencias ->
+            preferencias[RECIBIR_PEDIDOS] = activado
         }
     }
 }

@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus.data.repository
 
 import com.alvarez.lavacampus.data.local.entity.DetallePedido
@@ -6,6 +5,7 @@ import com.alvarez.lavacampus.data.local.entity.Pedido
 import com.alvarez.lavacampus.data.local.entity.Servicio
 import com.alvarez.lavacampus.data.local.entity.Usuario
 import com.alvarez.lavacampus.data.local.relation.PedidoConDetalle
+import com.alvarez.lavacampus.data.model.ClienteResumen
 import kotlinx.coroutines.flow.Flow
 
 interface LavaRepository {
@@ -24,6 +24,9 @@ interface LavaRepository {
 
     fun observarClientes(): Flow<List<Usuario>>
 
+    // COMMIT 14: Consultar clientes con sus estadísticas de pedidos.
+    fun observarResumenClientes(): Flow<List<ClienteResumen>>
+
     // =========================
     // SERVICIOS
     // =========================
@@ -37,6 +40,18 @@ interface LavaRepository {
     suspend fun registrarServicio(servicio: Servicio): Long
 
     suspend fun actualizarServicio(servicio: Servicio)
+
+    // =========================
+    // SERVICIOS - COMMIT 14
+    // =========================
+
+    // Elimina un servicio si no está asociado a ningún pedido.
+    // Si está asociado, lo desactiva para conservar el historial.
+    //
+    // Retorna:
+    // true  -> Servicio eliminado definitivamente.
+    // false -> Servicio desactivado porque tiene pedidos asociados.
+    suspend fun eliminarServicio(servicioId: Int): Boolean
 
     // =========================
     // PEDIDOS
@@ -74,6 +89,20 @@ interface LavaRepository {
     )
 
     fun contarPedidosPorEstado(estado: String): Flow<Int>
+    // Cantidad total de pedidos realizados por el estudiante.
+    fun contarPedidosUsuario(
+        usuarioId: Int
+    ): Flow<Int>
+
+    // Cantidad de pedidos que todavía están activos.
+    fun contarPedidosActivosUsuario(
+        usuarioId: Int
+    ): Flow<Int>
+
+    // Cantidad de kilos registrados en pedidos no cancelados.
+    fun obtenerKilosLavadosUsuario(
+        usuarioId: Int
+    ): Flow<Double>
 
     // =========================
     // CASILLEROS - COMMIT 13

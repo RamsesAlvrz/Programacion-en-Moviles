@@ -8,6 +8,7 @@ import com.alvarez.lavacampus.data.local.entity.Pedido
 import com.alvarez.lavacampus.data.local.entity.Servicio
 import com.alvarez.lavacampus.data.local.entity.Usuario
 import com.alvarez.lavacampus.data.local.relation.PedidoConDetalle
+import com.alvarez.lavacampus.data.model.ClienteResumen
 import kotlinx.coroutines.flow.Flow
 
 // Implementación del repositorio utilizando Room.
@@ -49,6 +50,11 @@ class LavaRepositoryRoom(
         return usuarioDao.obtenerClientes()
     }
 
+    // COMMIT 14: Obtener estudiantes con sus estadísticas de pedidos.
+    override fun observarResumenClientes(): Flow<List<ClienteResumen>> {
+        return usuarioDao.obtenerResumenClientes()
+    }
+
     // =====================================
     // OPERACIONES DE SERVICIOS
     // =====================================
@@ -75,6 +81,47 @@ class LavaRepositoryRoom(
 
     override suspend fun actualizarServicio(servicio: Servicio) {
         servicioDao.actualizar(servicio)
+    }
+
+    override suspend fun eliminarServicio(servicioId: Int): Boolean {
+
+        return database.withTransaction {
+
+            // Verificar que el servicio exista.
+            val servicio = servicioDao.obtenerPorId(servicioId)
+                ?: throw IllegalArgumentException(
+                    "El servicio seleccionado no existe."
+                )
+
+            // Comprobar si el servicio está asociado a pedidos.
+            val cantidadDetalles =
+                detallePedidoDao.contarPorServicio(servicioId)
+
+            if (cantidadDetalles > 0) {
+
+                // Si tiene pedidos, no se elimina.
+                // Solamente se desactiva.
+                servicioDao.actualizar(
+                    servicio.copy(activo = false)
+                )
+
+                false
+
+            } else {
+
+                // Si no tiene pedidos, se elimina definitivamente.
+                val filasEliminadas =
+                    servicioDao.eliminarPorId(servicioId)
+
+                if (filasEliminadas == 0) {
+                    throw IllegalStateException(
+                        "No se pudo eliminar el servicio."
+                    )
+                }
+
+                true
+            }
+        }
     }
 
     // =====================================
@@ -151,6 +198,27 @@ class LavaRepositoryRoom(
         estado: String
     ): Flow<Int> {
         return pedidoDao.contarPorEstado(estado)
+    }
+
+    // Obtener el total de pedidos del estudiante.
+    override fun contarPedidosUsuario(
+        usuarioId: Int
+    ): Flow<Int> {
+        return pedidoDao.contarPedidosUsuario(usuarioId)
+    }
+
+    // Obtener la cantidad de pedidos activos.
+    override fun contarPedidosActivosUsuario(
+        usuarioId: Int
+    ): Flow<Int> {
+        return pedidoDao.contarPedidosActivosUsuario(usuarioId)
+    }
+
+    // Obtener los kilos registrados en pedidos no cancelados.
+    override fun obtenerKilosLavadosUsuario(
+        usuarioId: Int
+    ): Flow<Double> {
+        return pedidoDao.obtenerKilosLavadosUsuario(usuarioId)
     }
 
     // =====================================

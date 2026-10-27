@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+
+    <!-- Contorno exterior de la lavadora -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8,4 L24,4 Q26,4 26,6 L26,26 Q26,28 24,28 L8,28 Q6,28 6,26 L6,6 Q6,4 8,4 Z" />
+
+    <!-- Panel superior -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="1.5"
+        android:pathData="M6,11 L26,11" />
+
+    <!-- Botones -->
+    <path
+        android:fillColor="#9CA3AF"
+        android:pathData="M10,7 m-1,0 a1,1 0,1 0,2 0 a1,1 0,1 0,-2 0" />
+
+    <path
+        android:fillColor="#9CA3AF"
+        android:pathData="M14,7 m-1,0 a1,1 0,1 0,2 0 a1,1 0,1 0,-2 0" />
+
+    <!-- Puerta circular -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="1.7"
+        android:pathData="M16,19 m-7,0 a7,7 0,1 0,14 0 a7,7 0,1 0,-14 0" />
+
+    <!-- Cristal interior -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#9CA3AF"
+        android:strokeWidth="1.2"
+        android:pathData="M16,19 m-4.5,0 a4.5,4.5 0,1 0,9 0 a4.5,4.5 0,1 0,-9 0" />
+
+</vector>

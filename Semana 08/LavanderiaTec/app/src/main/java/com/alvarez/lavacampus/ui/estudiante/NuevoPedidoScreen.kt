@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus.ui.estudiante
 
 import androidx.compose.foundation.BorderStroke
@@ -51,6 +50,11 @@ fun NuevoPedidoScreen(
     val cargando by viewModel.cargando.collectAsStateWithLifecycle()
     val guardando by viewModel.guardando.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+
+    // COMMIT 14: Estado de recepción de pedidos guardado en DataStore.
+    val recibirPedidos by viewModel.recibirPedidos.collectAsStateWithLifecycle(
+        initialValue = true
+    )
 
     var nota by rememberSaveable { mutableStateOf("") }
 
@@ -112,6 +116,35 @@ fun NuevoPedidoScreen(
                 )
             }
 
+            // COMMIT 14: Avisar cuando la lavandería no acepta pedidos.
+            if (!recibirPedidos) {
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFFFFF1F0),
+                        border = BorderStroke(1.dp, Color(0xFFF5B7B1))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Text(
+                                text = "Servicio temporalmente no disponible",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = Color(0xFFB42318)
+                            )
+                            Text(
+                                text = "La lavandería no está recibiendo nuevos pedidos en este momento. Inténtalo más tarde.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF7A271A)
+                            )
+                        }
+                    }
+                }
+            }
+
             if (cargando) {
                 item {
                     Box(
@@ -132,7 +165,7 @@ fun NuevoPedidoScreen(
                 ) { linea ->
                     ServicioSeleccionCard(
                         linea = linea,
-                        habilitado = !guardando,
+                        habilitado = !guardando && recibirPedidos,
                         onAumentar = {
                             viewModel.aumentarCantidad(
                                 linea.servicio.id
@@ -171,7 +204,7 @@ fun NuevoPedidoScreen(
                     BasicTextField(
                         value = nota,
                         onValueChange = { nota = it },
-                        enabled = !guardando,
+                        enabled = !guardando && recibirPedidos,
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = androidx.compose.ui.text.TextStyle(
                             fontSize = 13.sp,
@@ -335,6 +368,7 @@ fun NuevoPedidoScreen(
                         }
                     },
                     enabled = haySeleccion &&
+                            recibirPedidos &&
                             !guardando &&
                             !cargando,
                     modifier = Modifier
@@ -353,7 +387,7 @@ fun NuevoPedidoScreen(
                         )
                     } else {
                         Text(
-                            text = "Confirmar pedido",
+                            text = if (recibirPedidos) "Confirmar pedido" else "Pedidos no disponibles",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
