@@ -9,8 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.LocalLaundryService
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,11 +27,17 @@ import com.alvarez.lavacampus.viewmodel.BandejaViewModel
 import com.alvarez.lavacampus.viewmodel.PedidoBandeja
 import java.util.Locale
 
+// Colores originales de la bandeja.
 private val FondoBandeja = Color(0xFFFAF9FE)
 private val MoradoBandeja = Color(0xFF7024DB)
 private val BordeBandeja = Color(0xFFECEAF2)
 private val TextoPrincipal = Color(0xFF252735)
 private val TextoSecundario = Color(0xFF9195A3)
+
+// COMMIT A: Colores para identificar pedidos atrasados.
+private val RojoAtrasado = Color(0xFFD92D40)
+private val FondoAtrasado = Color(0xFFFFF0F1)
+private val BordeAtrasado = Color(0xFFFFB8C0)
 
 @Composable
 fun BandejaScreen(
@@ -40,9 +46,14 @@ fun BandejaScreen(
     onGestionarPedido: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    // Estados obtenidos desde BandejaViewModel.
     val pedidos by viewModel.pedidos.collectAsState()
     val busqueda by viewModel.busqueda.collectAsState()
     val filtro by viewModel.filtroEstado.collectAsState()
+
+    // COMMIT A: Cantidad total de pedidos atrasados.
+    val totalAtrasados by viewModel.totalPedidosAtrasados.collectAsState()
 
     Column(
         modifier = modifier
@@ -50,12 +61,13 @@ fun BandejaScreen(
             .padding(horizontal = 16.dp)
     ) {
 
-        // Encabezado de la pantalla.
+        // Encabezado original.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(58.dp)
         ) {
+
             IconButton(
                 onClick = onVolver,
                 modifier = Modifier.align(Alignment.CenterStart)
@@ -78,7 +90,7 @@ fun BandejaScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Buscador por estudiante o número de pedido.
+        // Buscador original por estudiante o número de pedido.
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = Color.White,
@@ -88,10 +100,12 @@ fun BandejaScreen(
                 .fillMaxWidth()
                 .height(48.dp)
         ) {
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 13.dp)
             ) {
+
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
@@ -110,7 +124,9 @@ fun BandejaScreen(
                         color = TextoPrincipal
                     ),
                     decorationBox = { innerTextField ->
+
                         Box {
+
                             if (busqueda.isBlank()) {
                                 Text(
                                     text = "Buscar por estudiante o número",
@@ -120,6 +136,7 @@ fun BandejaScreen(
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
+
                             innerTextField()
                         }
                     },
@@ -130,11 +147,76 @@ fun BandejaScreen(
 
         Spacer(modifier = Modifier.height(13.dp))
 
-        // Chips de filtros.
+        // COMMIT A: Resumen de pedidos atrasados.
+        // Se muestra únicamente cuando existen pedidos vencidos.
+        if (totalAtrasados > 0) {
+
+            Surface(
+                color = FondoAtrasado,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, BordeAtrasado),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Row(
+                    modifier = Modifier.padding(
+                        horizontal = 14.dp,
+                        vertical = 12.dp
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        Text(
+                            text = "Pedidos atrasados",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = RojoAtrasado
+                        )
+
+                        Spacer(modifier = Modifier.height(3.dp))
+
+                        Text(
+                            text = "Requieren atención prioritaria",
+                            fontSize = 10.sp,
+                            color = RojoAtrasado.copy(alpha = 0.8f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Surface(
+                        color = RojoAtrasado,
+                        shape = RoundedCornerShape(50)
+                    ) {
+
+                        Text(
+                            text = totalAtrasados.toString(),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 6.dp
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(13.dp))
+        }
+
+        // Filtros originales de la bandeja.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+
             val filtros = listOf(
                 "TODOS" to "Todos",
                 "RECIBIDO" to "Recibido",
@@ -143,6 +225,7 @@ fun BandejaScreen(
             )
 
             filtros.forEach { (codigo, etiqueta) ->
+
                 val seleccionado = filtro == codigo
 
                 Surface(
@@ -160,9 +243,15 @@ fun BandejaScreen(
                     modifier = Modifier
                         .weight(1f)
                         .height(38.dp)
-                        .clickable { viewModel.seleccionarFiltro(codigo) }
+                        .clickable {
+                            viewModel.seleccionarFiltro(codigo)
+                        }
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+
                         Text(
                             text = etiqueta,
                             fontSize = 11.sp,
@@ -185,29 +274,36 @@ fun BandejaScreen(
 
         Spacer(modifier = Modifier.height(15.dp))
 
+        // Listado de pedidos.
         if (pedidos.isEmpty()) {
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
+
                 Text(
                     text = "No se encontraron pedidos",
                     color = TextoSecundario,
                     fontSize = 14.sp
                 )
             }
+
         } else {
+
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
+
                 items(
                     items = pedidos,
                     key = { it.pedido.id }
                 ) { item ->
+
                     TarjetaPedidoBandeja(
                         item = item,
                         onAbrir = {
@@ -225,9 +321,11 @@ private fun TarjetaPedidoBandeja(
     item: PedidoBandeja,
     onAbrir: () -> Unit
 ) {
+
     val pedido = item.pedido
     val estado = EstadoPedido.desdeCodigo(pedido.estado)
 
+    // Colores originales según el estado.
     val colorEstado = when (estado) {
         EstadoPedido.RECIBIDO -> Color(0xFFBD8310)
         EstadoPedido.EN_PROCESO -> Color(0xFF367EE6)
@@ -253,15 +351,24 @@ private fun TarjetaPedidoBandeja(
         else -> null
     }
 
+    // COMMIT A: Se resalta la tarjeta cuando el pedido está atrasado.
     Surface(
         shape = RoundedCornerShape(15.dp),
         color = Color.White,
-        border = BorderStroke(1.dp, BordeBandeja),
+        border = BorderStroke(
+            width = if (item.estaAtrasado) 1.5.dp else 1.dp,
+            color = if (item.estaAtrasado) {
+                RojoAtrasado
+            } else {
+                BordeBandeja
+            }
+        ),
         shadowElevation = 1.dp,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onAbrir)
     ) {
+
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.Top
@@ -269,16 +376,20 @@ private fun TarjetaPedidoBandeja(
 
             // Icono de lavandería con fondo pastel.
             Box(
-                modifier = Modifier
-                    .size(43.dp),
+                modifier = Modifier.size(43.dp),
                 contentAlignment = Alignment.Center
             ) {
+
                 Surface(
                     shape = RoundedCornerShape(11.dp),
                     color = fondoEstado,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+
                         Icon(
                             imageVector = Icons.Default.LocalLaundryService,
                             contentDescription = null,
@@ -291,13 +402,17 @@ private fun TarjetaPedidoBandeja(
 
             Spacer(modifier = Modifier.width(11.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
 
+                // Número de pedido y precio.
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
+
                     Text(
                         text = "Pedido #${pedido.id.toString().padStart(3, '0')}",
                         fontSize = 13.sp,
@@ -319,7 +434,7 @@ private fun TarjetaPedidoBandeja(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Nombre del estudiante y detalle real del pedido.
+                // Nombre del estudiante.
                 val nombreEstudiante =
                     item.estudiante?.nombre ?: "Estudiante"
 
@@ -328,30 +443,58 @@ private fun TarjetaPedidoBandeja(
                     .split(Regex("\\s+"))
                     .filter { it.isNotBlank() }
                     .let { partes ->
+
                         when {
                             partes.isEmpty() -> "Estudiante"
+
                             partes.size == 1 -> partes.first()
-                            else -> "${partes.first()} ${partes[1].first()}."
+
+                            else -> {
+                                "${partes.first()} ${partes[1].first()}."
+                            }
                         }
                     }
 
                 val detallePedido = item.detalleResumen
 
                 Text(
-                    text = if (detallePedido.isBlank()) nombreAbreviado
-                    else "$nombreAbreviado · $detallePedido",
+                    text = if (detallePedido.isBlank()) {
+                        nombreAbreviado
+                    } else {
+                        "$nombreAbreviado · $detallePedido"
+                    },
                     fontSize = 11.sp,
                     color = TextoSecundario,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
+// Mostrar la fecha límite de entrega del pedido.
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Text(
+                    text = "Entrega: ${pedido.fechaEntrega}",
+                    fontSize = 11.sp,
+                    fontWeight = if (item.estaAtrasado) {
+                        FontWeight.SemiBold
+                    } else {
+                        FontWeight.Normal
+                    },
+                    color = if (item.estaAtrasado) {
+                        RojoAtrasado
+                    } else {
+                        TextoSecundario
+                    }
+                )
+
                 Spacer(modifier = Modifier.height(7.dp))
 
+                // Estado actual del pedido.
                 Surface(
                     color = fondoEstado,
                     shape = RoundedCornerShape(50)
                 ) {
+
                     Text(
                         text = estado?.etiqueta ?: pedido.estado,
                         fontSize = 10.sp,
@@ -364,13 +507,43 @@ private fun TarjetaPedidoBandeja(
                     )
                 }
 
+                // COMMIT A: Etiqueta para pedidos atrasados.
+                if (item.estaAtrasado) {
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Surface(
+                        color = FondoAtrasado,
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(
+                            1.dp,
+                            BordeAtrasado
+                        )
+                    ) {
+
+                        Text(
+                            text = "Pedido atrasado",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = RojoAtrasado,
+                            modifier = Modifier.padding(
+                                horizontal = 9.dp,
+                                vertical = 4.dp
+                            )
+                        )
+                    }
+                }
+
+                // Botón original para gestionar el pedido.
                 if (textoBoton != null) {
+
                     Spacer(modifier = Modifier.height(7.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
+
                         Button(
                             onClick = onAbrir,
                             colors = ButtonDefaults.buttonColors(
@@ -385,6 +558,7 @@ private fun TarjetaPedidoBandeja(
                                 .width(112.dp)
                                 .height(36.dp)
                         ) {
+
                             Text(
                                 text = textoBoton,
                                 fontSize = 11.sp,

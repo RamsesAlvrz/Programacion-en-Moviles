@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus.ui.administrador
 
 import androidx.compose.foundation.layout.*
@@ -6,9 +5,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.LocalLaundryService
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,17 +26,28 @@ private val Morado = Color(0xFF6D28D9)
 private val TextoOscuro = Color(0xFF263247)
 private val Verde = Color(0xFF16A34A)
 
+// COMMIT A: Colores para los pedidos atrasados.
+private val RojoAtrasado = Color(0xFFDC2626)
+private val FondoAtrasado = Color(0xFFFEE2E2)
+
 @Composable
 fun PanelScreen(
     viewModel: PanelViewModel,
     onVerPedidosListos: () -> Unit
 ) {
+
     val pedidosHoy by viewModel.pedidosHoy.collectAsStateWithLifecycle()
     val enProceso by viewModel.enProceso.collectAsStateWithLifecycle()
     val porRecoger by viewModel.porRecoger.collectAsStateWithLifecycle()
+
+    // COMMIT A: Nuevo indicador de pedidos atrasados.
+    val pedidosAtrasados by viewModel.pedidosAtrasados.collectAsStateWithLifecycle()
+
     val ingresosSemana by viewModel.ingresosSemana.collectAsStateWithLifecycle()
+
     val pedidosPagadosSemana by viewModel.pedidosPagadosSemana
         .collectAsStateWithLifecycle()
+
     val porEstado by viewModel.porEstado.collectAsStateWithLifecycle()
     val porServicio by viewModel.porServicio.collectAsStateWithLifecycle()
     val cargando by viewModel.cargando.collectAsStateWithLifecycle()
@@ -67,6 +74,7 @@ fun PanelScreen(
         Column(
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
+
             Text(
                 text = "Panel de la lavandería",
                 fontSize = 20.sp,
@@ -82,6 +90,7 @@ fun PanelScreen(
         }
 
         if (cargando) {
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -90,13 +99,15 @@ fun PanelScreen(
             ) {
                 CircularProgressIndicator()
             }
+
         } else {
 
-            // TRES CONTADORES PASTEL
+            // TRES CONTADORES ORIGINALES
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 TarjetaContador(
                     titulo = "Pedidos hoy",
                     cantidad = pedidosHoy,
@@ -122,7 +133,59 @@ fun PanelScreen(
                 )
             }
 
-            // INGRESOS SEMANALES
+            // COMMIT A: NUEVA TARJETA DE PEDIDOS ATRASADOS
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(13.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = FondoAtrasado
+                )
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 16.dp,
+                            vertical = 12.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+
+                        Text(
+                            text = "Pedidos atrasados",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = RojoAtrasado
+                        )
+
+                        Text(
+                            text = if (pedidosAtrasados > 0) {
+                                "Requieren atención prioritaria"
+                            } else {
+                                "No hay pedidos atrasados"
+                            },
+                            fontSize = 11.sp,
+                            color = RojoAtrasado.copy(alpha = 0.8f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Text(
+                        text = pedidosAtrasados.toString(),
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = RojoAtrasado
+                    )
+                }
+            }
 
             // INGRESOS SEMANALES
             Card(
@@ -132,6 +195,7 @@ fun PanelScreen(
                     containerColor = Morado
                 )
             ) {
+
                 Column(
                     modifier = Modifier.padding(
                         horizontal = 16.dp,
@@ -139,6 +203,7 @@ fun PanelScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
+
                     Text(
                         text = "Ingresos de la semana",
                         fontSize = 12.sp,
@@ -150,6 +215,7 @@ fun PanelScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+
                         Text(
                             text = String.format(
                                 Locale.US,
@@ -171,11 +237,11 @@ fun PanelScreen(
                 }
             }
 
-
             // GRÁFICO DE DONA
             Column(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+
                 Text(
                     text = "Pedidos por estado",
                     fontSize = 14.sp,
@@ -193,6 +259,7 @@ fun PanelScreen(
                         defaultElevation = 1.dp
                     )
                 ) {
+
                     Box(
                         modifier = Modifier.padding(12.dp)
                     ) {
@@ -205,6 +272,7 @@ fun PanelScreen(
             Column(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+
                 Text(
                     text = "Ingresos por servicio (S/)",
                     fontSize = 14.sp,
@@ -222,6 +290,7 @@ fun PanelScreen(
                         defaultElevation = 1.dp
                     )
                 ) {
+
                     Box(
                         modifier = Modifier.padding(12.dp)
                     ) {
@@ -230,8 +299,9 @@ fun PanelScreen(
                 }
             }
 
-            // ALERTA VERDE DE PEDIDOS LISTOS
+            // ALERTA ORIGINAL DE PEDIDOS LISTOS
             if (porRecoger > 0) {
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -239,6 +309,7 @@ fun PanelScreen(
                         containerColor = Color(0xFFDCFCE7)
                     )
                 ) {
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -246,6 +317,7 @@ fun PanelScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+
                         Icon(
                             imageVector = Icons.Default.NotificationsActive,
                             contentDescription = null,
@@ -256,6 +328,7 @@ fun PanelScreen(
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
+
                             Text(
                                 text = "$porRecoger pedidos esperan recojo",
                                 fontSize = 12.sp,
@@ -282,6 +355,7 @@ fun PanelScreen(
                                 containerColor = Verde
                             )
                         ) {
+
                             Text(
                                 text = "Ver",
                                 fontSize = 12.sp
@@ -293,6 +367,7 @@ fun PanelScreen(
         }
 
         if (mensajeError != null) {
+
             Text(
                 text = mensajeError.orEmpty(),
                 color = MaterialTheme.colorScheme.error,
@@ -310,6 +385,7 @@ private fun TarjetaContador(
     colorTexto: Color,
     modifier: Modifier = Modifier
 ) {
+
     Card(
         modifier = modifier.height(76.dp),
         shape = RoundedCornerShape(13.dp),
@@ -317,6 +393,7 @@ private fun TarjetaContador(
             containerColor = fondo
         )
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -324,6 +401,7 @@ private fun TarjetaContador(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+
             Text(
                 text = cantidad.toString(),
                 fontSize = 25.sp,
@@ -331,7 +409,7 @@ private fun TarjetaContador(
                 color = colorTexto
             )
 
-            Spacer(Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = titulo,
