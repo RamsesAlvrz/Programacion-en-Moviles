@@ -145,13 +145,35 @@ class NuevoPedidoViewModel(
         }
     }
 
-    // ==========================================
-    // CALCULAR TOTAL
-    // ==========================================
+// ==========================================
+// MEJORA B: DESCUENTO POR VOLUMEN
+// ==========================================
 
-    fun calcularTotal(): Double {
-
+    // Calcula el subtotal original de todos los servicios.
+    fun calcularSubtotal(): Double {
         return _lineas.value.sumOf { it.subtotal }
+    }
+
+    // Calcula el 10 % de descuento cuando el lavado supera los 5 kg.
+    fun calcularDescuento(): Double {
+
+        val lavado = _lineas.value.firstOrNull { linea ->
+            linea.servicio.nombre.equals(
+                "Lavado y secado",
+                ignoreCase = true
+            ) && linea.servicio.unidad == "KG"
+        }
+
+        return if (lavado != null && lavado.cantidad > 5.0) {
+            lavado.subtotal * 0.10
+        } else {
+            0.0
+        }
+    }
+
+    // Calcula el importe final después del descuento.
+    fun calcularTotal(): Double {
+        return calcularSubtotal() - calcularDescuento()
     }
 
     // ==========================================
@@ -325,9 +347,8 @@ class NuevoPedidoViewModel(
                     horasEntrega = horasMaximas
                 ).format(formatoFecha)
 
-                val total = seleccionadas.sumOf {
-                    it.subtotal
-                }
+                // Guardar el total final con el descuento aplicado.
+                val total = calcularTotal()
 
                 // ==========================================
                 // CREAR PEDIDO PRINCIPAL
@@ -350,12 +371,26 @@ class NuevoPedidoViewModel(
 
                 val detalles = seleccionadas.map { linea ->
 
+                    val esLavadoConDescuento =
+                        linea.servicio.nombre.equals(
+                            "Lavado y secado",
+                            ignoreCase = true
+                        ) &&
+                                linea.servicio.unidad == "KG" &&
+                                linea.cantidad > 5.0
+
+                    val subtotalFinal = if (esLavadoConDescuento) {
+                        linea.subtotal * 0.90
+                    } else {
+                        linea.subtotal
+                    }
+
                     DetallePedido(
                         pedidoId = 0,
                         servicioId = linea.servicio.id,
                         cantidad = linea.cantidad,
                         precioUnitario = linea.servicio.precio,
-                        subtotal = linea.subtotal
+                        subtotal = subtotalFinal
                     )
                 }
 

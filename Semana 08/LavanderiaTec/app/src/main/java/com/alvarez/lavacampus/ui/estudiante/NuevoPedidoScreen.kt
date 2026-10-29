@@ -62,8 +62,14 @@ fun NuevoPedidoScreen(
         viewModel.cargarServicios()
     }
 
+// Servicios seleccionados por el estudiante.
     val lineasSeleccionadas = lineas.filter { it.seleccionado }
-    val total = lineasSeleccionadas.sumOf { it.subtotal }
+
+// MEJORA B: Calcular el subtotal, descuento y total final.
+    val subtotal = viewModel.calcularSubtotal()
+    val descuento = viewModel.calcularDescuento()
+    val total = viewModel.calcularTotal()
+
     val haySeleccion = lineasSeleccionadas.isNotEmpty()
 
     Scaffold(
@@ -293,6 +299,57 @@ fun NuevoPedidoScreen(
                                 )
                             }
                         }
+                    }
+
+                    // MEJORA B: Mostrar el descuento por volumen.
+                    if (descuento > 0.0) {
+
+                        // Subtotal original antes de aplicar el descuento.
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Subtotal",
+                                fontSize = 12.sp,
+                                color = GrisPedido
+                            )
+
+                            Text(
+                                text = "S/ ${String.format(Locale.US, "%.2f", subtotal)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextoPedido
+                            )
+                        }
+
+                        // Descuento aplicado únicamente al lavado por volumen.
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Descuento por volumen (10 %)",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF168A58)
+                            )
+
+                            Text(
+                                text = "-S/ ${String.format(Locale.US, "%.2f", descuento)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF168A58)
+                            )
+                        }
+
+                        Text(
+                            text = "Descuento aplicado por superar los 5 kg de lavado.",
+                            fontSize = 10.sp,
+                            color = Color(0xFF168A58)
+                        )
                     }
 
                     HorizontalDivider(
