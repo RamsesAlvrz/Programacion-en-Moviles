@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus.ui.estudiante
 
 import androidx.compose.foundation.BorderStroke
@@ -35,7 +34,8 @@ fun MisPedidosScreen(
     usuarioId: Int,
     onVolver: () -> Unit,
     onNuevoPedido: () -> Unit,
-    onVerDetalle: (Int) -> Unit
+    onVerDetalle: (Int) -> Unit,
+    onRepetirPedido: (Int) -> Unit
 ) {
     val activos by viewModel.activos.collectAsState()
     val historial by viewModel.historial.collectAsState()
@@ -175,7 +175,8 @@ fun MisPedidosScreen(
                         TarjetaMisPedidos(
                             pedido = pedido,
                             onVerDetalle = { onVerDetalle(pedido.id) },
-                            onCancelar = { pedidoParaCancelar = pedido }
+                            onCancelar = { pedidoParaCancelar = pedido },
+                            onRepetir = { onRepetirPedido(pedido.id) }
                         )
                     }
 
@@ -247,7 +248,8 @@ fun MisPedidosScreen(
 private fun TarjetaMisPedidos(
     pedido: Pedido,
     onVerDetalle: () -> Unit,
-    onCancelar: () -> Unit
+    onCancelar: () -> Unit,
+    onRepetir: () -> Unit
 ) {
     val estaListo = pedido.estado == "LISTO"
 
@@ -348,6 +350,30 @@ private fun TarjetaMisPedidos(
                     Text(
                         text = "Cancelar",
                         color = Color(0xFFE35D5D),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            // MEJORA C: Repetir pedidos finalizados o cancelados.
+            if (pedido.estado == "ENTREGADO" || pedido.estado == "CANCELADO") {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(
+                    onClick = onRepetir,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    Text(
+                        text = "Repetir pedido",
+                        color = AzulPedidos,
                         fontWeight = FontWeight.SemiBold
                     )
                 }

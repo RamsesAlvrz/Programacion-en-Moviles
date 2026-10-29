@@ -140,6 +140,11 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf("INICIO")
             }
 
+            // MEJORA C: Identifica el pedido que se desea repetir.
+            var pedidoParaRepetirId by rememberSaveable {
+                mutableIntStateOf(0)
+            }
+
             var pedidoSeleccionadoId by rememberSaveable {
                 mutableIntStateOf(0)
             }
@@ -186,6 +191,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(usuarioActual?.id) {
                 pantallaEstudiante = "INICIO"
                 pedidoSeleccionadoId = 0
+                pedidoParaRepetirId = 0
                 pantallaOrigenDetalle = "INICIO"
                 pantallaOrigenNuevoPedido = "INICIO"
                 pantallaAdministrador = "PANEL"
@@ -236,14 +242,35 @@ class MainActivity : ComponentActivity() {
                         when (pantallaEstudiante) {
 
                             "NUEVO_PEDIDO" -> {
+
+                                LaunchedEffect(pedidoParaRepetirId, estudianteId) {
+
+                                    if (pedidoParaRepetirId > 0) {
+
+                                        // Recuperar servicios y cantidades del pedido anterior.
+                                        nuevoPedidoViewModel.cargarPedidoAnterior(
+                                            pedidoId = pedidoParaRepetirId,
+                                            usuarioId = estudianteId
+                                        )
+
+                                    } else {
+
+                                        // Un pedido nuevo debe comenzar sin cantidades anteriores.
+                                        nuevoPedidoViewModel.cargarServicios()
+                                    }
+                                }
+
                                 NuevoPedidoScreen(
                                     viewModel = nuevoPedidoViewModel,
                                     usuarioId = estudianteId,
+
                                     onVolver = {
-                                        pantallaEstudiante =
-                                            pantallaOrigenNuevoPedido
+                                        pedidoParaRepetirId = 0
+                                        pantallaEstudiante = pantallaOrigenNuevoPedido
                                     },
+
                                     onPedidoRegistrado = {
+                                        pedidoParaRepetirId = 0
                                         pantallaEstudiante = "PEDIDOS"
                                     }
                                 )
@@ -361,24 +388,19 @@ class MainActivity : ComponentActivity() {
                                                     usuarioId = estudianteId,
 
                                                     onNuevoPedido = {
-                                                        pantallaOrigenNuevoPedido =
-                                                            "INICIO"
-                                                        pantallaEstudiante =
-                                                            "NUEVO_PEDIDO"
+                                                        pedidoParaRepetirId = 0
+                                                        pantallaOrigenNuevoPedido = "INICIO"
+                                                        pantallaEstudiante = "NUEVO_PEDIDO"
                                                     },
 
                                                     onVerDetalle = { pedidoId ->
-                                                        pedidoSeleccionadoId =
-                                                            pedidoId
-                                                        pantallaOrigenDetalle =
-                                                            "INICIO"
-                                                        pantallaEstudiante =
-                                                            "DETALLE_PEDIDO"
+                                                        pedidoSeleccionadoId = pedidoId
+                                                        pantallaOrigenDetalle = "INICIO"
+                                                        pantallaEstudiante = "DETALLE_PEDIDO"
                                                     },
 
                                                     onMisPedidos = {
-                                                        pantallaEstudiante =
-                                                            "PEDIDOS"
+                                                        pantallaEstudiante = "PEDIDOS"
                                                     }
                                                 )
                                             }
@@ -387,29 +409,30 @@ class MainActivity : ComponentActivity() {
                                             "PEDIDOS" -> {
 
                                                 MisPedidosScreen(
-                                                    viewModel =
-                                                        misPedidosViewModel,
+                                                    viewModel = misPedidosViewModel,
                                                     usuarioId = estudianteId,
 
                                                     onVolver = {
-                                                        pantallaEstudiante =
-                                                            "INICIO"
+                                                        pantallaEstudiante = "INICIO"
                                                     },
 
                                                     onNuevoPedido = {
-                                                        pantallaOrigenNuevoPedido =
-                                                            "PEDIDOS"
-                                                        pantallaEstudiante =
-                                                            "NUEVO_PEDIDO"
+                                                        pedidoParaRepetirId = 0
+                                                        pantallaOrigenNuevoPedido = "PEDIDOS"
+                                                        pantallaEstudiante = "NUEVO_PEDIDO"
                                                     },
 
                                                     onVerDetalle = { pedidoId ->
-                                                        pedidoSeleccionadoId =
-                                                            pedidoId
-                                                        pantallaOrigenDetalle =
-                                                            "PEDIDOS"
-                                                        pantallaEstudiante =
-                                                            "DETALLE_PEDIDO"
+                                                        pedidoSeleccionadoId = pedidoId
+                                                        pantallaOrigenDetalle = "PEDIDOS"
+                                                        pantallaEstudiante = "DETALLE_PEDIDO"
+                                                    },
+
+                                                    // MEJORA C: Repetir desde el historial.
+                                                    onRepetirPedido = { pedidoId ->
+                                                        pedidoParaRepetirId = pedidoId
+                                                        pantallaOrigenNuevoPedido = "PEDIDOS"
+                                                        pantallaEstudiante = "NUEVO_PEDIDO"
                                                     }
                                                 )
                                             }

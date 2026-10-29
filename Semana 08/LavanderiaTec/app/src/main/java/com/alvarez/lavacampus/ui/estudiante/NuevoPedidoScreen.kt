@@ -58,9 +58,8 @@ fun NuevoPedidoScreen(
 
     var nota by rememberSaveable { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        viewModel.cargarServicios()
-    }
+    // La carga de servicios se realiza desde MainActivity para distinguir
+    // entre un pedido nuevo y la repetición de uno anterior.
 
 // Servicios seleccionados por el estudiante.
     val lineasSeleccionadas = lineas.filter { it.seleccionado }

@@ -83,6 +83,88 @@ class NuevoPedidoViewModel(
     }
 
     // ==========================================
+// MEJORA C: REPETIR UN PEDIDO ANTERIOR
+// ==========================================
+
+    // Recupera los servicios y cantidades de un pedido anterior.
+// Utiliza los precios actuales y conserva las validaciones
+// del formulario de nuevo pedido.
+    fun cargarPedidoAnterior(
+        pedidoId: Int,
+        usuarioId: Int
+    ) {
+        viewModelScope.launch {
+
+            _cargando.value = true
+            _error.value = null
+
+            try {
+                // Verificar que el pedido exista y pertenezca
+                // al estudiante que inició sesión.
+                val pedidoAnterior = repository.buscarPedidoPorId(pedidoId)
+
+                if (pedidoAnterior == null ||
+                    pedidoAnterior.usuarioId != usuarioId
+                ) {
+                    _error.value = "No se encontró el pedido anterior."
+                    return@launch
+                }
+
+                // Recuperar los servicios y cantidades originales.
+                val detallesAnteriores =
+                    repository.obtenerDetallesPorPedido(pedidoId)
+
+                // Consultar únicamente los servicios activos,
+                // utilizando sus precios actuales.
+                val serviciosActuales = repository
+                    .observarServiciosActivos()
+                    .first()
+
+                var serviciosNoDisponibles = 0
+
+                _lineas.value = serviciosActuales.map { servicio ->
+
+                    val detalleAnterior = detallesAnteriores.firstOrNull {
+                        it.servicioId == servicio.id
+                    }
+
+                    val cantidadAnterior = detalleAnterior?.cantidad ?: 0.0
+
+                    val linea = LineaPedido(
+                        servicio = servicio,
+                        cantidad = 0.0
+                    )
+
+                    // Respetar los límites de cantidad definidos
+                    // en LineaPedido.
+                    linea.actualizarCantidad(cantidadAnterior)
+                }
+
+                // Detectar servicios que ya no están disponibles.
+                serviciosNoDisponibles = detallesAnteriores.count { detalle ->
+                    serviciosActuales.none { servicio ->
+                        servicio.id == detalle.servicioId
+                    }
+                }
+
+                if (serviciosNoDisponibles > 0) {
+                    _error.value =
+                        "Algunos servicios del pedido anterior ya no están disponibles."
+                }
+
+            } catch (e: Exception) {
+
+                _error.value =
+                    "No se pudo recuperar el pedido anterior: ${e.message}"
+
+            } finally {
+
+                _cargando.value = false
+            }
+        }
+    }
+
+    // ==========================================
     // AUMENTAR CANTIDAD
     // ==========================================
 
