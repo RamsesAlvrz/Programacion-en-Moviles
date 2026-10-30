@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.PeopleOutline
@@ -298,13 +297,11 @@ class MainActivity : ComponentActivity() {
                             else -> {
 
                                 Scaffold(
-                                    containerColor = Color(0xFFF7FAFC),
-
+                                    containerColor = MaterialTheme.colorScheme.background,
                                     bottomBar = {
 
                                         NavigationBar(
-                                            containerColor = Color.White,
-                                            tonalElevation = 3.dp
+                                            containerColor = MaterialTheme.colorScheme.surface,                                            tonalElevation = 3.dp
                                         ) {
 
                                             val opciones = listOf(
@@ -476,57 +473,14 @@ class MainActivity : ComponentActivity() {
                     usuarioActual?.rol == "ADMIN" -> {
 
                         Scaffold(
-                            containerColor = Color(0xFFF5F8FC),
-                            topBar = {
-                                if (
-                                    pantallaAdministrador != "GESTION_PEDIDO" &&
-                                    pantallaAdministrador != "NUEVO_SERVICIO" &&
-                                    pantallaAdministrador != "EDITAR_SERVICIO" &&
-                                    pantallaAdministrador != "AJUSTES" &&
-                                    pantallaAdministrador != "CLIENTES"
-                                ) {                                    Surface(
-                                    color = Color.White,
-                                    shadowElevation = 1.dp
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(48.dp)
-                                            .padding(horizontal = 14.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "LavaCampus · Admin",
-                                            modifier = Modifier.weight(1f),
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                        TextButton(
-                                            onClick = {
-                                                sesionViewModel.cerrarSesion {
-                                                    pantallaAdministrador = "PANEL"
-                                                    pantallaEstudiante = "INICIO"
-                                                }
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Logout,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(Modifier.width(4.dp))
-                                            Text("Salir")
-                                        }
-                                    }
-                                }
-                                }
-                            },
+                            containerColor = MaterialTheme.colorScheme.background,
                             bottomBar = {
                                 if (
                                     pantallaAdministrador != "GESTION_PEDIDO" &&
                                     pantallaAdministrador != "NUEVO_SERVICIO" &&
                                     pantallaAdministrador != "EDITAR_SERVICIO"
                                 ) {                                    NavigationBar(
-                                    containerColor = Color.White,
+                                    containerColor = MaterialTheme.colorScheme.surface,
                                     tonalElevation = 2.dp
                                 ) {
                                     val opcionesAdmin = listOf(

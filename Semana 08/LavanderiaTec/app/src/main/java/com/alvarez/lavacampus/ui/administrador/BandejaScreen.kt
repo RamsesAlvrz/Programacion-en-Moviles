@@ -1,6 +1,7 @@
 package com.alvarez.lavacampus.ui.administrador
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -28,16 +30,23 @@ import com.alvarez.lavacampus.viewmodel.PedidoBandeja
 import java.util.Locale
 
 // Colores originales de la bandeja.
-private val FondoBandeja = Color(0xFFFAF9FE)
+private val FondoBandeja
+    @Composable get() = MaterialTheme.colorScheme.background
 private val MoradoBandeja = Color(0xFF7024DB)
-private val BordeBandeja = Color(0xFFECEAF2)
-private val TextoPrincipal = Color(0xFF252735)
-private val TextoSecundario = Color(0xFF9195A3)
+private val BordeBandeja
+    @Composable get() = MaterialTheme.colorScheme.outlineVariant
+private val TextoPrincipal
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val TextoSecundario
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 // COMMIT A: Colores para identificar pedidos atrasados.
-private val RojoAtrasado = Color(0xFFD92D40)
-private val FondoAtrasado = Color(0xFFFFF0F1)
-private val BordeAtrasado = Color(0xFFFFB8C0)
+private val RojoAtrasado
+    @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFFF8999) else Color(0xFFD92D40)
+private val FondoAtrasado
+    @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF48242D) else Color(0xFFFFF0F1)
+private val BordeAtrasado
+    @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFB95668) else Color(0xFFFFB8C0)
 
 @Composable
 fun BandejaScreen(
@@ -58,6 +67,7 @@ fun BandejaScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(FondoBandeja)
             .padding(horizontal = 16.dp)
     ) {
 
@@ -93,7 +103,7 @@ fun BandejaScreen(
         // Buscador original por estudiante o número de pedido.
         Surface(
             shape = RoundedCornerShape(12.dp),
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, BordeBandeja),
             shadowElevation = 1.dp,
             modifier = Modifier
@@ -198,7 +208,7 @@ fun BandejaScreen(
                             text = totalAtrasados.toString(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF3D1020) else Color.White,
                             modifier = Modifier.padding(
                                 horizontal = 12.dp,
                                 vertical = 6.dp
@@ -233,7 +243,7 @@ fun BandejaScreen(
                     color = if (seleccionado) {
                         MoradoBandeja
                     } else {
-                        Color.White
+                        MaterialTheme.colorScheme.surface
                     },
                     border = if (seleccionado) {
                         null
@@ -263,7 +273,7 @@ fun BandejaScreen(
                             color = if (seleccionado) {
                                 Color.White
                             } else {
-                                Color(0xFF777C89)
+                                TextoSecundario
                             },
                             maxLines = 1
                         )
@@ -327,21 +337,23 @@ private fun TarjetaPedidoBandeja(
 
     // Colores originales según el estado.
     val colorEstado = when (estado) {
-        EstadoPedido.RECIBIDO -> Color(0xFFBD8310)
-        EstadoPedido.EN_PROCESO -> Color(0xFF367EE6)
-        EstadoPedido.LISTO -> Color(0xFF24A76A)
-        EstadoPedido.ENTREGADO -> Color(0xFF7C8290)
-        EstadoPedido.CANCELADO -> Color(0xFFE24A4A)
+        EstadoPedido.RECIBIDO -> if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFFFCE67) else Color(0xFFBD8310)
+        EstadoPedido.EN_PROCESO -> if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF9DC1FF) else Color(0xFF367EE6)
+        EstadoPedido.LISTO -> if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF79E3AE) else Color(0xFF24A76A)
+        EstadoPedido.ENTREGADO -> if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFBEC5D4) else Color(0xFF7C8290)
+        EstadoPedido.CANCELADO -> if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFFF9999) else Color(0xFFE24A4A)
         null -> TextoSecundario
     }
 
+    val modoOscuro = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
     val fondoEstado = when (estado) {
-        EstadoPedido.RECIBIDO -> Color(0xFFFFF3C9)
-        EstadoPedido.EN_PROCESO -> Color(0xFFE0ECFF)
-        EstadoPedido.LISTO -> Color(0xFFDCF9E9)
-        EstadoPedido.ENTREGADO -> Color(0xFFF0F0F3)
-        EstadoPedido.CANCELADO -> Color(0xFFFFE7E7)
-        null -> Color(0xFFF0F0F3)
+        EstadoPedido.RECIBIDO -> if (modoOscuro) Color(0xFF453719) else Color(0xFFFFF3C9)
+        EstadoPedido.EN_PROCESO -> if (modoOscuro) Color(0xFF1E365B) else Color(0xFFE0ECFF)
+        EstadoPedido.LISTO -> if (modoOscuro) Color(0xFF173E2C) else Color(0xFFDCF9E9)
+        EstadoPedido.ENTREGADO -> if (modoOscuro) Color(0xFF333640) else Color(0xFFF0F0F3)
+        EstadoPedido.CANCELADO -> if (modoOscuro) Color(0xFF4C2626) else Color(0xFFFFE7E7)
+        null -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     val textoBoton = when (estado) {
@@ -354,7 +366,7 @@ private fun TarjetaPedidoBandeja(
     // COMMIT A: Se resalta la tarjeta cuando el pedido está atrasado.
     Surface(
         shape = RoundedCornerShape(15.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             width = if (item.estaAtrasado) 1.5.dp else 1.dp,
             color = if (item.estaAtrasado) {

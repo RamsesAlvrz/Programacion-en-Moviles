@@ -31,12 +31,9 @@ import com.alvarez.lavacampus.viewmodel.NuevoPedidoViewModel
 import java.util.Locale
 import java.text.SimpleDateFormat
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 private val TurquesaPedido = Color(0xFF0895B5)
-private val FondoPedido = Color(0xFFF0FCFF)
-private val TextoPedido = Color(0xFF263341)
-private val GrisPedido = Color(0xFF8B95A2)
-private val BordePedido = Color(0xFFE4E9ED)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +69,7 @@ fun NuevoPedidoScreen(
     val haySeleccion = lineasSeleccionadas.isNotEmpty()
 
     Scaffold(
-        containerColor = FondoPedido,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -80,7 +77,7 @@ fun NuevoPedidoScreen(
                         text = "Nuevo pedido",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextoPedido
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
@@ -88,12 +85,12 @@ fun NuevoPedidoScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = TextoPedido
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = FondoPedido
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -117,7 +114,7 @@ fun NuevoPedidoScreen(
                     text = "¿Qué necesitas?",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextoPedido
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -127,8 +124,8 @@ fun NuevoPedidoScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFFFF1F0),
-                        border = BorderStroke(1.dp, Color(0xFFF5B7B1))
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                     ) {
                         Column(
                             modifier = Modifier.padding(14.dp),
@@ -138,12 +135,12 @@ fun NuevoPedidoScreen(
                                 text = "Servicio temporalmente no disponible",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
-                                color = Color(0xFFB42318)
+                                color = MaterialTheme.colorScheme.onErrorContainer
                             )
                             Text(
                                 text = "La lavandería no está recibiendo nuevos pedidos en este momento. Inténtalo más tarde.",
                                 fontSize = 12.sp,
-                                color = Color(0xFF7A271A)
+                                color = MaterialTheme.colorScheme.onErrorContainer
                             )
                         }
                     }
@@ -159,7 +156,7 @@ fun NuevoPedidoScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
-                            color = TurquesaPedido
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -190,7 +187,7 @@ fun NuevoPedidoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            Color.White,
+                            MaterialTheme.colorScheme.surface,
                             RoundedCornerShape(11.dp)
                         )
                         .padding(
@@ -201,7 +198,7 @@ fun NuevoPedidoScreen(
                     Text(
                         text = "Nota (opcional)",
                         fontSize = 11.sp,
-                        color = GrisPedido
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(Modifier.height(5.dp))
@@ -213,7 +210,7 @@ fun NuevoPedidoScreen(
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = androidx.compose.ui.text.TextStyle(
                             fontSize = 13.sp,
-                            color = TextoPedido
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         minLines = 1,
                         maxLines = 3,
@@ -231,7 +228,7 @@ fun NuevoPedidoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            Color(0xFFE9FCFF),
+                            MaterialTheme.colorScheme.surfaceVariant,
                             RoundedCornerShape(12.dp)
                         )
                         .padding(13.dp),
@@ -241,14 +238,14 @@ fun NuevoPedidoScreen(
                         text = "Resumen",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TurquesaPedido
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     if (lineasSeleccionadas.isEmpty()) {
                         Text(
                             text = "Selecciona al menos un servicio",
                             fontSize = 12.sp,
-                            color = GrisPedido
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
                         lineasSeleccionadas.forEach { linea ->
@@ -277,7 +274,7 @@ fun NuevoPedidoScreen(
                                     }",
                                     modifier = Modifier.weight(1f),
                                     fontSize = 11.sp,
-                                    color = GrisPedido,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -293,7 +290,7 @@ fun NuevoPedidoScreen(
                                         )
                                     }",
                                     fontSize = 11.sp,
-                                    color = TextoPedido,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -312,14 +309,14 @@ fun NuevoPedidoScreen(
                             Text(
                                 text = "Subtotal",
                                 fontSize = 12.sp,
-                                color = GrisPedido
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
                             Text(
                                 text = "S/ ${String.format(Locale.US, "%.2f", subtotal)}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = TextoPedido
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
@@ -333,26 +330,26 @@ fun NuevoPedidoScreen(
                                 text = "Descuento por volumen (10 %)",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF168A58)
+                                color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF4ADE80) else Color(0xFF168A58)
                             )
 
                             Text(
                                 text = "-S/ ${String.format(Locale.US, "%.2f", descuento)}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF168A58)
+                                color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF4ADE80) else Color(0xFF168A58)
                             )
                         }
 
                         Text(
                             text = "Descuento aplicado por superar los 5 kg de lavado.",
                             fontSize = 10.sp,
-                            color = Color(0xFF168A58)
+                            color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF4ADE80) else Color(0xFF168A58)
                         )
                     }
 
                     HorizontalDivider(
-                        color = Color(0xFFD2EAF0)
+                        color = MaterialTheme.colorScheme.outline
                     )
 
                     Row(
@@ -364,7 +361,7 @@ fun NuevoPedidoScreen(
                             text = "Total",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextoPedido
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Text(
@@ -377,7 +374,7 @@ fun NuevoPedidoScreen(
                             }",
                             fontSize = 19.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TurquesaPedido
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -397,7 +394,7 @@ fun NuevoPedidoScreen(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     fontSize = 11.sp,
-                    color = GrisPedido
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -431,7 +428,8 @@ fun NuevoPedidoScreen(
                         .fillMaxWidth()
                         .height(49.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TurquesaPedido
+                        containerColor = TurquesaPedido,
+                        contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(11.dp)
                 ) {
@@ -494,14 +492,14 @@ private fun ServicioSeleccionCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(13.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             width = if (seleccionado) 1.5.dp else 1.dp,
             color = if (seleccionado) {
-                TurquesaPedido
+                MaterialTheme.colorScheme.primary
             } else {
-                BordePedido
+                MaterialTheme.colorScheme.outline
             }
         )
     ) {
@@ -516,9 +514,9 @@ private fun ServicioSeleccionCard(
                     .size(39.dp)
                     .background(
                         if (seleccionado) {
-                            Color(0xFFD8F7FB)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                         } else {
-                            Color(0xFFF2F4F6)
+                            MaterialTheme.colorScheme.surfaceVariant
                         },
                         RoundedCornerShape(10.dp)
                     ),
@@ -528,9 +526,9 @@ private fun ServicioSeleccionCard(
                     imageVector = icono,
                     contentDescription = null,
                     tint = if (seleccionado) {
-                        TurquesaPedido
+                        MaterialTheme.colorScheme.primary
                     } else {
-                        GrisPedido
+                        MaterialTheme.colorScheme.onSurfaceVariant
                     },
                     modifier = Modifier.size(21.dp)
                 )
@@ -544,7 +542,7 @@ private fun ServicioSeleccionCard(
                     text = servicio.nombre,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextoPedido
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
@@ -562,7 +560,7 @@ private fun ServicioSeleccionCard(
                         }
                     } · ${servicio.horasEntrega} h",
                     fontSize = 11.sp,
-                    color = GrisPedido
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(
@@ -585,7 +583,7 @@ private fun ServicioSeleccionCard(
                         textAlign = TextAlign.Center,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextoPedido
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     BotonCantidad(
@@ -614,7 +612,7 @@ private fun BotonCantidad(
                 if (habilitado) {
                     TurquesaPedido
                 } else {
-                    Color(0xFFE5E7EB)
+                    MaterialTheme.colorScheme.surfaceVariant
                 }
             )
             .clickable(
@@ -628,7 +626,7 @@ private fun BotonCantidad(
             color = if (habilitado) {
                 Color.White
             } else {
-                GrisPedido
+                MaterialTheme.colorScheme.onSurfaceVariant
             },
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold
@@ -662,3 +660,4 @@ private fun formatearFechaEntrega(fecha: String): String {
         fecha
     }
 }
+

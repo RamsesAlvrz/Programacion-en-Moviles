@@ -25,7 +25,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 private val AzulPedidos = Color(0xFF0097B2)
-private val FondoPedidos = Color(0xFFF1FBFD)
 private val VerdePedidos = Color(0xFF20A35A)
 
 @Composable
@@ -53,9 +52,9 @@ fun MisPedidosScreen(
         if (pestanaSeleccionada == 0) activos else historial
 
     Scaffold(
-        containerColor = FondoPedidos,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Surface(color = FondoPedidos) {
+            Surface(color = MaterialTheme.colorScheme.background) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -122,13 +121,13 @@ fun MisPedidosScreen(
                             .fillMaxHeight()
                             .clickable { pestanaSeleccionada = index },
                         shape = RoundedCornerShape(10.dp),
-                        color = if (seleccionado) AzulPedidos else Color(0xFFEAF0F2)
+                        color = if (seleccionado) AzulPedidos else MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = titulo,
                                 color = if (seleccionado) Color.White
-                                else Color.DarkGray,
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = if (seleccionado)
                                     FontWeight.Bold else FontWeight.Medium,
                                 fontSize = 14.sp
@@ -159,7 +158,7 @@ fun MisPedidosScreen(
                             "No tienes pedidos activos."
                         else
                             "Todavía no tienes pedidos en el historial.",
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
@@ -192,7 +191,7 @@ fun MisPedidosScreen(
 
                         Text(
                             text = "Puedes consultar el estado y los detalles de tus pedidos en cualquier momento.",
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp
                         )
                     }
@@ -258,7 +257,7 @@ private fun TarjetaMisPedidos(
             .fillMaxWidth()
             .clickable(onClick = onVerDetalle),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = if (estaListo)
             BorderStroke(1.dp, VerdePedidos)
         else
@@ -301,7 +300,7 @@ private fun TarjetaMisPedidos(
 
                     Text(
                         text = formatearFechaMisPedidos(pedido.fechaRegistro),
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -314,7 +313,7 @@ private fun TarjetaMisPedidos(
 
                 Text(
                     text = "S/ %.2f".format(Locale.US, pedido.total),
-                    color = AzulPedidos,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -373,7 +372,7 @@ private fun TarjetaMisPedidos(
 
                     Text(
                         text = "Repetir pedido",
-                        color = AzulPedidos,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }

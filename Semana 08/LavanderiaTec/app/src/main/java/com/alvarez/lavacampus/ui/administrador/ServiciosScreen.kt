@@ -29,8 +29,6 @@ import com.alvarez.lavacampus.viewmodel.ServiciosViewModel
 import java.util.Locale
 
 private val MoradoServicios = Color(0xFF6D28D9)
-private val MoradoClaroServicios = Color(0xFFF0EAFE)
-private val FondoServicios = Color(0xFFF8F7FC)
 
 @Composable
 fun ServiciosScreen(
@@ -56,11 +54,11 @@ fun ServiciosScreen(
     }
 
     Scaffold(
-        containerColor = FondoServicios,
+        containerColor = MaterialTheme.colorScheme.background,
 
         topBar = {
             Surface(
-                color = FondoServicios
+                color = MaterialTheme.colorScheme.background
             ) {
                 Row(
                     modifier = Modifier
@@ -73,7 +71,7 @@ fun ServiciosScreen(
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Regresar",
-                            tint = Color(0xFF374151)
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
 
@@ -87,7 +85,7 @@ fun ServiciosScreen(
                             text = "Servicios y tarifas",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            color = Color(0xFF202636)
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -125,7 +123,7 @@ fun ServiciosScreen(
             ) {
                 Text(
                     text = "Todavía no hay servicios registrados.",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
             }
@@ -176,7 +174,7 @@ private fun TarjetaServicioAdmin(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp
     ) {
         Row(
@@ -191,7 +189,7 @@ private fun TarjetaServicioAdmin(
                 modifier = Modifier
                     .size(46.dp)
                     .background(
-                        color = MoradoClaroServicios,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
                         shape = RoundedCornerShape(12.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -199,7 +197,7 @@ private fun TarjetaServicioAdmin(
                 Icon(
                     imageVector = obtenerIconoServicio(servicio.icono),
                     contentDescription = null,
-                    tint = MoradoServicios,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.size(25.dp)
                 )
             }
@@ -214,7 +212,7 @@ private fun TarjetaServicioAdmin(
                     text = servicio.nombre,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF283142),
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -224,7 +222,7 @@ private fun TarjetaServicioAdmin(
                 Text(
                     text = construirDetalleServicio(servicio),
                     fontSize = 10.sp,
-                    color = Color(0xFF89909D),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -244,8 +242,8 @@ private fun TarjetaServicioAdmin(
                     checkedThumbColor = Color.White,
                     checkedTrackColor = MoradoServicios,
                     uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Color(0xFFD1D5DB),
-                    uncheckedBorderColor = Color.Transparent
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.outline
                 )
             )
 

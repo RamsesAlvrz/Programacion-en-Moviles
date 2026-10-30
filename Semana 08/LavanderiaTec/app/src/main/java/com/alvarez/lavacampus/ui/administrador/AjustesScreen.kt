@@ -50,6 +50,8 @@ fun AjustesScreen(
     val superficie = if (modoOscuro) MaterialTheme.colorScheme.surface else Color.White
     val texto = if (modoOscuro) MaterialTheme.colorScheme.onSurface else TextoGuia
     val secundario = if (modoOscuro) MaterialTheme.colorScheme.onSurfaceVariant else GrisGuia
+    val acento = if (modoOscuro) Color(0xFFC4A7FF) else MoradoGuia
+    val fondoAcento = if (modoOscuro) Color(0xFF33264A) else LilaGuia
 
     Column(
         modifier = Modifier.fillMaxSize().background(fondo)
@@ -92,13 +94,13 @@ fun AjustesScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
-                        modifier = Modifier.size(42.dp).background(LilaGuia, CircleShape),
+                        modifier = Modifier.size(42.dp).background(fondoAcento, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Filled.PersonOutline,
                             contentDescription = null,
-                            tint = MoradoGuia,
+                            tint = acento,
                             modifier = Modifier.size(23.dp)
                         )
                     }
@@ -124,8 +126,8 @@ fun AjustesScreen(
                         Text(
                             text = "Perfil activo",
                             fontSize = 9.sp,
-                            color = MoradoGuia,
-                            modifier = Modifier.background(LilaGuia, RoundedCornerShape(4.dp))
+                            color = acento,
+                            modifier = Modifier.background(fondoAcento, RoundedCornerShape(4.dp))
                                 .padding(horizontal = 5.dp, vertical = 1.dp)
                         )
                     }
@@ -210,7 +212,7 @@ fun AjustesScreen(
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
                     Text("Se guardan en el dispositivo", fontSize = 9.sp, color = secundario)
                     Spacer(Modifier.height(3.dp))
-                    Text("con DataStore", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = MoradoGuia)
+                    Text("con DataStore", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = acento)
                 }
             }
 
@@ -257,8 +259,8 @@ private fun PreferenciaCompacta(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = MoradoGuia,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color(0xFFD5D6DC),
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
                 uncheckedBorderColor = Color.Transparent
             )
         )

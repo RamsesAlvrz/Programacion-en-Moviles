@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,10 +32,6 @@ import com.alvarez.lavacampus.data.model.ClienteResumen
 import java.util.Locale
 
 private val MoradoClientes = Color(0xFF7629DB)
-private val FondoClientes = Color(0xFFF9F8FD)
-private val TextoClientes = Color(0xFF222638)
-private val BordeClientes = Color(0xFFE9E7EF)
-private val GrisClientes = Color(0xFF9A9BA8)
 
 @Composable
 fun ClientesScreen(
@@ -43,13 +40,13 @@ fun ClientesScreen(
 ) {
     val clientes by viewModel.clientes.collectAsStateWithLifecycle()
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
+    val colores = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoClientes)
+            .background(colores.background)
     ) {
-        // Encabezado de la guía: flecha y título centrado.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -62,7 +59,7 @@ fun ClientesScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Volver",
-                    tint = TextoClientes,
+                    tint = colores.onBackground,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -71,7 +68,7 @@ fun ClientesScreen(
                 modifier = Modifier.align(Alignment.Center),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextoClientes
+                color = colores.onBackground
             )
         }
 
@@ -83,8 +80,8 @@ fun ClientesScreen(
                 .padding(horizontal = 16.dp)
                 .height(43.dp),
             shape = RoundedCornerShape(11.dp),
-            color = Color.White,
-            border = BorderStroke(1.dp, BordeClientes),
+            color = colores.surface,
+            border = BorderStroke(1.dp, colores.outlineVariant),
             shadowElevation = 1.dp
         ) {
             Row(
@@ -94,7 +91,7 @@ fun ClientesScreen(
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = "Buscar",
-                    tint = GrisClientes,
+                    tint = colores.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(8.dp))
@@ -103,7 +100,7 @@ fun ClientesScreen(
                     onValueChange = viewModel::actualizarBusqueda,
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    textStyle = TextStyle(fontSize = 12.sp, color = TextoClientes),
+                    textStyle = TextStyle(fontSize = 12.sp, color = colores.onSurface),
                     cursorBrush = SolidColor(MoradoClientes),
                     decorationBox = { campo ->
                         Box {
@@ -111,7 +108,7 @@ fun ClientesScreen(
                                 Text(
                                     text = "Buscar estudiante",
                                     fontSize = 12.sp,
-                                    color = GrisClientes
+                                    color = colores.onSurfaceVariant
                                 )
                             }
                             campo()
@@ -126,7 +123,7 @@ fun ClientesScreen(
                         Icon(
                             imageVector = Icons.Filled.Close,
                             contentDescription = "Limpiar búsqueda",
-                            tint = GrisClientes,
+                            tint = colores.onSurfaceVariant,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -148,7 +145,7 @@ fun ClientesScreen(
                         imageVector = Icons.Filled.People,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
-                        tint = GrisClientes
+                        tint = colores.onSurfaceVariant
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
@@ -157,7 +154,7 @@ fun ClientesScreen(
                         else
                             "No se encontraron clientes",
                         fontSize = 13.sp,
-                        color = GrisClientes
+                        color = colores.onSurfaceVariant
                     )
                 }
             }
@@ -181,11 +178,15 @@ fun ClientesScreen(
 
 @Composable
 private fun TarjetaCliente(cliente: ClienteResumen) {
+    val colores = MaterialTheme.colorScheme
+    val oscuro = colores.background.luminance() < 0.5f
+    val moradoLegible = if (oscuro) Color(0xFFCAA7FF) else MoradoClientes
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, BordeClientes),
+        color = colores.surface,
+        border = BorderStroke(1.dp, colores.outlineVariant),
         shadowElevation = 1.dp
     ) {
         Row(
@@ -198,12 +199,15 @@ private fun TarjetaCliente(cliente: ClienteResumen) {
             Box(
                 modifier = Modifier
                     .size(43.dp)
-                    .background(Color(0xFFF0EAFF), CircleShape),
+                    .background(
+                        if (oscuro) Color(0xFF382651) else Color(0xFFF0EAFF),
+                        CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = obtenerIniciales(cliente.nombre),
-                    color = MoradoClientes,
+                    color = moradoLegible,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -219,14 +223,14 @@ private fun TarjetaCliente(cliente: ClienteResumen) {
                     text = cliente.nombre,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextoClientes,
+                    color = colores.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = cliente.codigo,
                     fontSize = 10.sp,
-                    color = GrisClientes,
+                    color = colores.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -234,7 +238,7 @@ private fun TarjetaCliente(cliente: ClienteResumen) {
                     text = "${cliente.cantidadPedidos} pedidos",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = MoradoClientes
+                    color = moradoLegible
                 )
             }
 
@@ -247,14 +251,14 @@ private fun TarjetaCliente(cliente: ClienteResumen) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = GrisClientes,
+                    tint = colores.onSurfaceVariant,
                     modifier = Modifier.size(17.dp)
                 )
                 Text(
                     text = String.format(Locale.US, "S/ %.2f", cliente.totalGastado),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextoClientes
+                    color = colores.onSurface
                 )
             }
         }

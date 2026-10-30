@@ -29,9 +29,6 @@ import com.alvarez.lavacampus.R
 import java.util.Locale
 
 private val Morado = Color(0xFF6D28D9)
-private val Fondo = Color(0xFFF8F7FC)
-private val Borde = Color(0xFFE5E7EB)
-private val Texto = Color(0xFF222638)
 
 @Composable
 fun FormularioServicioScreen(
@@ -78,13 +75,13 @@ fun FormularioServicioScreen(
     var errorPrecio by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = Fondo,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-                    .background(Fondo),
+                    .background(MaterialTheme.colorScheme.background),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
@@ -94,7 +91,7 @@ fun FormularioServicioScreen(
                     Icon(
                         Icons.Filled.ArrowBack,
                         contentDescription = "Volver",
-                        tint = Texto
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -109,7 +106,7 @@ fun FormularioServicioScreen(
                         else "Nuevo servicio",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Texto
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -240,7 +237,7 @@ fun FormularioServicioScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(11.dp),
-                color = Color.White
+                color = MaterialTheme.colorScheme.surface
             ) {
                 Row(
                     modifier = Modifier
@@ -254,13 +251,13 @@ fun FormularioServicioScreen(
                             "Servicio activo",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Texto
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Text(
                             "Los estudiantes pueden pedirlo",
                             fontSize = 10.sp,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -339,7 +336,7 @@ fun FormularioServicioScreen(
             ) {
                 Text(
                     "Cancelar",
-                    color = Morado,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -370,10 +367,10 @@ private fun CampoCompacto(
             .fillMaxWidth()
             .height(altura),
         shape = RoundedCornerShape(11.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             1.dp,
-            if (error) MaterialTheme.colorScheme.error else Borde
+            if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant
         )
     ) {
         Column(
@@ -386,7 +383,7 @@ private fun CampoCompacto(
             Text(
                 text = etiqueta,
                 fontSize = 10.sp,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 12.sp
             )
 
@@ -403,7 +400,7 @@ private fun CampoCompacto(
                 ),
                 textStyle = TextStyle(
                     fontSize = 13.sp,
-                    color = Texto
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
                 cursorBrush = SolidColor(Morado),
                 decorationBox = { innerTextField ->
@@ -412,7 +409,7 @@ private fun CampoCompacto(
                             Text(
                                 placeholder,
                                 fontSize = 12.sp,
-                                color = Color.LightGray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         }
 
@@ -434,7 +431,7 @@ private fun TituloSeccion(texto: String) {
         text = texto,
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,
-        color = Texto
+        color = MaterialTheme.colorScheme.onSurface
     )
 }
 
@@ -454,9 +451,9 @@ private fun BotonSeleccion(
             .height(37.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(10.dp),
-        color = if (seleccionado) Morado else Color.White,
+        color = if (seleccionado) Morado else MaterialTheme.colorScheme.surface,
         border = if (seleccionado) null
-        else BorderStroke(1.dp, Borde),
+        else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         shadowElevation = if (seleccionado) 1.dp else 0.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -465,7 +462,7 @@ private fun BotonSeleccion(
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 color = if (seleccionado) Color.White
-                else Color.Gray
+                else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -487,11 +484,11 @@ private fun BotonIcono(
             .height(48.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(10.dp),
-        color = if (seleccionado) Color(0xFFF1EAFE)
-        else Color.White,
+        color = if (seleccionado) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             if (seleccionado) 1.5.dp else 1.dp,
-            if (seleccionado) Morado else Borde
+            if (seleccionado) Morado else MaterialTheme.colorScheme.outlineVariant
         )
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -499,8 +496,8 @@ private fun BotonIcono(
                 painter = painterResource(id = recurso),
                 contentDescription = null,
                 modifier = Modifier.size(22.dp),
-                tint = if (seleccionado) Morado
-                else Color(0xFF9CA3AF)
+                tint = if (seleccionado) MaterialTheme.colorScheme.onPrimaryContainer
+                else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

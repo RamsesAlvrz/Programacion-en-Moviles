@@ -27,11 +27,16 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 private val TurquesaDetalle = Color(0xFF0895B5)
-private val FondoDetalle = Color(0xFFF0FCFF)
-private val TextoDetalle = Color(0xFF263341)
-private val GrisDetalle = Color(0xFF8B95A2)
-private val BordeDetalle = Color(0xFFE4E9ED)
-private val AmarilloDetalle = Color(0xFFFFF4C9)
+private val FondoDetalle: Color
+    @Composable get() = MaterialTheme.colorScheme.background
+private val TextoDetalle: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val GrisDetalle: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+private val BordeDetalle: Color
+    @Composable get() = MaterialTheme.colorScheme.outline
+private val AmarilloDetalle: Color
+    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,7 +159,7 @@ fun DetallePedidoScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(13.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         border = BorderStroke(1.dp, BordeDetalle)
                     ) {
@@ -239,7 +244,7 @@ fun DetallePedidoScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         border = BorderStroke(1.dp, BordeDetalle)
                     ) {
@@ -301,7 +306,7 @@ fun DetallePedidoScreen(
                             },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFAA7510)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         Text(
@@ -310,7 +315,7 @@ fun DetallePedidoScreen(
                                     ?: "Se asignará al estar listo"
                             }",
                             fontSize = 11.sp,
-                            color = Color(0xFFAA7510)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -430,7 +435,7 @@ private fun SeguimientoVertical(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(1.dp, BordeDetalle)
     ) {
@@ -460,7 +465,7 @@ private fun SeguimientoVertical(
                                     if (completado) {
                                         TurquesaDetalle
                                     } else {
-                                        Color.White
+                                        MaterialTheme.colorScheme.surfaceVariant
                                     },
                                     CircleShape
                                 )
@@ -488,14 +493,14 @@ private fun SeguimientoVertical(
                                     modifier = Modifier
                                         .size(18.dp)
                                         .background(
-                                            Color.White,
+                                            MaterialTheme.colorScheme.surfaceVariant,
                                             CircleShape
                                         )
                                         .then(
                                             Modifier
                                                 .padding(1.dp)
                                                 .background(
-                                                    Color(0xFFF1F3F5),
+                                                    MaterialTheme.colorScheme.outline,
                                                     CircleShape
                                                 )
                                         )
@@ -645,5 +650,3 @@ private fun fechaCortaDetalle(fecha: String): String {
     // Si no reconoce la fecha, conserva el valor original.
     return fecha
 }
-
-

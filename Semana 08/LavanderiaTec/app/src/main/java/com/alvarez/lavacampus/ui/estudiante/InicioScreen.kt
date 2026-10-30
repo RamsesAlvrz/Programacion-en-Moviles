@@ -26,9 +26,6 @@ import java.util.Date
 import java.util.Locale
 
 private val TurquesaInicio = Color(0xFF0895B5)
-private val FondoInicio = Color(0xFFF7FAFC)
-private val TextoPrincipal = Color(0xFF253041)
-private val TextoSecundario = Color(0xFF87909D)
 
 @Composable
 fun InicioScreen(
@@ -38,6 +35,10 @@ fun InicioScreen(
     onVerDetalle: (Int) -> Unit,
     onMisPedidos: () -> Unit
 ) {
+    val TextoPrincipal = MaterialTheme.colorScheme.onBackground
+    val TextoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
+    val FondoInicio = MaterialTheme.colorScheme.background
+
     val estudiante by viewModel.estudiante.collectAsStateWithLifecycle()
     val pedidos by viewModel.pedidos.collectAsStateWithLifecycle()
     val cargando by viewModel.cargando.collectAsStateWithLifecycle()
@@ -347,6 +348,8 @@ private fun TarjetaPedidoActivo(
 
 @Composable
 private fun SeguimientoEnTarjeta(estado: String) {
+    val TextoPrincipal = MaterialTheme.colorScheme.onSurface
+    val TextoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
     val etapas = listOf(
         "RECIBIDO",
         "EN_PROCESO",
@@ -362,13 +365,13 @@ private fun SeguimientoEnTarjeta(estado: String) {
     )
 
     val etapaActual = etapas.indexOf(estado.uppercase())
-    val colorPendiente = Color(0xFFE5E7EB)
+    val colorPendiente = MaterialTheme.colorScheme.outline
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                Color.White,
+                MaterialTheme.colorScheme.surface,
                 RoundedCornerShape(11.dp)
             )
             .padding(horizontal = 9.dp, vertical = 9.dp)
@@ -448,11 +451,13 @@ private fun AccesoRapido(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val TextoPrincipal = MaterialTheme.colorScheme.onSurface
+    val TextoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
     Card(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
@@ -465,7 +470,7 @@ private fun AccesoRapido(
                 modifier = Modifier
                     .size(37.dp)
                     .background(
-                        Color(0xFFD8F7FB),
+                        MaterialTheme.colorScheme.surfaceVariant,
                         RoundedCornerShape(10.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -499,6 +504,8 @@ private fun PedidoRecienteItem(
     pedido: Pedido,
     onClick: () -> Unit
 ) {
+    val TextoPrincipal = MaterialTheme.colorScheme.onSurface
+    val TextoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
     val estado = pedido.estado.uppercase()
 
     val estadoTexto = when (estado) {
@@ -519,14 +526,7 @@ private fun PedidoRecienteItem(
         else -> Color.Gray
     }
 
-    val fondoEstado = when (estado) {
-        "RECIBIDO" -> Color(0xFFDBEAFE)
-        "EN_PROCESO" -> Color(0xFFD8F7FB)
-        "LISTO" -> Color(0xFFDCFCE7)
-        "ENTREGADO" -> Color(0xFFE2E8F0)
-        "CANCELADO" -> Color(0xFFFEE2E2)
-        else -> Color(0xFFF3F4F6)
-    }
+    val fondoEstado = MaterialTheme.colorScheme.surfaceVariant
 
     Card(
         modifier = Modifier
@@ -534,7 +534,7 @@ private fun PedidoRecienteItem(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(13.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
@@ -658,5 +658,3 @@ private fun formatearFechaCorta(fecha: String): String {
 
     return fecha
 }
-
-

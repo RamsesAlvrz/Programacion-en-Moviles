@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,7 +24,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val Morado = Color(0xFF6D28D9)
-private val TextoOscuro = Color(0xFF263247)
 private val Verde = Color(0xFF16A34A)
 
 // COMMIT A: Colores para los pedidos atrasados.
@@ -35,6 +35,13 @@ fun PanelScreen(
     viewModel: PanelViewModel,
     onVerPedidosListos: () -> Unit
 ) {
+
+    // Se consulta el tema de MaterialTheme, no el tema del sistema,
+    // para respetar el interruptor de modo oscuro de la aplicación.
+    val oscuro = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val textoPrincipal = MaterialTheme.colorScheme.onBackground
+    val textoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
+    val superficieGrafico = MaterialTheme.colorScheme.surface
 
     val pedidosHoy by viewModel.pedidosHoy.collectAsStateWithLifecycle()
     val enProceso by viewModel.enProceso.collectAsStateWithLifecycle()
@@ -79,13 +86,13 @@ fun PanelScreen(
                 text = "Panel de la lavandería",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextoOscuro
+                color = textoPrincipal
             )
 
             Text(
                 text = "Hoy · $fecha",
                 fontSize = 12.sp,
-                color = Color(0xFF8993A4)
+                color = textoSecundario
             )
         }
 
@@ -111,24 +118,24 @@ fun PanelScreen(
                 TarjetaContador(
                     titulo = "Pedidos hoy",
                     cantidad = pedidosHoy,
-                    fondo = Color(0xFFF0ECFF),
-                    colorTexto = Color(0xFF7C3AED),
+                    fondo = if (oscuro) Color(0xFF332451) else Color(0xFFF0ECFF),
+                    colorTexto = if (oscuro) Color(0xFFD8B4FE) else Color(0xFF7C3AED),
                     modifier = Modifier.weight(1f)
                 )
 
                 TarjetaContador(
                     titulo = "En proceso",
                     cantidad = enProceso,
-                    fondo = Color(0xFFE8EFFF),
-                    colorTexto = Color(0xFF2563EB),
+                    fondo = if (oscuro) Color(0xFF1B3152) else Color(0xFFE8EFFF),
+                    colorTexto = if (oscuro) Color(0xFF93C5FD) else Color(0xFF2563EB),
                     modifier = Modifier.weight(1f)
                 )
 
                 TarjetaContador(
                     titulo = "Por recoger",
                     cantidad = porRecoger,
-                    fondo = Color(0xFFDCFCE7),
-                    colorTexto = Color(0xFF16A34A),
+                    fondo = if (oscuro) Color(0xFF173D2D) else Color(0xFFDCFCE7),
+                    colorTexto = if (oscuro) Color(0xFF86EFAC) else Color(0xFF16A34A),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -138,7 +145,7 @@ fun PanelScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(13.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = FondoAtrasado
+                    containerColor = if (oscuro) Color(0xFF4B2026) else FondoAtrasado
                 )
             ) {
 
@@ -162,7 +169,7 @@ fun PanelScreen(
                             text = "Pedidos atrasados",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = RojoAtrasado
+                            color = if (oscuro) Color(0xFFFCA5A5) else RojoAtrasado
                         )
 
                         Text(
@@ -172,7 +179,7 @@ fun PanelScreen(
                                 "No hay pedidos atrasados"
                             },
                             fontSize = 11.sp,
-                            color = RojoAtrasado.copy(alpha = 0.8f)
+                            color = if (oscuro) Color(0xFFFCA5A5) else RojoAtrasado.copy(alpha = 0.8f)
                         )
                     }
 
@@ -182,7 +189,7 @@ fun PanelScreen(
                         text = pedidosAtrasados.toString(),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = RojoAtrasado
+                        color = if (oscuro) Color(0xFFFCA5A5) else RojoAtrasado
                     )
                 }
             }
@@ -246,14 +253,14 @@ fun PanelScreen(
                     text = "Pedidos por estado",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextoOscuro
+                    color = textoPrincipal
                 )
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = superficieGrafico
                     ),
                     elevation = CardDefaults.cardElevation(
                         defaultElevation = 1.dp
@@ -277,14 +284,14 @@ fun PanelScreen(
                     text = "Ingresos por servicio (S/)",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextoOscuro
+                    color = textoPrincipal
                 )
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = superficieGrafico
                     ),
                     elevation = CardDefaults.cardElevation(
                         defaultElevation = 1.dp
@@ -306,7 +313,7 @@ fun PanelScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFDCFCE7)
+                        containerColor = if (oscuro) Color(0xFF173D2D) else Color(0xFFDCFCE7)
                     )
                 ) {
 
@@ -321,7 +328,7 @@ fun PanelScreen(
                         Icon(
                             imageVector = Icons.Default.NotificationsActive,
                             contentDescription = null,
-                            tint = Verde,
+                            tint = if (oscuro) Color(0xFF86EFAC) else Verde,
                             modifier = Modifier.size(20.dp)
                         )
 
@@ -333,13 +340,13 @@ fun PanelScreen(
                                 text = "$porRecoger pedidos esperan recojo",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF15803D)
+                                color = if (oscuro) Color(0xFFBBF7D0) else Color(0xFF15803D)
                             )
 
                             Text(
                                 text = "Revisa a los estudiantes",
                                 fontSize = 10.sp,
-                                color = Color(0xFF16A34A)
+                                color = if (oscuro) Color(0xFF86EFAC) else Color(0xFF16A34A)
                             )
                         }
 

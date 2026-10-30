@@ -38,10 +38,14 @@ import java.util.Date
 import java.util.Locale
 
 private val MoradoGestion = Color(0xFF7024DB)
-private val FondoGestion = Color(0xFFFAF9FD)
-private val BordeGestion = Color(0xFFECEAF2)
-private val TextoGestion = Color(0xFF282A35)
-private val GrisGestion = Color(0xFF9A9DA8)
+private val FondoGestion: Color
+    @Composable get() = MaterialTheme.colorScheme.background
+private val BordeGestion: Color
+    @Composable get() = MaterialTheme.colorScheme.outlineVariant
+private val TextoGestion: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val GrisGestion: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 
 @Composable
 fun GestionPedidoScreen(
@@ -182,9 +186,9 @@ fun GestionPedidoScreen(
                             Surface(
                                 shape = RoundedCornerShape(50),
                                 color = when {
-                                    ocupado -> Color(0xFFE7E8ED)
+                                    ocupado -> MaterialTheme.colorScheme.surfaceVariant
                                     elegido -> MoradoGestion
-                                    else -> Color.White
+                                    else -> MaterialTheme.colorScheme.surface
                                 },
                                 border = if (!ocupado && !elegido) {
                                     BorderStroke(1.dp, BordeGestion)
@@ -226,7 +230,7 @@ fun GestionPedidoScreen(
 
                 // Total y pago
                 Surface(
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, BordeGestion),
                     modifier = Modifier.fillMaxWidth()
@@ -273,7 +277,7 @@ fun GestionPedidoScreen(
                             modifier = Modifier.height(32.dp),
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = MoradoGestion,
-                                uncheckedTrackColor = Color(0xFFD5D7DE),
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 uncheckedBorderColor = Color.Transparent
                             )
                         )
@@ -282,33 +286,33 @@ fun GestionPedidoScreen(
 
                 // Regla informativa
                 Surface(
-                    color = Color(0xFFF2EEFF),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = RoundedCornerShape(11.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = buildAnnotatedString {
                             append("Regla: no se entrega un pedido sin cobrar;\n")
-                            withStyle(SpanStyle(color = MoradoGestion, fontWeight = FontWeight.Bold)) {
+                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.Bold)) {
                                 append("ni se pasa a Listo sin casillero.")
                             }
                         },
                         fontSize = 11.sp,
                         lineHeight = 17.sp,
-                        color = Color(0xFF655B85),
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(horizontal = 13.dp, vertical = 12.dp)
                     )
                 }
 
                 if (!mensaje.isNullOrBlank()) {
                     Surface(
-                        color = Color(0xFFF2EEFF),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
                         shape = RoundedCornerShape(9.dp)
                     ) {
                         Text(
                             text = mensaje.orEmpty(),
                             fontSize = 12.sp,
-                            color = MoradoGestion,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(12.dp)
                         )
                     }
@@ -394,7 +398,7 @@ private fun TarjetaEstudianteGestion(
     estado: EstadoPedido?
 ) {
     Surface(
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(1.dp, BordeGestion),
         modifier = Modifier.fillMaxWidth()
@@ -415,12 +419,12 @@ private fun TarjetaEstudianteGestion(
                 modifier = Modifier
                     .size(46.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF0E9FF)),
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = iniciales,
-                    color = MoradoGestion,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -508,9 +512,10 @@ private fun SeguimientoPedido(
 
     val altoFila = 43.dp
     val tamanoCirculo = 21.dp
+    val colorLinea = MaterialTheme.colorScheme.outlineVariant
 
     Surface(
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(15.dp),
         border = BorderStroke(1.dp, BordeGestion),
         modifier = Modifier.fillMaxWidth()
@@ -530,7 +535,7 @@ private fun SeguimientoPedido(
                 val centroPrimerCirculo = altoFila.toPx() / 2f
                 val centroUltimoCirculo = altoFila.toPx() * (pasos.size - 0.5f)
                 drawLine(
-                    color = Color(0xFFDADCE5),
+                    color = colorLinea,
                     start = Offset(centroX, centroPrimerCirculo),
                     end = Offset(centroX, centroUltimoCirculo),
                     strokeWidth = 2.dp.toPx()
@@ -563,10 +568,10 @@ private fun SeguimientoPedido(
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = if (completado) MoradoGestion else Color.White,
+                                color = if (completado) MoradoGestion else MaterialTheme.colorScheme.surface,
                                 border = if (completado) null else BorderStroke(
                                     1.5.dp,
-                                    Color(0xFFD7D9E1)
+                                    MaterialTheme.colorScheme.outlineVariant
                                 ),
                                 modifier = Modifier.size(tamanoCirculo)
                             ) {

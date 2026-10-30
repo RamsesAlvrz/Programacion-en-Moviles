@@ -20,12 +20,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.lavacampus.data.local.entity.Usuario
+import com.alvarez.lavacampus.viewmodel.GastoMensual
 import com.alvarez.lavacampus.viewmodel.PerfilViewModel
 import com.alvarez.lavacampus.viewmodel.PreferenciasViewModel
 import java.util.Locale
@@ -33,8 +35,6 @@ import java.util.Locale
 private val Turquesa = Color(0xFF0895B5)
 private val FondoPerfil = Color(0xFFF0FBFD)
 private val CelesteTarjeta = Color(0xFFD5F8FC)
-private val TextoPrincipal = Color(0xFF263341)
-private val TextoSecundario = Color(0xFF88949F)
 
 @Composable
 fun PerfilScreen(
@@ -52,6 +52,9 @@ fun PerfilScreen(
         .collectAsStateWithLifecycle()
 
     val kilosLavados by perfilViewModel.kilosLavados
+        .collectAsStateWithLifecycle()
+
+    val gastosMensuales by perfilViewModel.gastosMensuales
         .collectAsStateWithLifecycle()
 
     val modoOscuro by preferenciasViewModel.modoOscuro
@@ -74,6 +77,7 @@ fun PerfilScreen(
 
     val superficie = MaterialTheme.colorScheme.surface
     val texto = MaterialTheme.colorScheme.onSurface
+    val textoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
 
     Column(
         modifier = Modifier
@@ -170,7 +174,7 @@ fun PerfilScreen(
                         Text(
                             text = usuario.correo,
                             fontSize = 11.sp,
-                            color = TextoSecundario,
+                            color = textoSecundario,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -220,6 +224,10 @@ fun PerfilScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            Spacer(modifier = Modifier.height(13.dp))
+
+            GraficoGastosMensuales(gastosMensuales = gastosMensuales)
 
             Spacer(modifier = Modifier.height(13.dp))
 
@@ -310,7 +318,7 @@ fun PerfilScreen(
 
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 12.dp),
-                        color = Color(0xFFE9EDF1)
+                        color = MaterialTheme.colorScheme.outlineVariant
                     )
 
                     FilaPreferenciaPerfil(
@@ -343,7 +351,7 @@ fun PerfilScreen(
                     Text(
                         text = "Se guardan en el dispositivo",
                         fontSize = 11.sp,
-                        color = if (oscuro) texto else TextoSecundario
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(3.dp))
@@ -399,7 +407,7 @@ private fun EstadisticaPerfil(
     Surface(
         modifier = modifier.height(72.dp),
         shape = RoundedCornerShape(11.dp),
-        color = CelesteTarjeta
+        color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) MaterialTheme.colorScheme.surfaceVariant else CelesteTarjeta
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -409,7 +417,7 @@ private fun EstadisticaPerfil(
                 text = valor,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = Turquesa,
+                color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) MaterialTheme.colorScheme.primary else Turquesa,
                 maxLines = 1
             )
 
@@ -419,7 +427,7 @@ private fun EstadisticaPerfil(
                 text = etiqueta,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Medium,
-                color = Turquesa,
+                color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) MaterialTheme.colorScheme.primary else Turquesa,
                 maxLines = 1
             )
         }
@@ -456,8 +464,7 @@ private fun FilaPreferenciaPerfil(
             Text(
                 text = descripcion,
                 fontSize = 10.sp,
-                color = TextoSecundario
-            )
+                color = MaterialTheme.colorScheme.onSurfaceVariant            )
         }
 
         Switch(
@@ -468,9 +475,117 @@ private fun FilaPreferenciaPerfil(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = Turquesa,
                 uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color(0xFFD4D8DE),
-                uncheckedBorderColor = Color.Transparent
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                uncheckedBorderColor = MaterialTheme.colorScheme.outline
             )
         )
+    }
+}
+
+// MEJORA D: Gráfico de gastos de los últimos seis meses.
+@Composable
+private fun GraficoGastosMensuales(gastosMensuales: List<GastoMensual>) {
+    val maximo = (gastosMensuales.maxOfOrNull { it.total } ?: 0.0)
+    val totalPeriodo = gastosMensuales.sumOf { it.total }
+    val colorTexto = MaterialTheme.colorScheme.onSurface
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Mis gastos mensuales",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorTexto
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Pedidos pagados por mes de creación · Últimos 6 meses",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(18.dp))
+
+            if (gastosMensuales.isEmpty()) {
+                Text(
+                    text = "Cargando gastos...",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(174.dp),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    gastosMensuales.forEach { gasto ->
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = String.format(Locale.US, "%.0f", gasto.total),
+                                fontSize = 9.sp,
+                                maxLines = 1,
+                                color = colorTexto
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp),
+                                contentAlignment = Alignment.BottomCenter
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.64f)
+                                        .fillMaxHeight(
+                                            if (maximo <= 0.0) 0.02f
+                                            else (gasto.total / maximo).toFloat()
+                                                .coerceIn(0.02f, 1f)
+                                        )
+                                        .background(
+                                            if (gasto.total > 0.0) Turquesa
+                                            else MaterialTheme.colorScheme.surfaceVariant,
+                                            RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)
+                                        )
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(7.dp))
+                            Text(
+                                text = gasto.mes.take(3),
+                                fontSize = 10.sp,
+                                maxLines = 1,
+                                color = colorTexto
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Total últimos 6 meses: S/ " +
+                            String.format(Locale.US, "%.2f", totalPeriodo),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (maximo <= 0.0) {
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Text(
+                        text = "Aún no tienes pedidos pagados en este período.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }

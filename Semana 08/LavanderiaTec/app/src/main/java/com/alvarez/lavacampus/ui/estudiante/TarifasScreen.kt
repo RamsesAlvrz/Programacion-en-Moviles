@@ -1,4 +1,3 @@
-
 package com.alvarez.lavacampus.ui.estudiante
 
 import androidx.compose.foundation.layout.*
@@ -24,8 +23,6 @@ import com.alvarez.lavacampus.data.repository.LavaRepository
 import java.util.Locale
 
 private val AzulTarifas = Color(0xFF0097B2)
-private val FondoTarifas = Color(0xFFF1FBFD)
-private val CelesteIcono = Color(0xFFD7F7FC)
 
 @Composable
 fun TarifasScreen(
@@ -37,9 +34,9 @@ fun TarifasScreen(
     }.collectAsState(initial = emptyList())
 
     Scaffold(
-        containerColor = FondoTarifas,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Surface(color = FondoTarifas) {
+            Surface(color = MaterialTheme.colorScheme.background) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -50,7 +47,8 @@ fun TarifasScreen(
                     IconButton(onClick = onVolver) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = "Volver",
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
 
@@ -59,6 +57,7 @@ fun TarifasScreen(
                         modifier = Modifier.weight(1f),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
 
@@ -67,23 +66,15 @@ fun TarifasScreen(
             }
         }
     ) { paddingValues ->
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(
-                top = 16.dp,
-                bottom = 24.dp
-            )
+            contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
         ) {
-
-            items(
-                items = servicios,
-                key = { it.id }
-            ) { servicio ->
+            items(items = servicios, key = { it.id }) { servicio ->
                 TarjetaTarifa(servicio)
             }
 
@@ -114,13 +105,13 @@ fun TarifasScreen(
                         Text(
                             text = "Lunes a sábado · 8:00 a 18:00",
                             fontSize = 13.sp,
-                            color = Color.DarkGray
+                            color = MaterialTheme.colorScheme.onBackground
                         )
 
                         Text(
                             text = "Recojo en casilleros de pabellón A",
                             fontSize = 12.sp,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -131,7 +122,7 @@ fun TarifasScreen(
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFFFFF1BE),
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(
@@ -141,14 +132,14 @@ fun TarifasScreen(
                         Text(
                             text = "Mínimo 1 kg por servicio de lavado.",
                             fontSize = 12.sp,
-                            color = Color(0xFF9B6500),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                             fontWeight = FontWeight.SemiBold
                         )
 
                         Text(
                             text = "Máximo 3 pedidos activos por estudiante.",
                             fontSize = 12.sp,
-                            color = Color(0xFF9B6500),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -164,11 +155,9 @@ private fun TarjetaTarifa(servicio: Servicio) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -178,7 +167,7 @@ private fun TarjetaTarifa(servicio: Servicio) {
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Surface(
-                color = CelesteIcono,
+                color = MaterialTheme.colorScheme.secondaryContainer,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.size(58.dp)
             ) {
@@ -194,7 +183,8 @@ private fun TarjetaTarifa(servicio: Servicio) {
                 Text(
                     text = servicio.nombre,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
@@ -206,7 +196,7 @@ private fun TarjetaTarifa(servicio: Servicio) {
 
                 Text(
                     text = "Entrega en ${servicio.horasEntrega} h",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             }
@@ -231,7 +221,7 @@ private fun IconoTarifa(servicio: Servicio) {
     Icon(
         imageVector = icono,
         contentDescription = servicio.nombre,
-        tint = AzulTarifas,
+        tint = MaterialTheme.colorScheme.onSecondaryContainer,
         modifier = Modifier.size(28.dp)
     )
 }
@@ -245,9 +235,5 @@ fun Servicio.textoPrecio(): String {
         else -> "por unidad"
     }
 
-    return "S/ %.2f %s".format(
-        Locale.US,
-        precio,
-        unidadTexto
-    )
+    return "S/ %.2f %s".format(Locale.US, precio, unidadTexto)
 }
