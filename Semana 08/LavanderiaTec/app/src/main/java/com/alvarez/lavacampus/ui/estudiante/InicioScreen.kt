@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,7 +38,11 @@ fun InicioScreen(
 ) {
     val TextoPrincipal = MaterialTheme.colorScheme.onBackground
     val TextoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
-    val FondoInicio = MaterialTheme.colorScheme.background
+    val FondoInicio = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialTheme.colorScheme.background
+    } else {
+        Color(0xFFF0FBFD)
+    }
 
     val estudiante by viewModel.estudiante.collectAsStateWithLifecycle()
     val pedidos by viewModel.pedidos.collectAsStateWithLifecycle()

@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,6 +24,7 @@ import com.alvarez.lavacampus.data.repository.LavaRepository
 import java.util.Locale
 
 private val AzulTarifas = Color(0xFF0097B2)
+private val FondoClaroTarifas = Color(0xFFF0FBFD)
 
 @Composable
 fun TarifasScreen(
@@ -33,10 +35,16 @@ fun TarifasScreen(
         repository.observarServiciosActivos()
     }.collectAsState(initial = emptyList())
 
+    val fondoPantalla = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialTheme.colorScheme.background
+    } else {
+        FondoClaroTarifas
+    }
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = fondoPantalla,
         topBar = {
-            Surface(color = MaterialTheme.colorScheme.background) {
+            Surface(color = fondoPantalla) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -28,15 +29,17 @@ import java.util.Locale
 
 private val TurquesaDetalle = Color(0xFF0895B5)
 private val FondoDetalle: Color
-    @Composable get() = MaterialTheme.colorScheme.background
+    @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialTheme.colorScheme.background
+    } else {
+        Color(0xFFF0FBFD)
+    }
 private val TextoDetalle: Color
     @Composable get() = MaterialTheme.colorScheme.onSurface
 private val GrisDetalle: Color
     @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 private val BordeDetalle: Color
     @Composable get() = MaterialTheme.colorScheme.outline
-private val AmarilloDetalle: Color
-    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -288,25 +291,47 @@ fun DetallePedidoScreen(
                     }
                 }
 
-                // PAGO Y CASILLERO
+                // PAGO Y CASILLERO: amarillo si está pendiente, verde si está pagado.
                 item {
+                    val esPagado = datos.pedido.pagado
+                    val modoOscuro = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                    val fondoPago = when {
+                        esPagado && modoOscuro -> Color(0xFF183D32)
+                        esPagado -> Color(0xFFDDF7E6)
+                        modoOscuro -> Color(0xFF493B1F)
+                        else -> Color(0xFFFFF3C4)
+                    }
+                    val colorTituloPago = when {
+                        esPagado && modoOscuro -> Color(0xFF9AE6BD)
+                        esPagado -> Color(0xFF18794E)
+                        modoOscuro -> Color(0xFFFFD77D)
+                        else -> Color(0xFF926000)
+                    }
+                    val colorCasillero = if (modoOscuro) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else if (esPagado) {
+                        Color(0xFF315C48)
+                    } else {
+                        Color(0xFF775D2B)
+                    }
+
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(AmarilloDetalle)
+                            .background(fondoPago)
                             .padding(13.dp),
                         verticalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
                         Text(
-                            text = if (datos.pedido.pagado) {
+                            text = if (esPagado) {
                                 "Pagado"
                             } else {
                                 "Pago pendiente · se paga al recoger"
                             },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = colorTituloPago
                         )
 
                         Text(
@@ -315,7 +340,7 @@ fun DetallePedidoScreen(
                                     ?: "Se asignará al estar listo"
                             }",
                             fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = colorCasillero
                         )
                     }
                 }

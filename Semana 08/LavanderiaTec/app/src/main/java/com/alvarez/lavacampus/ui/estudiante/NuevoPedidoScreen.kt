@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 
 private val TurquesaPedido = Color(0xFF0895B5)
+private val FondoClaroPedido = Color(0xFFF0FBFD)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,8 +69,14 @@ fun NuevoPedidoScreen(
 
     val haySeleccion = lineasSeleccionadas.isNotEmpty()
 
+    val fondoPantalla = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialTheme.colorScheme.background
+    } else {
+        FondoClaroPedido
+    }
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = fondoPantalla,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -90,7 +97,7 @@ fun NuevoPedidoScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = fondoPantalla
                 )
             )
         }
@@ -99,6 +106,7 @@ fun NuevoPedidoScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(fondoPantalla)
                 .padding(paddingValues),
             contentPadding = PaddingValues(
                 start = 20.dp,
@@ -660,4 +668,3 @@ private fun formatearFechaEntrega(fecha: String): String {
         fecha
     }
 }
-
