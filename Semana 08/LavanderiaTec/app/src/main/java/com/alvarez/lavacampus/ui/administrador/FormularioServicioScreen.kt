@@ -17,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +30,7 @@ import com.alvarez.lavacampus.R
 import java.util.Locale
 
 private val Morado = Color(0xFF6D28D9)
+private val FondoLilaAdmin = Color(0xFFF9F8FD)
 
 @Composable
 fun FormularioServicioScreen(
@@ -74,14 +76,20 @@ fun FormularioServicioScreen(
     var errorNombre by remember { mutableStateOf(false) }
     var errorPrecio by remember { mutableStateOf(false) }
 
+    val fondoPantalla = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialTheme.colorScheme.background
+    } else {
+        FondoLilaAdmin
+    }
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = fondoPantalla,
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-                    .background(MaterialTheme.colorScheme.background),
+                    .background(fondoPantalla),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(

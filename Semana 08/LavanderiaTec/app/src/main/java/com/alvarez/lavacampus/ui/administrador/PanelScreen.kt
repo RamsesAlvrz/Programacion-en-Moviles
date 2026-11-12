@@ -1,5 +1,6 @@
 package com.alvarez.lavacampus.ui.administrador
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+private val FondoClaroPanel = Color(0xFFF9F8FD)
 private val Morado = Color(0xFF6D28D9)
 private val Verde = Color(0xFF16A34A)
 
@@ -39,6 +41,7 @@ fun PanelScreen(
     // Se consulta el tema de MaterialTheme, no el tema del sistema,
     // para respetar el interruptor de modo oscuro de la aplicación.
     val oscuro = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val fondoPantalla = if (oscuro) MaterialTheme.colorScheme.background else FondoClaroPanel
     val textoPrincipal = MaterialTheme.colorScheme.onBackground
     val textoSecundario = MaterialTheme.colorScheme.onSurfaceVariant
     val superficieGrafico = MaterialTheme.colorScheme.surface
@@ -72,6 +75,7 @@ fun PanelScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(fondoPantalla)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)

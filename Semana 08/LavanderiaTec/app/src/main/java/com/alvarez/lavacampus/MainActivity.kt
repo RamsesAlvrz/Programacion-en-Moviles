@@ -29,6 +29,7 @@ import com.alvarez.lavacampus.ui.administrador.PanelScreen
 import com.alvarez.lavacampus.ui.administrador.GestionPedidoScreen
 import com.alvarez.lavacampus.ui.estudiante.DetallePedidoScreen
 import com.alvarez.lavacampus.ui.estudiante.InicioScreen
+import com.alvarez.lavacampus.ui.estudiante.RegistroScreen
 import com.alvarez.lavacampus.ui.estudiante.LoginScreen
 import com.alvarez.lavacampus.ui.estudiante.MisPedidosScreen
 import com.alvarez.lavacampus.ui.estudiante.NuevoPedidoScreen
@@ -178,6 +179,8 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(false)
             }
 
+            var mostrarRegistro by rememberSaveable { mutableStateOf(false) }
+
             var sesionVerificada by remember {
                 mutableStateOf(false)
             }
@@ -228,10 +231,12 @@ class MainActivity : ComponentActivity() {
                     }
 
                     usuarioActual == null -> {
-                        LoginScreen(
-                            viewModel = sesionViewModel,
-                            onLoginExitoso = {}
-                        )
+                        if (mostrarRegistro) {
+                            RegistroScreen(viewModel = sesionViewModel, onVolver = { mostrarRegistro = false })
+                        } else {
+                            LoginScreen(viewModel = sesionViewModel, onLoginExitoso = {},
+                                onRegistrarse = { sesionViewModel.limpiarError(); mostrarRegistro = true })
+                        }
                     }
 
                     usuarioActual?.rol == "CLIENTE" -> {
@@ -470,7 +475,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    usuarioActual?.rol == "ADMIN" -> {
+                    usuarioActual?.rol == "ADMIN" || usuarioActual?.rol == "SOPORTE" -> {
 
                         Scaffold(
                             containerColor = MaterialTheme.colorScheme.background,
@@ -664,7 +669,7 @@ class MainActivity : ComponentActivity() {
 
                 // COMMIT 14: Confirmar el cambio de cuenta antes de cerrar sesión.
                 if (mostrarConfirmacionCambioPerfil && usuarioActual != null) {
-                    val esAdministrador = usuarioActual?.rol == "ADMIN"
+                    val esAdministrador = usuarioActual?.rol == "ADMIN" || usuarioActual?.rol == "SOPORTE"
 
                     AlertDialog(
                         onDismissRequest = {

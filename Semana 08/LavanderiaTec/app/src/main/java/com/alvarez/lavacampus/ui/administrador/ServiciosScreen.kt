@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,6 +30,7 @@ import com.alvarez.lavacampus.viewmodel.ServiciosViewModel
 import java.util.Locale
 
 private val MoradoServicios = Color(0xFF6D28D9)
+private val FondoClaroAdmin = Color(0xFFF9F8FD)
 
 @Composable
 fun ServiciosScreen(
@@ -53,12 +55,18 @@ fun ServiciosScreen(
         }
     }
 
+    val fondoPantalla = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialTheme.colorScheme.background
+    } else {
+        FondoClaroAdmin
+    }
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = fondoPantalla,
 
         topBar = {
             Surface(
-                color = MaterialTheme.colorScheme.background
+                color = fondoPantalla
             ) {
                 Row(
                     modifier = Modifier
@@ -195,9 +203,9 @@ private fun TarjetaServicioAdmin(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = obtenerIconoServicio(servicio.icono),
+                    imageVector = obtenerIconoServicio(servicio),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    tint = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFFCAA7FF) else MoradoServicios,
                     modifier = Modifier.size(25.dp)
                 )
             }
@@ -282,22 +290,20 @@ private fun construirDetalleServicio(servicio: Servicio): String {
     return "S/ $precio por $unidad · ${servicio.horasEntrega} h"
 }
 
-// Selecciona el ícono según el valor almacenado en Room.
-private fun obtenerIconoServicio(icono: String): ImageVector {
-    return when (icono.lowercase()) {
-        "lavadora", "lavado", "wash" ->
-            Icons.Filled.LocalLaundryService
-
-        "plancha", "planchado" ->
-            Icons.Filled.DryCleaning
-
-        "ropa", "camiseta", "prenda" ->
-            Icons.Filled.Checkroom
-
-        "edredon", "edredón", "frazada" ->
-            Icons.Filled.Wash
-
-        else ->
-            Icons.Filled.LocalLaundryService
+// Se prioriza el nombre del servicio: los registros antiguos pueden tener
+// "lavadora" guardado en Room para todos los servicios.
+private fun obtenerIconoServicio(servicio: Servicio): ImageVector {
+    val nombre = servicio.nombre.lowercase(Locale.ROOT)
+    return when {
+        "planch" in nombre -> Icons.Filled.DryCleaning
+        "seco" in nombre -> Icons.Filled.Checkroom
+        "edred" in nombre || "frazad" in nombre || "cobert" in nombre -> Icons.Filled.Wash
+        "lavado" in nombre || "secado" in nombre -> Icons.Filled.LocalLaundryService
+        else -> when (servicio.icono.lowercase(Locale.ROOT)) {
+            "plancha", "planchado" -> Icons.Filled.DryCleaning
+            "ropa", "camiseta", "prenda" -> Icons.Filled.Checkroom
+            "edredon", "edredón", "frazada" -> Icons.Filled.Wash
+            else -> Icons.Filled.LocalLaundryService
+        }
     }
 }

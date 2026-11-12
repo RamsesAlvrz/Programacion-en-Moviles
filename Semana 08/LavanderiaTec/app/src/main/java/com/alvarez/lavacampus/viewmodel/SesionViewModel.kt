@@ -84,6 +84,54 @@ class SesionViewModel(
         }
     }
 
+    // Registrar una cuenta de estudiante en Room.
+    fun registrarEstudiante(
+        nombre: String, codigo: String, correo: String,
+        clave: String, confirmarClave: String,
+        onResultado: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            _cargando.value = true
+            _mensajeError.value = null
+            try {
+                val correoLimpio = correo.trim().lowercase()
+                when {
+                    nombre.isBlank() || codigo.isBlank() || correoLimpio.isBlank() ||
+                            clave.isBlank() || confirmarClave.isBlank() ->
+                        _mensajeError.value = "Completa los cinco campos"
+                    !android.util.Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches() ->
+                        _mensajeError.value = "Correo no válido"
+                    clave != confirmarClave ->
+                        _mensajeError.value = "Las contraseñas no coinciden"
+                    repository.buscarUsuarioPorCorreo(correoLimpio) != null ->
+                        _mensajeError.value = "El correo ya está registrado"
+                    else -> {
+                        val id = repository.registrarUsuario(
+                            Usuario(nombre = nombre.trim(), codigo = codigo.trim(),
+                                correo = correoLimpio, clave = clave, rol = "CLIENTE")
+                        )
+                        if (id > 0) {
+                            val usuario = repository.buscarUsuarioPorId(id.toInt())
+                            if (usuario != null) {
+                                preferenciasStore.guardarSesion(usuario.id, usuario.rol)
+                                _usuarioActual.value = usuario
+                                onResultado(true)
+                                return@launch
+                            }
+                        }
+                        _mensajeError.value = "No se pudo registrar la cuenta"
+                    }
+                }
+                onResultado(false)
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al registrar: ${e.message}"
+                onResultado(false)
+            } finally {
+                _cargando.value = false
+            }
+        }
+    }
+
     // Cerrar la sesión actual
     fun cerrarSesion(onFinalizado: () -> Unit) {
         viewModelScope.launch {

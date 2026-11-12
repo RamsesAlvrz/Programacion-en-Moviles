@@ -31,7 +31,11 @@ import java.util.Locale
 
 // Colores originales de la bandeja.
 private val FondoBandeja
-    @Composable get() = MaterialTheme.colorScheme.background
+    @Composable get() = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        MaterialTheme.colorScheme.background
+    } else {
+        Color(0xFFF9F8FD)
+    }
 private val MoradoBandeja = Color(0xFF7024DB)
 private val BordeBandeja
     @Composable get() = MaterialTheme.colorScheme.outlineVariant

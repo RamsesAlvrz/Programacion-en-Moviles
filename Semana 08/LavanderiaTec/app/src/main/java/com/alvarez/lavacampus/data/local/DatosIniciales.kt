@@ -38,6 +38,10 @@ object DatosIniciales {
             correo = "admin@lavacampus.test",
             clave = "admin",
             rol = "ADMIN"
+        ),
+        Usuario(
+            nombre = "Soporte LavaCampus", codigo = "SOP001",
+            correo = "soporte@lavacampus.test", clave = "soporte123", rol = "SOPORTE"
         )
     )
     // Catálogo de servicios solicitado por la guía

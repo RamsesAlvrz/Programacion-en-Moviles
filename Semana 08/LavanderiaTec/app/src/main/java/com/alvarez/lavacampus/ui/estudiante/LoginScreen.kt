@@ -28,10 +28,13 @@ import com.alvarez.lavacampus.viewmodel.SesionViewModel
 @Composable
 fun LoginScreen(
     viewModel: SesionViewModel,
-    onLoginExitoso: (String) -> Unit
+    onLoginExitoso: (String) -> Unit,
+    onRegistrarse: () -> Unit
 ) {
     var correo by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
+    var confirmarClave by remember { mutableStateOf("") }
+    var errorConfirmacion by remember { mutableStateOf(false) }
     var rolSeleccionado by remember { mutableStateOf("CLIENTE") }
 
     val cargando by viewModel.cargando.collectAsStateWithLifecycle()
@@ -90,7 +93,8 @@ fun LoginScreen(
         ) {
             listOf(
                 "CLIENTE" to "Estudiante",
-                "ADMIN" to "Administrador"
+                "ADMIN" to "Administrador",
+                "SOPORTE" to "Soporte"
             ).forEach { (rol, etiqueta) ->
 
                 val seleccionado = rolSeleccionado == rol
@@ -201,6 +205,32 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        if (rolSeleccionado != "SOPORTE") {
+            OutlinedTextField(
+                value = confirmarClave,
+                onValueChange = { confirmarClave = it; errorConfirmacion = false },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Confirmar contraseña", fontSize = 12.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Lock,
+                        contentDescription = "Confirmar contraseña",
+                        tint = colorPrincipal,
+                        modifier = Modifier.size(19.dp)
+                    )
+                },
+                singleLine = true,
+                isError = errorConfirmacion,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                shape = RoundedCornerShape(10.dp)
+            )
+            if (errorConfirmacion) {
+                Text("Las contraseñas no coinciden", color = MaterialTheme.colorScheme.error)
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+
         // Enlace visual de recuperación
         Text(
             text = "¿Olvidaste tu contraseña?",
@@ -228,7 +258,9 @@ fun LoginScreen(
         // Botón de ingreso
         Button(
             onClick = {
-                viewModel.iniciarSesion(
+                if (rolSeleccionado != "SOPORTE" && clave != confirmarClave) {
+                    errorConfirmacion = true
+                } else viewModel.iniciarSesion(
                     correo = correo,
                     clave = clave,
                     rol = rolSeleccionado
@@ -240,7 +272,8 @@ fun LoginScreen(
             },
             enabled = !cargando &&
                     correo.isNotBlank() &&
-                    clave.isNotBlank(),
+                    clave.isNotBlank() &&
+                    (rolSeleccionado == "SOPORTE" || confirmarClave.isNotBlank()),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -275,7 +308,7 @@ fun LoginScreen(
             // Pendiente de conectar con una pantalla de registro.
             Text(
                 text = "¿No tienes cuenta? Regístrate",
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().clickable { onRegistrarse() },
                 textAlign = TextAlign.Center,
                 color = colorPrincipal,
                 fontSize = 12.sp,

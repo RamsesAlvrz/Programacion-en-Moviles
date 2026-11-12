@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alvarez.lavacampus.data.local.entity.Servicio
@@ -25,6 +26,8 @@ import java.util.Locale
 
 private val AzulTarifas = Color(0xFF0097B2)
 private val FondoClaroTarifas = Color(0xFFF0FBFD)
+private val FondoIconoTarifas = Color(0xFFE0F7FA)
+private val FondoAvisoTarifas = Color(0xFFFFF2C6)
 
 @Composable
 fun TarifasScreen(
@@ -35,10 +38,19 @@ fun TarifasScreen(
         repository.observarServiciosActivos()
     }.collectAsState(initial = emptyList())
 
-    val fondoPantalla = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
-        MaterialTheme.colorScheme.background
-    } else {
-        FondoClaroTarifas
+    val modoOscuro = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val fondoPantalla = if (modoOscuro) MaterialTheme.colorScheme.background else FondoClaroTarifas
+
+    // Orden visual de la guía, sin alterar los datos ni el orden guardado en Room.
+    val serviciosOrdenados = remember(servicios) {
+        servicios.sortedWith(compareBy { servicio ->
+            when {
+                servicio.nombre.contains("lavado y secado", ignoreCase = true) -> 0
+                servicio.nombre.contains("planch", ignoreCase = true) -> 1
+                servicio.nombre.contains("lavado en seco", ignoreCase = true) -> 2
+                else -> 3
+            }
+        })
     }
 
     Scaffold(
@@ -48,8 +60,8 @@ fun TarifasScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
-                        .padding(horizontal = 16.dp),
+                        .height(56.dp)
+                        .padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onVolver) {
@@ -59,16 +71,14 @@ fun TarifasScreen(
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
-
                     Text(
                         text = "Tarifas y servicios",
                         modifier = Modifier.weight(1f),
-                        fontSize = 18.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
-
                     Spacer(modifier = Modifier.width(48.dp))
                 }
             }
@@ -78,17 +88,16 @@ fun TarifasScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
+                .padding(horizontal = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(13.dp),
+            contentPadding = PaddingValues(top = 15.dp, bottom = 24.dp)
         ) {
-            items(items = servicios, key = { it.id }) { servicio ->
-                TarjetaTarifa(servicio)
+            items(items = serviciosOrdenados, key = { it.id }) { servicio ->
+                TarjetaTarifa(servicio, modoOscuro)
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-
+                Spacer(modifier = Modifier.height(10.dp))
                 Row(
                     verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -97,28 +106,23 @@ fun TarifasScreen(
                         imageVector = Icons.Outlined.Schedule,
                         contentDescription = null,
                         tint = AzulTarifas,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(19.dp)
                     )
-
-                    Column {
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text(
                             text = "Horario de atención",
-                            color = AzulTarifas,
+                            color = if (modoOscuro) MaterialTheme.colorScheme.primary else AzulTarifas,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 12.sp
                         )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
                         Text(
                             text = "Lunes a sábado · 8:00 a 18:00",
-                            fontSize = 13.sp,
+                            fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
-
                         Text(
                             text = "Recojo en casilleros de pabellón A",
-                            fontSize = 12.sp,
+                            fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -126,28 +130,27 @@ fun TarifasScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(10.dp))
-
+                Spacer(modifier = Modifier.height(12.dp))
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                    shape = RoundedCornerShape(12.dp)
+                    color = if (modoOscuro) Color(0xFF493B1F) else FondoAvisoTarifas,
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 15.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
+                        val colorAviso = if (modoOscuro) Color(0xFFFFDB8C) else Color(0xFF78571E)
                         Text(
                             text = "Mínimo 1 kg por servicio de lavado.",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            fontSize = 11.sp,
+                            color = colorAviso,
                             fontWeight = FontWeight.SemiBold
                         )
-
                         Text(
                             text = "Máximo 3 pedidos activos por estudiante.",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            fontSize = 11.sp,
+                            color = colorAviso,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -158,35 +161,32 @@ fun TarifasScreen(
 }
 
 @Composable
-private fun TarjetaTarifa(servicio: Servicio) {
+private fun TarjetaTarifa(servicio: Servicio, modoOscuro: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 14.dp, vertical = 17.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(12.dp),
+                color = if (modoOscuro) MaterialTheme.colorScheme.secondaryContainer else FondoIconoTarifas,
+                shape = RoundedCornerShape(11.dp),
                 modifier = Modifier.size(58.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    IconoTarifa(servicio)
+                    IconoTarifa(servicio, modoOscuro)
                 }
             }
-
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
                     text = servicio.nombre,
@@ -194,14 +194,12 @@ private fun TarjetaTarifa(servicio: Servicio) {
                     fontSize = 15.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-
                 Text(
                     text = servicio.textoPrecio(),
-                    color = AzulTarifas,
+                    color = if (modoOscuro) MaterialTheme.colorScheme.primary else AzulTarifas,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
-
                 Text(
                     text = "Entrega en ${servicio.horasEntrega} h",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -213,7 +211,7 @@ private fun TarjetaTarifa(servicio: Servicio) {
 }
 
 @Composable
-private fun IconoTarifa(servicio: Servicio) {
+private fun IconoTarifa(servicio: Servicio, modoOscuro: Boolean) {
     val icono = when (servicio.unidad.uppercase()) {
         "KG" -> Icons.Outlined.LocalLaundryService
         "PRENDA" -> {
@@ -229,8 +227,8 @@ private fun IconoTarifa(servicio: Servicio) {
     Icon(
         imageVector = icono,
         contentDescription = servicio.nombre,
-        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = Modifier.size(28.dp)
+        tint = if (modoOscuro) MaterialTheme.colorScheme.onSecondaryContainer else AzulTarifas,
+        modifier = Modifier.size(29.dp)
     )
 }
 
@@ -242,6 +240,5 @@ fun Servicio.textoPrecio(): String {
         "UNIDAD" -> "por unidad"
         else -> "por unidad"
     }
-
     return "S/ %.2f %s".format(Locale.US, precio, unidadTexto)
 }

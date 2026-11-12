@@ -32,6 +32,7 @@ import com.alvarez.lavacampus.data.model.ClienteResumen
 import java.util.Locale
 
 private val MoradoClientes = Color(0xFF7629DB)
+private val FondoClaroClientes = Color(0xFFF9F8FD)
 
 @Composable
 fun ClientesScreen(
@@ -41,11 +42,16 @@ fun ClientesScreen(
     val clientes by viewModel.clientes.collectAsStateWithLifecycle()
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
     val colores = MaterialTheme.colorScheme
+    val fondoPantalla = if (colores.background.luminance() < 0.5f) {
+        colores.background
+    } else {
+        FondoClaroClientes
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colores.background)
+            .background(fondoPantalla)
     ) {
         Box(
             modifier = Modifier
