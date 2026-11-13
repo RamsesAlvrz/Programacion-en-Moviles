@@ -1,8 +1,13 @@
+
 package com.tecsup.smartcatalog.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -11,36 +16,44 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+
 import com.tecsup.smartcatalog.data.auth.AuthRepository
 import com.tecsup.smartcatalog.data.repository.ItemRepository
-import com.tecsup.smartcatalog.ui.detalle.DetalleScreen
-import com.tecsup.smartcatalog.ui.detalle.DetalleViewModel
-import com.tecsup.smartcatalog.ui.detalle.DetalleViewModelFactory
-import com.tecsup.smartcatalog.ui.favoritos.FavoritosScreen
-import com.tecsup.smartcatalog.ui.favoritos.FavoritosViewModel
-import com.tecsup.smartcatalog.ui.favoritos.FavoritosViewModelFactory
-import com.tecsup.smartcatalog.ui.lista.ListaScreen
-import com.tecsup.smartcatalog.ui.lista.ListaViewModel
-import com.tecsup.smartcatalog.ui.lista.ListaViewModelFactory
-import com.tecsup.smartcatalog.ui.login.LoginScreen
-import com.tecsup.smartcatalog.ui.login.LoginViewModel
-import com.tecsup.smartcatalog.ui.login.LoginViewModelFactory
+
 import com.tecsup.smartcatalog.ui.admin.AdminScreen
 import com.tecsup.smartcatalog.ui.admin.AdminViewModel
 import com.tecsup.smartcatalog.ui.admin.AdminViewModelFactory
-import kotlinx.coroutines.launch
+
+import com.tecsup.smartcatalog.ui.detalle.DetalleScreen
+import com.tecsup.smartcatalog.ui.detalle.DetalleViewModel
+import com.tecsup.smartcatalog.ui.detalle.DetalleViewModelFactory
+
+import com.tecsup.smartcatalog.ui.favoritos.FavoritosScreen
+import com.tecsup.smartcatalog.ui.favoritos.FavoritosViewModel
+import com.tecsup.smartcatalog.ui.favoritos.FavoritosViewModelFactory
+
+import com.tecsup.smartcatalog.ui.lista.ListaScreen
+import com.tecsup.smartcatalog.ui.lista.ListaViewModel
+import com.tecsup.smartcatalog.ui.lista.ListaViewModelFactory
+
+import com.tecsup.smartcatalog.ui.login.LoginScreen
+import com.tecsup.smartcatalog.ui.login.LoginViewModel
+import com.tecsup.smartcatalog.ui.login.LoginViewModelFactory
+
+import com.tecsup.smartcatalog.ui.theme.FondoPremium
+import com.tecsup.smartcatalog.ui.theme.AzulBrillante
+import com.tecsup.smartcatalog.ui.theme.BordePremium
 
 @Composable
 fun AppNav(repository: ItemRepository) {
 
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
-    val scope = rememberCoroutineScope()
 
-    // Recuperar sesión y verificar rol antes de mostrar pantallas.
     var cargandoSesion by remember { mutableStateOf(true) }
     var rolActual by remember { mutableStateOf<String?>(null) }
 
+    // Recuperar sesión y verificar rol
     LaunchedEffect(Unit) {
         rolActual = try {
             if (authRepository.usuarioActual() != null) {
@@ -64,9 +77,14 @@ fun AppNav(repository: ItemRepository) {
     }
 
     if (cargandoSesion) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(FondoPremium),
+            contentAlignment = Alignment.Center
+        ) {
             CircularProgressIndicator(
-                modifier = Modifier.padding(24.dp)
+                color = AzulBrillante
             )
         }
         return
@@ -95,6 +113,7 @@ fun AppNav(repository: ItemRepository) {
         startDestination = destinoInicial
     ) {
 
+        // LOGIN Y REGISTRO
         composable("login") {
 
             val loginViewModel: LoginViewModel = viewModel(
@@ -125,26 +144,62 @@ fun AppNav(repository: ItemRepository) {
             )
         }
 
+        // CATÁLOGO
         composable("catalogo") {
 
             val listaViewModel: ListaViewModel = viewModel(
                 factory = ListaViewModelFactory(repository)
             )
 
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(FondoPremium)
+            ) {
 
+                // BARRA SUPERIOR DARK TECH
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.End
+                        .background(FondoPremium)
+                        .padding(
+                            horizontal = 14.dp,
+                            vertical = 4.dp
+                        ),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = { cerrarSesion() }) {
-                        Text("Cerrar sesión")
+                    TextButton(
+                        onClick = { cerrarSesion() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Logout,
+                            contentDescription = null,
+                            tint = AzulBrillante,
+                            modifier = Modifier.size(18.dp)
+                        )
+
+                        Spacer(
+                            modifier = Modifier.width(6.dp)
+                        )
+
+                        Text(
+                            text = "Cerrar sesión",
+                            color = AzulBrillante,
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 }
 
-                Box(modifier = Modifier.weight(1f)) {
+                HorizontalDivider(
+                    color = BordePremium,
+                    thickness = 0.5.dp
+                )
+
+                // CONTENIDO DEL CATÁLOGO
+                Box(
+                    modifier = Modifier.weight(1f)
+                ) {
                     ListaScreen(
                         viewModel = listaViewModel,
                         onVerDetalle = { id ->
@@ -158,6 +213,7 @@ fun AppNav(repository: ItemRepository) {
             }
         }
 
+        // DETALLE DEL CELULAR
         composable(
             route = "detalle/{productoId}",
             arguments = listOf(
@@ -183,6 +239,7 @@ fun AppNav(repository: ItemRepository) {
             )
         }
 
+        // FAVORITOS
         composable("favoritos") {
 
             val favoritosViewModel: FavoritosViewModel = viewModel(
@@ -200,7 +257,7 @@ fun AppNav(repository: ItemRepository) {
             )
         }
 
-
+        // PANEL ADMINISTRADOR
         composable("admin") {
 
             val adminViewModel: AdminViewModel = viewModel(

@@ -1,6 +1,7 @@
 
 package com.tecsup.smartcatalog.ui.lista
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tecsup.smartcatalog.ui.UiState
 import com.tecsup.smartcatalog.ui.components.CatalogoBanner
 import com.tecsup.smartcatalog.ui.components.ProductoGridCard
+import com.tecsup.smartcatalog.ui.theme.*
 
 @Composable
 fun ListaScreen(
@@ -38,7 +40,9 @@ fun ListaScreen(
     var menuExpandido by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FondoPremium)
     ) {
         when (val actual = estado) {
 
@@ -47,7 +51,9 @@ fun ListaScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = AzulBrillante
+                    )
                 }
             }
 
@@ -121,7 +127,7 @@ fun ListaScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
 
-                    // Encabezado dentro del scroll
+                    // ENCABEZADO
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -134,12 +140,12 @@ fun ListaScreen(
                             ) {
                                 Surface(
                                     shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = AzulElectrico
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Smartphone,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        tint = TextoPremium,
                                         modifier = Modifier
                                             .padding(10.dp)
                                             .size(24.dp)
@@ -150,13 +156,14 @@ fun ListaScreen(
                                     Text(
                                         text = "SmartCatalog",
                                         style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextoPremium
                                     )
 
                                     Text(
                                         text = "Tecnología a tu alcance",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = TextoPremiumSecundario
                                     )
                                 }
                             }
@@ -165,13 +172,13 @@ fun ListaScreen(
                                 Icon(
                                     imageVector = Icons.Default.FavoriteBorder,
                                     contentDescription = "Mis favoritos",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = AzulBrillante
                                 )
                             }
                         }
                     }
 
-                    // Buscador
+                    // BUSCADOR
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         OutlinedTextField(
                             value = busqueda,
@@ -189,11 +196,24 @@ fun ListaScreen(
                             },
                             singleLine = true,
                             shape = RoundedCornerShape(18.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextoPremium,
+                                unfocusedTextColor = TextoPremium,
+                                focusedContainerColor = SuperficiePremium,
+                                unfocusedContainerColor = SuperficiePremium,
+                                focusedBorderColor = AzulBrillante,
+                                unfocusedBorderColor = BordePremium,
+                                focusedPlaceholderColor = TextoPremiumSecundario,
+                                unfocusedPlaceholderColor = TextoPremiumSecundario,
+                                focusedLeadingIconColor = AzulBrillante,
+                                unfocusedLeadingIconColor = TextoPremiumSecundario,
+                                cursorColor = AzulBrillante
+                            )
                         )
                     }
 
-                    // Banner
+                    // BANNER
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         CatalogoBanner(
                             onExplorar = {
@@ -204,16 +224,17 @@ fun ListaScreen(
                         )
                     }
 
-                    // Título de categorías
+                    // TÍTULO DE MARCAS
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Text(
                             text = "Explorar marcas",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = TextoPremium
                         )
                     }
 
-                    // Filtros de marca
+                    // FILTROS
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Row(
                             modifier = Modifier
@@ -227,13 +248,27 @@ fun ListaScreen(
                                     onClick = {
                                         viewModel.seleccionarMarca(marca)
                                     },
-                                    label = { Text(marca) }
+                                    label = {
+                                        Text(marca)
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = SuperficiePremium,
+                                        labelColor = TextoPremiumSecundario,
+                                        selectedContainerColor = AzulElectrico,
+                                        selectedLabelColor = TextoPremium
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = marcaSeleccionada == marca,
+                                        borderColor = BordePremium,
+                                        selectedBorderColor = AzulElectrico
+                                    )
                                 )
                             }
                         }
                     }
 
-                    // Contador y ordenamiento
+                    // PRODUCTOS Y ORDENAMIENTO
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -244,28 +279,35 @@ fun ListaScreen(
                                 Text(
                                     text = "Nuestros celulares",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextoPremium
                                 )
 
                                 Text(
                                     text = "${productosFiltrados.size} productos",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = TextoPremiumSecundario
                                 )
                             }
 
                             Box {
                                 TextButton(
-                                    onClick = { menuExpandido = true }
+                                    onClick = {
+                                        menuExpandido = true
+                                    }
                                 ) {
-                                    Text("Ordenar")
+                                    Text(
+                                        text = "Ordenar",
+                                        color = AzulBrillante
+                                    )
                                 }
 
                                 DropdownMenu(
                                     expanded = menuExpandido,
                                     onDismissRequest = {
                                         menuExpandido = false
-                                    }
+                                    },
+                                    containerColor = SuperficiePremium
                                 ) {
                                     listOf(
                                         "Normal",
@@ -273,7 +315,12 @@ fun ListaScreen(
                                         "Mayor precio"
                                     ).forEach { orden ->
                                         DropdownMenuItem(
-                                            text = { Text(orden) },
+                                            text = {
+                                                Text(
+                                                    text = orden,
+                                                    color = TextoPremium
+                                                )
+                                            },
                                             onClick = {
                                                 viewModel.seleccionarOrden(orden)
                                                 menuExpandido = false
@@ -285,21 +332,23 @@ fun ListaScreen(
                         }
                     }
 
+                    // AVISO SIN CONEXIÓN
                     if (actual.offline) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
+                                color = SuperficiePremium
                             ) {
                                 Text(
                                     text = "Sin conexión: mostrando productos guardados",
                                     modifier = Modifier.padding(12.dp),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = AzulBrillante
                                 )
                             }
                         }
                     }
 
+                    // PRODUCTOS
                     if (productosFiltrados.isEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Box(
@@ -310,7 +359,8 @@ fun ListaScreen(
                             ) {
                                 Text(
                                     text = "No encontramos celulares con esos filtros.",
-                                    style = MaterialTheme.typography.bodyLarge
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = TextoPremiumSecundario
                                 )
                             }
                         }
@@ -319,7 +369,6 @@ fun ListaScreen(
                             items = productosFiltrados,
                             key = { it.id }
                         ) { producto ->
-
                             ProductoGridCard(
                                 item = producto,
                                 onClick = {
