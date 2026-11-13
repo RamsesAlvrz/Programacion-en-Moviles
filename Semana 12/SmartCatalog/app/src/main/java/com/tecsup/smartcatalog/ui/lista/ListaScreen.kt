@@ -1,6 +1,6 @@
+
 package com.tecsup.smartcatalog.ui.lista
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,18 +19,32 @@ import com.tecsup.smartcatalog.ui.UiState
 @Composable
 fun ListaScreen(
     viewModel: ListaViewModel,
-    onVerDetalle: (Int) -> Unit
+    onVerDetalle: (Int) -> Unit,
+    onVerFavoritos: () -> Unit
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
+
         Text(
             text = "SmartCatalog - Celulares",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(16.dp)
         )
+
+        // BOTÓN PARA ABRIR FAVORITOS
+        Button(
+            onClick = onVerFavoritos,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            Text("★ Mis favoritos")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         when (val actual = estado) {
 
@@ -44,31 +58,56 @@ fun ListaScreen(
 
             is UiState.Error -> {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Error: ${actual.mensaje}")
+                    Text(
+                        text = "Error: ${actual.mensaje}",
+                        color = MaterialTheme.colorScheme.error
+                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(onClick = { viewModel.cargarProductos() }) {
+                    Button(
+                        onClick = {
+                            viewModel.cargarProductos()
+                        }
+                    ) {
                         Text("Reintentar")
                     }
                 }
             }
 
             is UiState.Success -> {
+
+                if (actual.offline) {
+                    Text(
+                        text = "Modo sin conexión: mostrando productos guardados",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp,
+                            vertical = 8.dp
+                        )
+                    )
+                }
+
                 if (actual.data.isEmpty()) {
                     Text(
-                        "No hay celulares disponibles",
+                        text = "No hay celulares disponibles",
                         modifier = Modifier.padding(16.dp)
                     )
                 } else {
-                    LazyColumn {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
                         items(
                             items = actual.data,
                             key = { it.id }
                         ) { item ->
+
                             ProductoCard(
                                 item = item,
-                                onClick = { onVerDetalle(item.id) },
+                                onClick = {
+                                    onVerDetalle(item.id)
+                                },
                                 onFavorito = {
                                     viewModel.cambiarFavorito(item)
                                 }
@@ -90,7 +129,10 @@ fun ProductoCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(
+                horizontal = 12.dp,
+                vertical = 6.dp
+            )
             .clickable(onClick = onClick)
     ) {
         Row(
@@ -105,7 +147,9 @@ fun ProductoCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = item.nombre,
                     style = MaterialTheme.typography.titleMedium
@@ -117,10 +161,11 @@ fun ProductoCard(
 
                 TextButton(onClick = onFavorito) {
                     Text(
-                        if (item.favorito)
+                        if (item.favorito) {
                             "★ Quitar favorito"
-                        else
+                        } else {
                             "☆ Agregar favorito"
+                        }
                     )
                 }
             }

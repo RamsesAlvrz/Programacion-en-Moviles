@@ -1,3 +1,4 @@
+
 package com.tecsup.smartcatalog.ui.navigation
 
 import androidx.compose.runtime.Composable
@@ -11,6 +12,9 @@ import com.tecsup.smartcatalog.data.repository.ItemRepository
 import com.tecsup.smartcatalog.ui.detalle.DetalleScreen
 import com.tecsup.smartcatalog.ui.detalle.DetalleViewModel
 import com.tecsup.smartcatalog.ui.detalle.DetalleViewModelFactory
+import com.tecsup.smartcatalog.ui.favoritos.FavoritosScreen
+import com.tecsup.smartcatalog.ui.favoritos.FavoritosViewModel
+import com.tecsup.smartcatalog.ui.favoritos.FavoritosViewModelFactory
 import com.tecsup.smartcatalog.ui.lista.ListaScreen
 import com.tecsup.smartcatalog.ui.lista.ListaViewModel
 import com.tecsup.smartcatalog.ui.lista.ListaViewModelFactory
@@ -25,6 +29,7 @@ fun AppNav(repository: ItemRepository) {
         startDestination = "catalogo"
     ) {
 
+        // PANTALLA PRINCIPAL
         composable("catalogo") {
 
             val listaViewModel: ListaViewModel = viewModel(
@@ -35,10 +40,14 @@ fun AppNav(repository: ItemRepository) {
                 viewModel = listaViewModel,
                 onVerDetalle = { id ->
                     navController.navigate("detalle/$id")
+                },
+                onVerFavoritos = {
+                    navController.navigate("favoritos")
                 }
             )
         }
 
+        // PANTALLA DE DETALLE
         composable(
             route = "detalle/{productoId}",
             arguments = listOf(
@@ -60,6 +69,24 @@ fun AppNav(repository: ItemRepository) {
                 viewModel = detalleViewModel,
                 onVolver = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        // PANTALLA DE FAVORITOS
+        composable("favoritos") {
+
+            val favoritosViewModel: FavoritosViewModel = viewModel(
+                factory = FavoritosViewModelFactory(repository)
+            )
+
+            FavoritosScreen(
+                viewModel = favoritosViewModel,
+                onVolver = {
+                    navController.popBackStack()
+                },
+                onVerDetalle = { id ->
+                    navController.navigate("detalle/$id")
                 }
             )
         }
