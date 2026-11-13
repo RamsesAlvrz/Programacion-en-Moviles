@@ -3,21 +3,26 @@ package com.tecsup.smartcatalog.ui.lista
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tecsup.smartcatalog.ui.UiState
-import com.tecsup.smartcatalog.ui.components.AppButton
-import com.tecsup.smartcatalog.ui.components.ProductoCard
-import com.tecsup.smartcatalog.ui.components.SmartCatalogHeader
+import com.tecsup.smartcatalog.ui.components.CatalogoBanner
+import com.tecsup.smartcatalog.ui.components.ProductoGridCard
 
 @Composable
 fun ListaScreen(
@@ -30,15 +35,11 @@ fun ListaScreen(
     val marcaSeleccionada by viewModel.marcaSeleccionada.collectAsStateWithLifecycle()
     val ordenPrecio by viewModel.ordenPrecio.collectAsStateWithLifecycle()
 
+    var menuExpandido by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-
-        SmartCatalogHeader(
-            titulo = "SmartCatalog",
-            subtitulo = "Encuentra el celular perfecto para ti"
-        )
-
         when (val actual = estado) {
 
             is UiState.Loading -> {
@@ -52,7 +53,7 @@ fun ListaScreen(
 
             is UiState.Error -> {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
@@ -60,10 +61,11 @@ fun ListaScreen(
                         color = MaterialTheme.colorScheme.error
                     )
 
-                    AppButton(
-                        texto = "Reintentar",
+                    Button(
                         onClick = { viewModel.cargarProductos() }
-                    )
+                    ) {
+                        Text("Reintentar")
+                    }
                 }
             }
 
@@ -78,7 +80,6 @@ fun ListaScreen(
 
                 val productosFiltrados = productos
                     .filter { producto ->
-
                         val coincideBusqueda =
                             producto.nombre.contains(
                                 busqueda,
@@ -107,166 +108,225 @@ fun ListaScreen(
                         }
                     }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 14.dp,
+                        end = 14.dp,
+                        top = 12.dp,
+                        bottom = 28.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
 
-                    Text(
-                        text = "Explora nuestro catálogo",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
-                    OutlinedTextField(
-                        value = busqueda,
-                        onValueChange = {
-                            viewModel.actualizarBusqueda(it)
-                        },
-                        label = {
-                            Text("Buscar celular o marca")
-                        },
-                        placeholder = {
-                            Text("Ejemplo: Samsung, iPhone...")
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Text(
-                        text = "Filtrar por marca",
-                        style = MaterialTheme.typography.titleSmall
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        marcas.forEach { marca ->
-
-                            FilterChip(
-                                selected = marcaSeleccionada == marca,
-                                onClick = {
-                                    viewModel.seleccionarMarca(marca)
-                                },
-                                label = {
-                                    Text(marca)
+                    // Encabezado dentro del scroll
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Smartphone,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier
+                                            .padding(10.dp)
+                                            .size(24.dp)
+                                    )
                                 }
-                            )
-                        }
-                    }
 
-                    var menuExpandido =
-                        androidx.compose.runtime.remember {
-                            androidx.compose.runtime.mutableStateOf(false)
-                        }
+                                Column {
+                                    Text(
+                                        text = "SmartCatalog",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
 
-                    Box {
-                        OutlinedButton(
-                            onClick = {
-                                menuExpandido.value = true
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Ordenar: $ordenPrecio")
-                        }
-
-                        DropdownMenu(
-                            expanded = menuExpandido.value,
-                            onDismissRequest = {
-                                menuExpandido.value = false
+                                    Text(
+                                        text = "Tecnología a tu alcance",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                        ) {
-                            listOf(
-                                "Normal",
-                                "Menor precio",
-                                "Mayor precio"
-                            ).forEach { orden ->
 
-                                DropdownMenuItem(
-                                    text = { Text(orden) },
-                                    onClick = {
-                                        viewModel.seleccionarOrden(orden)
-                                        menuExpandido.value = false
-                                    }
+                            IconButton(onClick = onVerFavoritos) {
+                                Icon(
+                                    imageVector = Icons.Default.FavoriteBorder,
+                                    contentDescription = "Mis favoritos",
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
                     }
 
-                    AppButton(
-                        texto = "★ Mis favoritos",
-                        onClick = onVerFavoritos
-                    )
-
-                    Text(
-                        text = "${productosFiltrados.size} celulares encontrados",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                if (actual.offline) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = "Sin conexión: mostrando productos guardados",
-                            modifier = Modifier.padding(12.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-
-                if (productosFiltrados.isEmpty()) {
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (productos.isEmpty()) {
-                                "No hay celulares disponibles."
-                            } else {
-                                "No encontramos celulares con esos filtros."
+                    // Buscador
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        OutlinedTextField(
+                            value = busqueda,
+                            onValueChange = {
+                                viewModel.actualizarBusqueda(it)
                             },
-                            style = MaterialTheme.typography.titleMedium
+                            placeholder = {
+                                Text("Buscar celulares o marcas...")
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null
+                                )
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 
-                } else {
+                    // Banner
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        CatalogoBanner(
+                            onExplorar = {
+                                viewModel.actualizarBusqueda("")
+                                viewModel.seleccionarMarca("Todas")
+                                viewModel.seleccionarOrden("Normal")
+                            }
+                        )
+                    }
 
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            end = 16.dp,
-                            bottom = 20.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    // Título de categorías
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            text = "Explorar marcas",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Filtros de marca
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            marcas.forEach { marca ->
+                                FilterChip(
+                                    selected = marcaSeleccionada == marca,
+                                    onClick = {
+                                        viewModel.seleccionarMarca(marca)
+                                    },
+                                    label = { Text(marca) }
+                                )
+                            }
+                        }
+                    }
+
+                    // Contador y ordenamiento
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Nuestros celulares",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Text(
+                                    text = "${productosFiltrados.size} productos",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Box {
+                                TextButton(
+                                    onClick = { menuExpandido = true }
+                                ) {
+                                    Text("Ordenar")
+                                }
+
+                                DropdownMenu(
+                                    expanded = menuExpandido,
+                                    onDismissRequest = {
+                                        menuExpandido = false
+                                    }
+                                ) {
+                                    listOf(
+                                        "Normal",
+                                        "Menor precio",
+                                        "Mayor precio"
+                                    ).forEach { orden ->
+                                        DropdownMenuItem(
+                                            text = { Text(orden) },
+                                            onClick = {
+                                                viewModel.seleccionarOrden(orden)
+                                                menuExpandido = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (actual.offline) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Text(
+                                    text = "Sin conexión: mostrando productos guardados",
+                                    modifier = Modifier.padding(12.dp),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+
+                    if (productosFiltrados.isEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 40.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No encontramos celulares con esos filtros.",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                    } else {
                         items(
                             items = productosFiltrados,
                             key = { it.id }
-                        ) { item ->
+                        ) { producto ->
 
-                            ProductoCard(
-                                item = item,
+                            ProductoGridCard(
+                                item = producto,
                                 onClick = {
-                                    onVerDetalle(item.id)
+                                    onVerDetalle(producto.id)
                                 },
                                 onFavorito = {
-                                    viewModel.cambiarFavorito(item)
+                                    viewModel.cambiarFavorito(producto)
                                 }
                             )
                         }
