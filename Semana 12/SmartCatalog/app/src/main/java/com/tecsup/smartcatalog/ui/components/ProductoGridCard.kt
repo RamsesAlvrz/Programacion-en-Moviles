@@ -8,7 +8,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.tecsup.smartcatalog.domain.model.Item
 import com.tecsup.smartcatalog.ui.theme.*
-import androidx.compose.foundation.border
 
 @Composable
 fun ProductoGridCard(
@@ -28,28 +33,24 @@ fun ProductoGridCard(
     onClick: () -> Unit,
     onFavorito: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = BordePremium,
-                shape = RoundedCornerShape(20.dp)
-            )
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.elevatedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = SuperficiePremium
         ),
-        elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation = 3.dp
+        border = BorderStroke(
+            width = 1.dp,
+            color = BordePremium
         )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
 
-            // FOTOGRAFÍA DEL CELULAR
+            // IMAGEN DEL CELULAR
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -73,13 +74,17 @@ fun ProductoGridCard(
                     )
                 }
 
-                // BOTÓN FAVORITOS
+                // BOTÓN DE FAVORITOS
                 Surface(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(12.dp),
                     shape = RoundedCornerShape(50),
-                    color = Color.White.copy(alpha = 0.95f)
+                    color = Color(0xFF101E38),
+                    border = BorderStroke(
+                        1.dp,
+                        BordePremium
+                    )
                 ) {
                     IconButton(
                         onClick = onFavorito,
@@ -99,7 +104,7 @@ fun ProductoGridCard(
                             tint = if (item.favorito) {
                                 AmarilloFavorito
                             } else {
-                                AzulElectrico
+                                AzulBrillante
                             },
                             modifier = Modifier.size(22.dp)
                         )
@@ -119,7 +124,6 @@ fun ProductoGridCard(
                     ),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
-
                 Text(
                     text = item.marca.uppercase(),
                     style = MaterialTheme.typography.labelSmall,

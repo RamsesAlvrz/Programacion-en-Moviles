@@ -24,6 +24,8 @@ import com.tecsup.smartcatalog.ui.admin.AdminScreen
 import com.tecsup.smartcatalog.ui.admin.AdminViewModel
 import com.tecsup.smartcatalog.ui.admin.AdminViewModelFactory
 
+import com.tecsup.smartcatalog.ui.comparador.ComparadorScreen
+
 import com.tecsup.smartcatalog.ui.detalle.DetalleScreen
 import com.tecsup.smartcatalog.ui.detalle.DetalleViewModel
 import com.tecsup.smartcatalog.ui.detalle.DetalleViewModelFactory
@@ -44,16 +46,23 @@ import com.tecsup.smartcatalog.ui.theme.FondoPremium
 import com.tecsup.smartcatalog.ui.theme.AzulBrillante
 import com.tecsup.smartcatalog.ui.theme.BordePremium
 
+import kotlinx.coroutines.flow.collectLatest
+
 @Composable
 fun AppNav(repository: ItemRepository) {
 
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
 
-    var cargandoSesion by remember { mutableStateOf(true) }
-    var rolActual by remember { mutableStateOf<String?>(null) }
+    var cargandoSesion by remember {
+        mutableStateOf(true)
+    }
 
-    // Recuperar sesión y verificar rol
+    var rolActual by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    // RECUPERAR SESIÓN Y VERIFICAR ROL
     LaunchedEffect(Unit) {
         rolActual = try {
             if (authRepository.usuarioActual() != null) {
@@ -196,7 +205,6 @@ fun AppNav(repository: ItemRepository) {
                     thickness = 0.5.dp
                 )
 
-                // CONTENIDO DEL CATÁLOGO
                 Box(
                     modifier = Modifier.weight(1f)
                 ) {
@@ -207,10 +215,30 @@ fun AppNav(repository: ItemRepository) {
                         },
                         onVerFavoritos = {
                             navController.navigate("favoritos")
+                        },
+                        onVerComparador = {
+                            navController.navigate("comparador")
                         }
                     )
                 }
             }
+        }
+
+        // NUEVO: COMPARADOR DE CELULARES
+        composable("comparador") {
+
+            val productos by repository
+                .observarProductos()
+                .collectAsState(
+                    initial = emptyList()
+                )
+
+            ComparadorScreen(
+                productos = productos,
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         // DETALLE DEL CELULAR

@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Smartphone
@@ -30,14 +31,17 @@ import com.tecsup.smartcatalog.ui.theme.*
 fun ListaScreen(
     viewModel: ListaViewModel,
     onVerDetalle: (Int) -> Unit,
-    onVerFavoritos: () -> Unit
+    onVerFavoritos: () -> Unit,
+    onVerComparador: () -> Unit
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val busqueda by viewModel.busqueda.collectAsStateWithLifecycle()
     val marcaSeleccionada by viewModel.marcaSeleccionada.collectAsStateWithLifecycle()
     val ordenPrecio by viewModel.ordenPrecio.collectAsStateWithLifecycle()
 
-    var menuExpandido by remember { mutableStateOf(false) }
+    var menuExpandido by remember {
+        mutableStateOf(false)
+    }
 
     Column(
         modifier = Modifier
@@ -68,7 +72,10 @@ fun ListaScreen(
                     )
 
                     Button(
-                        onClick = { viewModel.cargarProductos() }
+                        onClick = { viewModel.cargarProductos() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AzulElectrico
+                        )
                     ) {
                         Text("Reintentar")
                     }
@@ -86,6 +93,7 @@ fun ListaScreen(
 
                 val productosFiltrados = productos
                     .filter { producto ->
+
                         val coincideBusqueda =
                             producto.nombre.contains(
                                 busqueda,
@@ -168,7 +176,9 @@ fun ListaScreen(
                                 }
                             }
 
-                            IconButton(onClick = onVerFavoritos) {
+                            IconButton(
+                                onClick = onVerFavoritos
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.FavoriteBorder,
                                     contentDescription = "Mis favoritos",
@@ -213,7 +223,7 @@ fun ListaScreen(
                         )
                     }
 
-                    // BANNER
+                    // BANNER PRINCIPAL
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         CatalogoBanner(
                             onExplorar = {
@@ -222,6 +232,71 @@ fun ListaScreen(
                                 viewModel.seleccionarOrden("Normal")
                             }
                         )
+                    }
+
+                    // NUEVA FUNCIÓN: COMPARADOR
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            color = SuperficiePremium,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                BordePremium
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = ColorComparador
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CompareArrows,
+                                        contentDescription = null,
+                                        tint = AzulBrillante,
+                                        modifier = Modifier
+                                            .padding(12.dp)
+                                            .size(26.dp)
+                                    )
+                                }
+
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Text(
+                                        text = "Comparar celulares",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextoPremium
+                                    )
+
+                                    Text(
+                                        text = "Compara dos modelos y descubre cuál cuesta menos.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextoPremiumSecundario
+                                    )
+                                }
+
+                                Button(
+                                    onClick = onVerComparador,
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = AzulElectrico
+                                    ),
+                                    contentPadding = PaddingValues(
+                                        horizontal = 14.dp,
+                                        vertical = 10.dp
+                                    )
+                                ) {
+                                    Text("Ir")
+                                }
+                            }
+                        }
                     }
 
                     // TÍTULO DE MARCAS
@@ -234,7 +309,7 @@ fun ListaScreen(
                         )
                     }
 
-                    // FILTROS
+                    // FILTROS POR MARCA
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Row(
                             modifier = Modifier
@@ -385,3 +460,5 @@ fun ListaScreen(
         }
     }
 }
+
+private val ColorComparador = androidx.compose.ui.graphics.Color(0xFF172D59)
