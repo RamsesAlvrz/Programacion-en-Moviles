@@ -2,12 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-
-    // Lo activaremos cuando configuremos Firebase
-    // alias(libs.plugins.google.services)
+    alias(libs.plugins.google.services)
 }
-
-
 
 android {
     namespace = "com.tecsup.smartcatalog"

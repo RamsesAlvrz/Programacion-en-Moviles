@@ -12,8 +12,8 @@ interface ItemDao {
     @Query("SELECT * FROM productos ORDER BY id")
     fun obtenerTodos(): Flow<List<ItemEntity>>
 
-    @Query("SELECT * FROM productos WHERE favorito = 1")
-    fun obtenerFavoritos(): Flow<List<ItemEntity>>
+    @Query("SELECT * FROM productos")
+    suspend fun obtenerTodosUnaVez(): List<ItemEntity>
 
     @Query("SELECT * FROM productos WHERE id = :id LIMIT 1")
     suspend fun obtenerPorId(id: Int): ItemEntity?
@@ -33,7 +33,38 @@ interface ItemDao {
     @Query("DELETE FROM productos")
     suspend fun limpiarCache()
 
-    @Query("SELECT * FROM productos")
-    suspend fun obtenerTodosUnaVez(): List<ItemEntity>
+    // FAVORITOS POR USUARIO
 
+    @Query(
+        "SELECT productoId FROM favoritos_usuario " +
+                "WHERE usuarioId = :usuarioId"
+    )
+    fun observarIdsFavoritos(usuarioId: String): Flow<List<Int>>
+
+    @Query(
+        "SELECT COUNT(*) FROM favoritos_usuario " +
+                "WHERE usuarioId = :usuarioId"
+    )
+    fun contarFavoritosUsuario(usuarioId: String): Flow<Int>
+
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM favoritos_usuario " +
+                "WHERE usuarioId = :usuarioId AND productoId = :productoId)"
+    )
+    suspend fun esFavorito(
+        usuarioId: String,
+        productoId: Int
+    ): Boolean
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun agregarFavorito(favorito: FavoritoEntity)
+
+    @Query(
+        "DELETE FROM favoritos_usuario " +
+                "WHERE usuarioId = :usuarioId AND productoId = :productoId"
+    )
+    suspend fun quitarFavorito(
+        usuarioId: String,
+        productoId: Int
+    )
 }

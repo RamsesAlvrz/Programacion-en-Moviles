@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "700676756467",
+    "project_id": "smartcatalog-39770",
+    "storage_bucket": "smartcatalog-39770.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700676756467:android:1b72155e557ff683a33886",
+        "android_client_info": {
+          "package_name": "com.tecsup.smartcatalog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtQli3hwV_TXDQEwfiiUi425U8mbUI8LQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

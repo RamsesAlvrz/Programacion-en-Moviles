@@ -1,4 +1,3 @@
-
 package com.tecsup.smartcatalog
 
 import android.os.Bundle
