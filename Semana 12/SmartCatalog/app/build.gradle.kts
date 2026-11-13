@@ -77,5 +77,5 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     ksp("androidx.room:room-compiler:2.8.4")
-
+    implementation("androidx.compose.material:material-icons-extended")
 }

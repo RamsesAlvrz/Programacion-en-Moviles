@@ -1,20 +1,20 @@
-
 package com.tecsup.smartcatalog.ui.lista
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import com.tecsup.smartcatalog.domain.model.Item
 import com.tecsup.smartcatalog.ui.UiState
+import com.tecsup.smartcatalog.ui.components.AppButton
+import com.tecsup.smartcatalog.ui.components.ProductoCard
+import com.tecsup.smartcatalog.ui.components.SmartCatalogHeader
 
 @Composable
 fun ListaScreen(
@@ -27,76 +27,97 @@ fun ListaScreen(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-
-        Text(
-            text = "SmartCatalog - Celulares",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(16.dp)
+        SmartCatalogHeader(
+            titulo = "SmartCatalog",
+            subtitulo = "Descubre tu próximo celular"
         )
 
-        // BOTÓN PARA ABRIR FAVORITOS
-        Button(
-            onClick = onVerFavoritos,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("★ Mis favoritos")
-        }
+            Text(
+                text = "Explora nuestro catálogo",
+                style = MaterialTheme.typography.titleLarge
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            AppButton(
+                texto = "★ Mis favoritos",
+                onClick = onVerFavoritos
+            )
+        }
 
         when (val actual = estado) {
 
             is UiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(24.dp)
-                    )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
 
             is UiState.Error -> {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Text(
                         text = "Error: ${actual.mensaje}",
                         color = MaterialTheme.colorScheme.error
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = {
-                            viewModel.cargarProductos()
-                        }
-                    ) {
-                        Text("Reintentar")
-                    }
+                    AppButton(
+                        texto = "Reintentar",
+                        onClick = { viewModel.cargarProductos() }
+                    )
                 }
             }
 
             is UiState.Success -> {
 
                 if (actual.offline) {
-                    Text(
-                        text = "Modo sin conexión: mostrando productos guardados",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(
-                            horizontal = 16.dp,
-                            vertical = 8.dp
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = 16.dp,
+                                vertical = 8.dp
+                            ),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "Sin conexión: mostrando productos guardados",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(12.dp)
                         )
-                    )
+                    }
                 }
 
                 if (actual.data.isEmpty()) {
-                    Text(
-                        text = "No hay celulares disponibles",
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No hay celulares disponibles")
+                    }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 20.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(
                             items = actual.data,
@@ -114,59 +135,6 @@ fun ListaScreen(
                             )
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ProductoCard(
-    item: Item,
-    onClick: () -> Unit,
-    onFavorito: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 12.dp,
-                vertical = 6.dp
-            )
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            AsyncImage(
-                model = item.imagen,
-                contentDescription = item.nombre,
-                modifier = Modifier.size(90.dp),
-                contentScale = ContentScale.Fit
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = item.nombre,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Text(text = item.marca)
-
-                Text(text = "$ ${item.precio}")
-
-                TextButton(onClick = onFavorito) {
-                    Text(
-                        if (item.favorito) {
-                            "★ Quitar favorito"
-                        } else {
-                            "☆ Agregar favorito"
-                        }
-                    )
                 }
             }
         }

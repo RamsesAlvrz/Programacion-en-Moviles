@@ -3,12 +3,16 @@ package com.tecsup.smartcatalog.ui.admin
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tecsup.smartcatalog.ui.components.AppButton
+import com.tecsup.smartcatalog.ui.components.SmartCatalogHeader
+import com.tecsup.smartcatalog.ui.components.StatCard
 
 @Composable
 fun AdminScreen(
@@ -18,138 +22,134 @@ fun AdminScreen(
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
 
-        Text(
-            text = "Panel de administrador",
-            style = MaterialTheme.typography.headlineMedium
+        SmartCatalogHeader(
+            titulo = "Administración",
+            subtitulo = "Gestiona y supervisa SmartCatalog"
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Button(
-            onClick = onCerrarSesion
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Cerrar sesión")
-        }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        when (val actual = estado) {
-
-            is AdminUiState.Loading -> {
-                CircularProgressIndicator()
-            }
-
-            is AdminUiState.Error -> {
-                Text(
-                    text = "Error: ${actual.mensaje}",
-                    color = MaterialTheme.colorScheme.error
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(onClick = { viewModel.cargarDatos() }) {
-                    Text("Reintentar")
-                }
-            }
-
-            is AdminUiState.Success -> {
-
+            item {
                 Text(
                     text = "Resumen general",
                     style = MaterialTheme.typography.titleLarge
                 )
+            }
 
-                Spacer(modifier = Modifier.height(12.dp))
+            when (val actual = estado) {
 
-                EstadisticaCard(
-                    titulo = "Productos registrados",
-                    valor = actual.stats.totalProductos.toString()
-                )
+                is AdminUiState.Loading -> {
+                    item {
+                        CircularProgressIndicator()
+                    }
+                }
 
-                EstadisticaCard(
-                    titulo = "Usuarios registrados",
-                    valor = actual.stats.totalUsuarios.toString()
-                )
+                is AdminUiState.Error -> {
+                    item {
+                        Text(
+                            text = actual.mensaje,
+                            color = MaterialTheme.colorScheme.error
+                        )
 
-                EstadisticaCard(
-                    titulo = "Mis favoritos",
-                    valor = actual.stats.totalFavoritos.toString()
-                )
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(20.dp))
+                        AppButton(
+                            texto = "Reintentar",
+                            onClick = { viewModel.cargarDatos() }
+                        )
+                    }
+                }
 
-                Text(
-                    text = "Usuarios registrados",
-                    style = MaterialTheme.typography.titleLarge
-                )
+                is AdminUiState.Success -> {
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    item {
+                        StatCard(
+                            titulo = "Productos registrados",
+                            valor = actual.stats.totalProductos.toString()
+                        )
+                    }
 
-                if (actual.usuarios.isEmpty()) {
-                    Text("No hay usuarios registrados")
-                } else {
-                    LazyColumn {
-                        items(
-                            items = actual.usuarios,
-                            key = { it.uid }
-                        ) { usuario ->
+                    item {
+                        StatCard(
+                            titulo = "Usuarios registrados",
+                            valor = actual.stats.totalUsuarios.toString()
+                        )
+                    }
 
-                            UsuarioCard(usuario)
-                        }
+                    item {
+                        StatCard(
+                            titulo = "Mis favoritos",
+                            valor = actual.stats.totalFavoritos.toString()
+                        )
+                    }
+
+                    item {
+                        Text(
+                            text = "Usuarios registrados",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+
+                    items(
+                        items = actual.usuarios,
+                        key = { it.uid }
+                    ) { usuario ->
+                        UsuarioCard(usuario)
                     }
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun EstadisticaCard(
-    titulo: String,
-    valor: String
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = valor,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+                AppButton(
+                    texto = "Cerrar sesión",
+                    onClick = onCerrarSesion
+                )
+            }
         }
     }
 }
 
 @Composable
 fun UsuarioCard(usuario: UsuarioAdmin) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
 
             Text(
                 text = usuario.nombre,
                 style = MaterialTheme.typography.titleMedium
             )
 
-            Text("Correo: ${usuario.correo}")
+            Text(
+                text = usuario.correo,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-            Text("Rol: ${usuario.rol}")
+            Text(
+                text = "Rol: ${usuario.rol}",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
