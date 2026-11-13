@@ -1,7 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+
+    // Lo activaremos cuando configuremos Firebase
+    // alias(libs.plugins.google.services)
 }
+
+
 
 android {
     namespace = "com.tecsup.smartcatalog"
@@ -51,4 +57,29 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    // Retrofit: conexión con la API
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+
+    // Room: almacenamiento local
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+
+    // MVVM: ViewModel y estados de Compose
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
+
+    // Navegación entre pantallas
+    implementation(libs.navigation.compose)
+
+    // Imágenes de los productos
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
+    // Firebase Authentication y Firestore
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    ksp("androidx.room:room-compiler:2.8.4")
+
 }
