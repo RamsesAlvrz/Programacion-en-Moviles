@@ -12,6 +12,7 @@ class AppContainer(context: Context) {
 
     val itemRepository: ItemRepository = ItemRepositoryImpl(
         api = RetrofitClient.api,
-        dao = database.itemDao()
+        dao = database.itemDao(),
+        context = context.applicationContext
     )
 }

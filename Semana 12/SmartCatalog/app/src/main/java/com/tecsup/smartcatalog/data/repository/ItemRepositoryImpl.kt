@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-
-class ItemRepositoryImpl(
-    private val api: ApiService,
-    private val dao: ItemDao
-) : ItemRepository {
+import android.content.Context
+import com.tecsup.smartcatalog.notification.NotificationHelper
+        class ItemRepositoryImpl(
+            private val api: ApiService,
+            private val dao: ItemDao,
+            private val context: Context
+        ) : ItemRepository {
 
     private fun usuarioId(): String {
         return FirebaseAuth.getInstance().currentUser?.uid
@@ -98,27 +100,47 @@ class ItemRepositoryImpl(
         }
     }
 
-    override suspend fun cambiarFavorito(
-        id: Int,
-        favorito: Boolean
-    ) {
 
-        val uid = usuarioId()
+            override suspend fun cambiarFavorito(
+                id: Int,
+                favorito: Boolean
+            ) {
+                val uid = usuarioId()
 
-        if (favorito) {
-            dao.agregarFavorito(
-                FavoritoEntity(
-                    usuarioId = uid,
-                    productoId = id
-                )
-            )
-        } else {
-            dao.quitarFavorito(
-                usuarioId = uid,
-                productoId = id
-            )
-        }
-    }
+                if (favorito) {
+
+                    val yaEraFavorito = dao.esFavorito(
+                        usuarioId = uid,
+                        productoId = id
+                    )
+
+                    dao.agregarFavorito(
+                        FavoritoEntity(
+                            usuarioId = uid,
+                            productoId = id
+                        )
+                    )
+
+                    // Notificar solo cuando se agrega un favorito nuevo.
+                    if (!yaEraFavorito) {
+                        val producto = dao.obtenerPorId(id)
+
+                        if (producto != null) {
+                            NotificationHelper.notificarFavorito(
+                                context = context,
+                                nombreProducto = producto.nombre
+                            )
+                        }
+                    }
+
+                } else {
+                    dao.quitarFavorito(
+                        usuarioId = uid,
+                        productoId = id
+                    )
+                }
+            }
+
 
     override suspend fun limpiarCache() {
         dao.limpiarCache()
