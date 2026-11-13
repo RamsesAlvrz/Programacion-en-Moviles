@@ -1,4 +1,3 @@
-
 package com.tecsup.smartcatalog.ui.navigation
 
 import androidx.compose.foundation.layout.*
@@ -26,6 +25,9 @@ import com.tecsup.smartcatalog.ui.lista.ListaViewModelFactory
 import com.tecsup.smartcatalog.ui.login.LoginScreen
 import com.tecsup.smartcatalog.ui.login.LoginViewModel
 import com.tecsup.smartcatalog.ui.login.LoginViewModelFactory
+import com.tecsup.smartcatalog.ui.admin.AdminScreen
+import com.tecsup.smartcatalog.ui.admin.AdminViewModel
+import com.tecsup.smartcatalog.ui.admin.AdminViewModelFactory
 import kotlinx.coroutines.launch
 
 @Composable
@@ -198,29 +200,19 @@ fun AppNav(repository: ItemRepository) {
             )
         }
 
+
         composable("admin") {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-            ) {
+            val adminViewModel: AdminViewModel = viewModel(
+                factory = AdminViewModelFactory(repository)
+            )
 
-                Text(
-                    text = "Panel de administrador",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text("Bienvenido, administrador de SmartCatalog")
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(onClick = { cerrarSesion() }) {
-                    Text("Cerrar sesión")
+            AdminScreen(
+                viewModel = adminViewModel,
+                onCerrarSesion = {
+                    cerrarSesion()
                 }
-            }
+            )
         }
     }
 }
