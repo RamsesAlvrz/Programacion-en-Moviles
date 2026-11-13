@@ -1,47 +1,40 @@
+
 package com.tecsup.smartcatalog
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tecsup.smartcatalog.ui.lista.ListaScreen
+import com.tecsup.smartcatalog.ui.lista.ListaViewModel
+import com.tecsup.smartcatalog.ui.lista.ListaViewModelFactory
 import com.tecsup.smartcatalog.ui.theme.SmartCatalogTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val container by lazy {
+        AppContainer(applicationContext)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
             SmartCatalogTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+
+                val listaViewModel: ListaViewModel = viewModel(
+                    factory = ListaViewModelFactory(
+                        container.itemRepository
                     )
-                }
+                )
+
+                ListaScreen(
+                    viewModel = listaViewModel,
+                    onVerDetalle = { id ->
+                        // La navegación al detalle se implementará después.
+                    }
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SmartCatalogTheme {
-        Greeting("Android")
     }
 }

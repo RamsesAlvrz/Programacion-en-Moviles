@@ -32,4 +32,8 @@ interface ItemDao {
 
     @Query("DELETE FROM productos")
     suspend fun limpiarCache()
+
+    @Query("SELECT * FROM productos")
+    suspend fun obtenerTodosUnaVez(): List<ItemEntity>
+
 }
