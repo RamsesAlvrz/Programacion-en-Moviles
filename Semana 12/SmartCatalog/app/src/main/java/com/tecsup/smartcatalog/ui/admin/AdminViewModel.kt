@@ -1,3 +1,4 @@
+
 package com.tecsup.smartcatalog.ui.admin
 
 import androidx.lifecycle.ViewModel
@@ -69,14 +70,16 @@ class AdminViewModel(
                     .get()
                     .await()
 
-                val usuarios = documentos.documents.map { doc ->
-                    UsuarioAdmin(
-                        uid = doc.id,
-                        nombre = doc.getString("nombre") ?: "",
-                        correo = doc.getString("correo") ?: "",
-                        rol = doc.getString("rol") ?: "usuario"
-                    )
-                }
+                val usuarios = documentos.documents
+                    .map { doc ->
+                        UsuarioAdmin(
+                            uid = doc.id,
+                            nombre = doc.getString("nombre") ?: "",
+                            correo = doc.getString("correo") ?: "",
+                            rol = doc.getString("rol") ?: "usuario"
+                        )
+                    }
+                    .sortedBy { it.nombre.lowercase() }
 
                 _uiState.value = AdminUiState.Success(
                     stats = AdminStats(
@@ -89,10 +92,10 @@ class AdminViewModel(
 
             } catch (e: Exception) {
                 _uiState.value = AdminUiState.Error(
-                    e.message ?: "No se pudieron cargar los datos"
+                    mensaje = e.message
+                        ?: "No se pudieron cargar los datos"
                 )
             }
         }
     }
 }
-
