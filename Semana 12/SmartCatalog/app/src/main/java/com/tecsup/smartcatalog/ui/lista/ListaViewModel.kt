@@ -23,8 +23,30 @@ class ListaViewModel(
     val uiState: StateFlow<UiState<List<Item>>> =
         _uiState.asStateFlow()
 
+    private val _busqueda = MutableStateFlow("")
+    val busqueda: StateFlow<String> = _busqueda.asStateFlow()
+
+    private val _marcaSeleccionada = MutableStateFlow("Todas")
+    val marcaSeleccionada: StateFlow<String> =
+        _marcaSeleccionada.asStateFlow()
+
+    private val _ordenPrecio = MutableStateFlow("Normal")
+    val ordenPrecio: StateFlow<String> = _ordenPrecio.asStateFlow()
+
     init {
         cargarProductos()
+    }
+
+    fun actualizarBusqueda(texto: String) {
+        _busqueda.value = texto
+    }
+
+    fun seleccionarMarca(marca: String) {
+        _marcaSeleccionada.value = marca
+    }
+
+    fun seleccionarOrden(orden: String) {
+        _ordenPrecio.value = orden
     }
 
     fun cargarProductos() {
@@ -34,7 +56,8 @@ class ListaViewModel(
             try {
                 repository.sincronizarProductos()
 
-                val productos = repository.observarProductos().first()
+                val productos =
+                    repository.observarProductos().first()
 
                 _uiState.value = UiState.Success(
                     data = productos,
@@ -45,7 +68,8 @@ class ListaViewModel(
                 throw e
             } catch (e: Exception) {
 
-                val productosLocales = repository.observarProductos().first()
+                val productosLocales =
+                    repository.observarProductos().first()
 
                 if (productosLocales.isNotEmpty()) {
                     _uiState.value = UiState.Success(
@@ -63,15 +87,19 @@ class ListaViewModel(
 
     fun cambiarFavorito(item: Item) {
         viewModelScope.launch {
+
             repository.cambiarFavorito(
                 item.id,
                 !item.favorito
             )
 
-            val productos = repository.observarProductos().first()
+            val productos =
+                repository.observarProductos().first()
 
             val estadoAnterior = _uiState.value
-            val esOffline = (estadoAnterior as? UiState.Success)?.offline ?: false
+
+            val esOffline =
+                (estadoAnterior as? UiState.Success)?.offline ?: false
 
             _uiState.value = UiState.Success(
                 data = productos,
