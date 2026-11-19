@@ -273,13 +273,93 @@ Si los cambios ya existen y cumplen los requisitos, consérvalos y evita sobresc
 
 ---
 
+---
+
+### Prompt 04 — Persistencia del último lugar seleccionado con DataStore
+
+> Actúa como desarrollador Android senior especializado en Kotlin, Jetpack Compose, Preferences DataStore, StateFlow y arquitectura MVVM + Repository.
+
+#### CONTEXTO DEL PROYECTO
+
+Estoy desarrollando CampusGPS 2.0 en la rama `mejora-ia-gps`. El proyecto utiliza osmdroid (OpenStreetMap), FusedLocationProviderClient, StateFlow y MVVM + Repository. Los COMMIT 11, 12 y 13 incorporaron el rediseño visual, filtros por categorías y radios de 100, 200 y 500 metros.
+
+#### OBJETIVO
+
+Implementar Preferences DataStore para guardar el ID del último lugar seleccionado y recuperarlo al cerrar y volver a abrir CampusGPS, conservando todas las funcionalidades actuales.
+
+#### 1. DEPENDENCIAS
+
+- Declarar AndroidX DataStore Preferences en `gradle/libs.versions.toml`.
+- Agregar la dependencia en `app/build.gradle.kts`.
+- No modificar otras dependencias innecesariamente.
+
+#### 2. REPOSITORIO DE PREFERENCIAS
+
+Crear `data/PreferenciasRepository.kt` para:
+
+- Definir una única instancia de DataStore con `preferencesDataStore` y `applicationContext`.
+- Guardar el ID mediante `intPreferencesKey`.
+- Exponer el último ID como `Flow<Int?>`.
+- Implementar funciones suspendidas para guardar y limpiar el ID.
+- Manejar los errores de almacenamiento sin bloquear la aplicación.
+
+#### 3. INTEGRACIÓN CON EL VIEWMODEL
+
+Modificar `MapaViewmodel.kt` para:
+
+- Recibir `PreferenciasRepository` por constructor.
+- Recuperar el último ID al iniciar el ViewModel y verificar que corresponda a uno de los cinco lugares existentes.
+- Restaurar la selección en el `StateFlow` actual.
+- Guardar el ID cuando se seleccione un lugar válido.
+- Evitar que una recuperación tardía sobrescriba una selección nueva.
+- Mantener el último ID guardado aunque el lugar deje de ser visible por un filtro.
+- No perder permanentemente la selección al actualizar la ubicación.
+- Conservar el cálculo de distancias, el ordenamiento, las categorías y los radios.
+- No utilizar `Context` dentro del ViewModel ni acceder a DataStore desde los Composables.
+
+#### 4. INYECCIÓN DE DEPENDENCIAS
+
+- Modificar `CampusViewModelFactory.kt` para pasar el nuevo repositorio al ViewModel.
+- Modificar `MainActivity.kt` para inicializar `PreferenciasRepository` con `applicationContext`.
+- No agregar frameworks de inyección de dependencias.
+
+#### 5. ARCHIVOS PERMITIDOS
+
+- `gradle/libs.versions.toml`
+- `app/build.gradle.kts`
+- `data/PreferenciasRepository.kt`
+- `viewmodel/MapaViewmodel.kt`
+- `viewmodel/CampusViewModelFactory.kt`
+- `MainActivity.kt`
+
+#### 6. RESTRICCIONES OBLIGATORIAS
+
+- Mantener MVVM + Repository y los cinco lugares originales.
+- Conservar osmdroid, los filtros del COMMIT 12 y los radios del COMMIT 13.
+- No modificar el diseño esmeralda del COMMIT 11.
+- Conservar permisos, GPS, errores, marcadores y botón Más cercano.
+- No utilizar SharedPreferences, Firebase, Room ni bases de datos remotas.
+- No implementar aún el panel de detalles ni navegación del COMMIT 15.
+- No modificar `local.properties` ni exponer claves API.
+- No realizar commits ni cambiar de rama.
+- Si los cambios ya existen y funcionan, evitar sobrescribirlos o duplicarlos.
+
+#### 7. RESULTADO ESPERADO
+
+Revisar los archivos reales del proyecto, aplicar únicamente los cambios necesarios y comprobar errores evidentes de compilación.
+
+Verificar que la selección persista tras cerrar y reabrir la aplicación y que siga funcionando junto con categorías, radios y mapa. Al finalizar, resumir archivos modificados, decisiones técnicas, funcionalidades conservadas y pruebas pendientes.
+
+---
+
 ## Registro de resultados y decisiones
 
 | Prompt que escribí | Qué respondió Gemini | Qué cambié o descarté | Por qué |
 |---|---|---|---|
 | Prompt 01 — Rediseño visual de CampusGPS | Pendiente de registrar la respuesta real de Gemini. | Se actualizaron Color.kt, Theme.kt, PantallaMapa.kt, ListaLugares.kt y MensajeError.kt. Se conservó la lógica de ubicación. | Mejorar la presentación visual sin afectar las funciones existentes ni la arquitectura MVVM. |
 | Prompt 02 — Filtros por categorías | Pendiente de registrar la respuesta real de Gemini. | Se implementaron los filtros en MapaViewmodel.kt y PantallaMapa.kt. Se corrigió en MapaUbicacion.kt el cierre de ventanas de información anteriores. | Permitir explorar lugares por categoría manteniendo sincronizados el mapa y la lista. |
-| Prompt 03 — Radio de proximidad | Pendiente de registrar la respuesta real de Gemini. | Pendiente de verificar la implementación. | Permitir consultar lugares cercanos dentro de un radio seleccionado, conservando los filtros por categorías. |
+| Prompt 03 — Radio de proximidad | Pendiente de registrar la respuesta real de Gemini. | Cambios subidos a GitHub; pruebas funcionales aún sin confirmar. | Permitir consultar lugares cercanos dentro de un radio seleccionado, conservando los filtros por categorías. |
+| Prompt 04 — Persistencia con DataStore | Pendiente de registrar la respuesta real de Gemini. | Implementación preparada; pendiente de compilación y pruebas. | Recordar el último lugar seleccionado entre aperturas de la aplicación. |
 
 ---
 
@@ -316,7 +396,7 @@ Si los cambios ya existen y cumplen los requisitos, consérvalos y evita sobresc
 
 ### Commit 13 — Radio de proximidad
 
-**Estado:** Pendiente de pruebas.
+**Estado:** Push realizado a GitHub; pruebas funcionales pendientes de confirmar.
 
 **Archivos previstos:**
 

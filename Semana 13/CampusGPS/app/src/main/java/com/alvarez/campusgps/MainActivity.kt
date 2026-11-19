@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alvarez.campusgps.data.LugaresRepositoryLocal
+import com.alvarez.campusgps.data.PreferenciasRepository
 import com.alvarez.campusgps.data.UbicacionRepositoryGoogle
 import com.alvarez.campusgps.ui.PantallaMapa
 import com.alvarez.campusgps.ui.theme.CampusGPSTheme
@@ -25,9 +26,15 @@ class MainActivity : ComponentActivity() {
 
         val lugaresRepo = LugaresRepositoryLocal()
 
+        // COMMIT 14: repositorio de preferencias.
+        val preferenciasRepo = PreferenciasRepository(
+            applicationContext
+        )
+
         val factory = CampusViewModelFactory(
             ubicacionRepo,
-            lugaresRepo
+            lugaresRepo,
+            preferenciasRepo
         )
 
         setContent {

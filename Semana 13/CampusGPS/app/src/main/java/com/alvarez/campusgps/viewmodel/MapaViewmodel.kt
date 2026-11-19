@@ -1,10 +1,10 @@
-
 package com.alvarez.campusgps.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alvarez.campusgps.data.LugaresRepository
+import com.alvarez.campusgps.data.PreferenciasRepository
 import com.alvarez.campusgps.data.UbicacionRepository
 import com.alvarez.campusgps.model.LugarConDistancia
 import com.alvarez.campusgps.model.Posicion
@@ -17,13 +17,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MapaViewModel(
     private val ubicacionRepo: UbicacionRepository,
-    private val lugaresRepo: LugaresRepository
+    private val lugaresRepo: LugaresRepository,
+    private val preferenciasRepo: PreferenciasRepository
 ) : ViewModel() {
 
     companion object {
@@ -44,7 +46,7 @@ class MapaViewModel(
     val estado: StateFlow<UbicacionUi> =
         _estado.asStateFlow()
 
-    // Lista completa de lugares y distancias.
+    // Lista original de lugares.
     private val _lugares = MutableStateFlow(
         lugaresRepo.obtenerLugares().map {
             LugarConDistancia(it, null)
@@ -54,23 +56,21 @@ class MapaViewModel(
     val lugares: StateFlow<List<LugarConDistancia>> =
         _lugares.asStateFlow()
 
-    // Filtro por categoria del COMMIT 12.
+    // Filtro por categoria.
     private val _categoriaSeleccionada =
         MutableStateFlow("Todos")
 
     val categoriaSeleccionada: StateFlow<String> =
         _categoriaSeleccionada.asStateFlow()
 
-    // Radio del COMMIT 13.
-    // null significa que no hay limite de distancia.
+    // Radio de proximidad.
     private val _radioSeleccionado =
         MutableStateFlow<Int?>(null)
 
     val radioSeleccionado: StateFlow<Int?> =
         _radioSeleccionado.asStateFlow()
 
-    // Combina categoria y radio sin modificar
-    // la lista original de lugares.
+    // Filtrado combinado de categoria y radio.
     val lugaresFiltrados: StateFlow<List<LugarConDistancia>> =
         combine(
             lugares,
@@ -102,6 +102,10 @@ class MapaViewModel(
     val seleccionado: StateFlow<Int?> =
         _seleccionado.asStateFlow()
 
+    // Evita que la lectura inicial sobrescriba
+    // una seleccion realizada durante el arranque.
+    private var seleccionManualRealizada = false
+
     // Lugar mas cercano global.
     val masCercano: StateFlow<LugarConDistancia?> =
         lugares.map { lista ->
@@ -112,7 +116,7 @@ class MapaViewModel(
             initialValue = null
         )
 
-    // Lugar mas cercano entre los resultados visibles.
+    // Lugar mas cercano visible.
     val masCercanoVisible: StateFlow<LugarConDistancia?> =
         lugaresFiltrados.map { lista ->
             lista.firstOrNull { it.metros != null }
@@ -122,7 +126,66 @@ class MapaViewModel(
             initialValue = null
         )
 
-    // Cambiar filtro de categoria.
+    init {
+        recuperarUltimoLugar()
+    }
+
+    // COMMIT 14: recuperar seleccion guardada.
+    private fun recuperarUltimoLugar() {
+        viewModelScope.launch {
+            try {
+                val idGuardado =
+                    preferenciasRepo.ultimoLugarId.first()
+
+                if (!seleccionManualRealizada &&
+                    idGuardado != null
+                ) {
+                    val existe = _lugares.value.any {
+                        it.lugar.id == idGuardado
+                    }
+
+                    if (existe) {
+                        _seleccionado.value = idGuardado
+                        validarSeleccion()
+
+                        Log.d(
+                            "CampusGPS",
+                            "Lugar recuperado: $idGuardado"
+                        )
+                    } else {
+                        preferenciasRepo.limpiarUltimoLugar()
+                    }
+                }
+            } catch (error: Exception) {
+                Log.e(
+                    "CampusGPS",
+                    "No se pudo recuperar el lugar",
+                    error
+                )
+            }
+        }
+    }
+
+    // Guardar la seleccion en DataStore.
+    private fun guardarSeleccion(id: Int) {
+        viewModelScope.launch {
+            try {
+                preferenciasRepo.guardarUltimoLugar(id)
+
+                Log.d(
+                    "CampusGPS",
+                    "Lugar guardado: $id"
+                )
+            } catch (error: Exception) {
+                Log.e(
+                    "CampusGPS",
+                    "No se pudo guardar el lugar",
+                    error
+                )
+            }
+        }
+    }
+
     fun seleccionarCategoria(categoria: String) {
         if (categoria !in CATEGORIAS) return
 
@@ -130,7 +193,6 @@ class MapaViewModel(
         validarSeleccion()
     }
 
-    // Cambiar radio: null, 100, 200 o 500 metros.
     fun seleccionarRadio(radio: Int?) {
         if (radio != null && radio !in RADIOS) return
 
@@ -138,7 +200,9 @@ class MapaViewModel(
         validarSeleccion()
     }
 
-    // Evitar que quede seleccionado un lugar oculto.
+    // Elimina solo la seleccion visible cuando
+    // el filtro deja de incluir ese lugar.
+    // No borra la preferencia guardada.
     private fun validarSeleccion() {
         val idActual = _seleccionado.value ?: return
 
@@ -165,7 +229,7 @@ class MapaViewModel(
         }
     }
 
-    // Calcular y ordenar lugares por distancia.
+    // Calcular y ordenar distancias.
     private fun actualizarDistancias(pos: Posicion) {
         val listaOrdenada = lugaresRepo.obtenerLugares()
             .map { lugar ->
@@ -177,7 +241,6 @@ class MapaViewModel(
             .sortedBy { it.metros }
 
         _lugares.value = listaOrdenada
-
         validarSeleccion()
 
         listaOrdenada.forEach { item ->
@@ -189,7 +252,6 @@ class MapaViewModel(
         }
     }
 
-    // Reiniciar distancias sin eliminar filtros.
     private fun limpiarDistancias() {
         _lugares.value = lugaresRepo.obtenerLugares().map {
             LugarConDistancia(it, null)
@@ -198,7 +260,7 @@ class MapaViewModel(
         _seleccionado.value = null
     }
 
-    // Buscar ubicacion con manejo de errores.
+    // Buscar ubicacion.
     fun buscar() {
         if (_estado.value == UbicacionUi.Buscando) return
 
@@ -266,8 +328,10 @@ class MapaViewModel(
         )
     }
 
-    // Solo permite seleccionar lugares visibles.
+    // Seleccionar y persistir un lugar visible.
     fun seleccionar(id: Int?) {
+        seleccionManualRealizada = true
+
         if (id == null) {
             _seleccionado.value = null
             return
@@ -293,6 +357,7 @@ class MapaViewModel(
 
         if (esVisible) {
             _seleccionado.value = id
+            guardarSeleccion(id)
         }
     }
 }
