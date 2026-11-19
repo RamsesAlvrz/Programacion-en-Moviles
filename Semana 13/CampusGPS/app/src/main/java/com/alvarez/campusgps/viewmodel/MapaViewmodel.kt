@@ -1,3 +1,4 @@
+
 package com.alvarez.campusgps.viewmodel
 
 import android.util.Log
@@ -12,7 +13,10 @@ import com.alvarez.campusgps.util.distanciaMetros
 import com.alvarez.campusgps.util.formatearDistancia
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MapaViewModel(
@@ -39,6 +43,17 @@ class MapaViewModel(
 
     val seleccionado: StateFlow<Int?> =
         _seleccionado.asStateFlow()
+
+    // COMMIT 8: lugar más cercano
+    // Antes de calcular distancias es null.
+    val masCercano: StateFlow<LugarConDistancia?> =
+        lugares.map { lista ->
+            lista.firstOrNull { it.metros != null }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     // Calcular y ordenar lugares por distancia
     private fun actualizarDistancias(pos: Posicion) {
@@ -87,6 +102,7 @@ class MapaViewModel(
         )
     }
 
+    // Seleccionar un lugar desde la lista o el botón
     fun seleccionar(id: Int?) {
         _seleccionado.value = id
     }

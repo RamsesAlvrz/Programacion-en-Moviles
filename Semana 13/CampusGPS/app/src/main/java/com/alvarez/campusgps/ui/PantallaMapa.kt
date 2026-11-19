@@ -21,6 +21,7 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.campusgps.model.UbicacionUi
+import com.alvarez.campusgps.util.formatearDistancia
 import com.alvarez.campusgps.viewmodel.MapaViewModel
 
 @Composable
@@ -29,6 +30,7 @@ fun PantallaMapa(vm: MapaViewModel) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     val lugares by vm.lugares.collectAsStateWithLifecycle()
     val seleccionado by vm.seleccionado.collectAsStateWithLifecycle()
+    val masCercano by vm.masCercano.collectAsStateWithLifecycle()
 
     val contexto = LocalContext.current
 
@@ -87,7 +89,7 @@ fun PantallaMapa(vm: MapaViewModel) {
             )
         }
 
-        // Mapa en la parte superior
+        // Mapa
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,11 +100,12 @@ fun PantallaMapa(vm: MapaViewModel) {
                 posicion = posicion,
                 lugares = lugares,
                 seleccionado = seleccionado,
+                masCercanoId = masCercano?.lugar?.id,
                 modifier = Modifier.fillMaxSize()
             )
         }
 
-        // Botón de ubicación
+        // Botones y texto informativo
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -110,8 +113,11 @@ fun PantallaMapa(vm: MapaViewModel) {
                     top = 5.dp,
                     bottom = 4.dp
                 ),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
+
+            // Botón para obtener ubicación
             Button(
                 onClick = { alPulsar() },
                 enabled = estado !is UbicacionUi.Buscando,
@@ -121,7 +127,8 @@ fun PantallaMapa(vm: MapaViewModel) {
                 contentPadding = PaddingValues(
                     horizontal = 20.dp,
                     vertical = 4.dp
-                )
+                ),
+                modifier = Modifier.height(38.dp)
             ) {
                 Text(
                     text = "Obtener mi ubicación",
@@ -129,6 +136,51 @@ fun PantallaMapa(vm: MapaViewModel) {
                 )
             }
 
+            // Botón para ir al lugar más cercano
+            OutlinedButton(
+                onClick = {
+                    masCercano?.let { item ->
+                        vm.seleccionar(item.lugar.id)
+                    }
+                },
+                enabled = masCercano != null &&
+                        estado is UbicacionUi.Lista,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    Color(0xFF176B9A)
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF176B9A)
+                ),
+                contentPadding = PaddingValues(
+                    horizontal = 18.dp,
+                    vertical = 3.dp
+                ),
+                modifier = Modifier.height(34.dp)
+            ) {
+                Text(
+                    text = "Ir al más cercano",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Nombre y distancia del más cercano
+            if (masCercano != null) {
+                val item = masCercano!!
+
+                Text(
+                    text = "Más cercano: ${item.lugar.nombre} " +
+                            "(${item.metros?.let {
+                                formatearDistancia(it)
+                            } ?: "Sin calcular"})",
+                    fontSize = 11.sp,
+                    color = Color(0xFF263746),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            // Mensajes de búsqueda o error
             when (val actual = estado) {
                 UbicacionUi.Buscando -> {
                     Text(
@@ -149,10 +201,11 @@ fun PantallaMapa(vm: MapaViewModel) {
             }
         }
 
-        // Lista compacta debajo del botón
+        // Lista de lugares
         ListaLugares(
             lugares = lugares,
             seleccionado = seleccionado,
+            masCercanoId = masCercano?.lugar?.id,
             onClick = { id ->
                 vm.seleccionar(id)
             },

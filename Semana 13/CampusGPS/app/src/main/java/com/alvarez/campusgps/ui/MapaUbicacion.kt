@@ -1,11 +1,13 @@
 
 package com.alvarez.campusgps.ui
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
-import android.graphics.PorterDuff
+import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Typeface
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.widget.LinearLayout
@@ -32,9 +34,14 @@ fun MapaUbicacion(
     posicion: Posicion?,
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
+    masCercanoId: Int?,
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
+
+    val azul = Color.rgb(30, 144, 255)
+    val rojo = Color.rgb(229, 57, 53)
+    val verde = Color.rgb(46, 160, 80)
 
     // Configuración inicial del mapa
     val mapa = remember(contexto) {
@@ -52,7 +59,63 @@ fun MapaUbicacion(
         }
     }
 
-    // Crear una ventana personalizada
+    // Dibujar pin con círculo blanco en el centro
+    fun crearIconoPin(color: Int): BitmapDrawable {
+        val densidad =
+            contexto.resources.displayMetrics.density
+
+        val ancho = (34 * densidad).toInt()
+        val alto = (44 * densidad).toInt()
+
+        val bitmap = Bitmap.createBitmap(
+            ancho,
+            alto,
+            Bitmap.Config.ARGB_8888
+        )
+
+        val lienzo = Canvas(bitmap)
+
+        val pintura = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = color
+            style = Paint.Style.FILL
+        }
+
+        val escalaX = ancho / 34f
+        val escalaY = alto / 44f
+
+        lienzo.save()
+        lienzo.scale(escalaX, escalaY)
+
+        // Cuerpo del marcador
+        val forma = Path().apply {
+            moveTo(17f, 42f)
+            cubicTo(13f, 35f, 3f, 23f, 3f, 16f)
+            cubicTo(3f, 8f, 9f, 2f, 17f, 2f)
+            cubicTo(25f, 2f, 31f, 8f, 31f, 16f)
+            cubicTo(31f, 23f, 21f, 35f, 17f, 42f)
+            close()
+        }
+
+        lienzo.drawPath(forma, pintura)
+
+        // Bolita blanca central
+        pintura.color = Color.WHITE
+        lienzo.drawCircle(
+            17f,
+            16f,
+            6f,
+            pintura
+        )
+
+        lienzo.restore()
+
+        return BitmapDrawable(
+            contexto.resources,
+            bitmap
+        )
+    }
+
+    // Ventana de información personalizada
     fun crearVentana(
         nombre: String,
         categoria: String? = null
@@ -83,7 +146,7 @@ fun MapaUbicacion(
             }
         }
 
-        // Nombre centrado y en negrita
+        // Nombre en negrita
         val titulo = TextView(contexto).apply {
             text = nombre
             setTextColor(Color.BLACK)
@@ -94,7 +157,7 @@ fun MapaUbicacion(
 
         contenedor.addView(titulo)
 
-        // Categoría centrada debajo del nombre
+        // Categoría debajo
         if (!categoria.isNullOrBlank()) {
             val subtitulo = TextView(contexto).apply {
                 text = categoria
@@ -108,7 +171,7 @@ fun MapaUbicacion(
 
         return object : InfoWindow(contenedor, mapa) {
             override fun onOpen(item: Any?) {
-                // El contenido ya está configurado
+                // Contenido configurado
             }
 
             override fun onClose() {
@@ -117,7 +180,7 @@ fun MapaUbicacion(
         }
     }
 
-    // Marcador rojo de la ubicación actual
+    // Marcador rojo de ubicación actual
     val marcador = remember(mapa) {
         Marker(mapa).apply {
             title = "Estás aquí"
@@ -127,26 +190,9 @@ fun MapaUbicacion(
                 Marker.ANCHOR_BOTTOM
             )
 
-            val filtroRojo = ColorMatrix(
-                floatArrayOf(
-                    0f, 0f, 0f, 0f, 229f,
-                    0f, 0f, 0f, 0f, 57f,
-                    0f, 0f, 0f, 0f, 53f,
-                    0f, 0f, 0f, 1f, 0f
-                )
-            )
-
-            icon = icon?.constantState
-                ?.newDrawable()
-                ?.mutate()
-                ?.apply {
-                    colorFilter =
-                        ColorMatrixColorFilter(filtroRojo)
-                }
-
+            icon = crearIconoPin(rojo)
             infoWindow = crearVentana("Estás aquí")
 
-            // Cerrar las otras ventanas al tocar el rojo
             setOnMarkerClickListener { marcadorTocado, mapaActual ->
                 InfoWindow.closeAllInfoWindowsOn(mapaActual)
                 marcadorTocado.showInfoWindow()
@@ -155,8 +201,12 @@ fun MapaUbicacion(
         }
     }
 
-    // Cinco marcadores azules del campus
-    val marcadoresLugares = remember(mapa, lugares) {
+    // Marcadores del campus
+    val marcadoresLugares = remember(
+        mapa,
+        lugares,
+        masCercanoId
+    ) {
         lugares.map { item ->
             Marker(mapa).apply {
                 position = GeoPoint(
@@ -172,23 +222,22 @@ fun MapaUbicacion(
                     Marker.ANCHOR_BOTTOM
                 )
 
-                // Icono azul independiente
-                icon = icon?.constantState
-                    ?.newDrawable()
-                    ?.mutate()
-                    ?.apply {
-                        setColorFilter(
-                            Color.rgb(30, 144, 255),
-                            PorterDuff.Mode.SRC_IN
-                        )
+                // Verde para el más cercano
+                val colorMarcador =
+                    if (item.lugar.id == masCercanoId) {
+                        verde
+                    } else {
+                        azul
                     }
+
+                icon = crearIconoPin(colorMarcador)
 
                 infoWindow = crearVentana(
                     nombre = item.lugar.nombre,
                     categoria = item.lugar.categoria
                 )
 
-                // Cerrar las otras ventanas al tocar un azul
+                // Solo una ventana abierta
                 setOnMarkerClickListener { marcadorTocado, mapaActual ->
                     InfoWindow.closeAllInfoWindowsOn(mapaActual)
                     marcadorTocado.showInfoWindow()
@@ -198,20 +247,21 @@ fun MapaUbicacion(
         }
     }
 
-    // Centrar el mapa al obtener la ubicación
+    // Centrar al obtener ubicación
     LaunchedEffect(posicion) {
         if (posicion != null) {
-            val punto = GeoPoint(
-                posicion.latitud,
-                posicion.longitud
-            )
-
             mapa.controller.setZoom(16.0)
-            mapa.controller.animateTo(punto)
+
+            mapa.controller.animateTo(
+                GeoPoint(
+                    posicion.latitud,
+                    posicion.longitud
+                )
+            )
         }
     }
 
-    // Mover el mapa al lugar seleccionado
+    // Mover cámara al lugar seleccionado
     LaunchedEffect(seleccionado, marcadoresLugares) {
         if (seleccionado != null) {
 
@@ -229,16 +279,15 @@ fun MapaUbicacion(
                     )
                 )
 
-                // Buscar el marcador correspondiente
                 val marcadorSeleccionado =
                     marcadoresLugares.firstOrNull {
                         it.title == lugar.nombre
                     }
 
-                // Cerrar todas las ventanas anteriores
+                // Cerrar ventanas anteriores
                 InfoWindow.closeAllInfoWindowsOn(mapa)
 
-                // Abrir solo la ventana seleccionada
+                // Mostrar solo la seleccionada
                 marcadorSeleccionado?.showInfoWindow()
             }
         }
@@ -260,18 +309,22 @@ fun MapaUbicacion(
         modifier = modifier.fillMaxSize(),
         update = { vista ->
 
-            // Eliminar marcadores azules anteriores
             val marcadoresAnteriores =
                 vista.overlays
                     .filterIsInstance<Marker>()
                     .filter { it !== marcador }
 
-            vista.overlays.removeAll(marcadoresAnteriores)
+            // Quitar marcadores anteriores
+            vista.overlays.removeAll(
+                marcadoresAnteriores
+            )
 
-            // Agregar los cinco marcadores azules
-            vista.overlays.addAll(marcadoresLugares)
+            // Agregar marcadores actualizados
+            vista.overlays.addAll(
+                marcadoresLugares
+            )
 
-            // Mantener el marcador rojo
+            // Marcador rojo
             if (posicion != null) {
                 marcador.position = GeoPoint(
                     posicion.latitud,

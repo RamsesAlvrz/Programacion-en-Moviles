@@ -1,6 +1,8 @@
+
 package com.alvarez.campusgps.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,6 +25,7 @@ import com.alvarez.campusgps.util.formatearDistancia
 fun ListaLugares(
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
+    masCercanoId: Int?,
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -41,10 +44,15 @@ fun ListaLugares(
 
             val activo = seleccionado == item.lugar.id
 
+            val esMasCercano =
+                item.lugar.id == masCercanoId
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onClick(item.lugar.id) },
+                    .clickable {
+                        onClick(item.lugar.id)
+                    },
                 shape = RoundedCornerShape(9.dp),
                 border = if (activo) {
                     BorderStroke(
@@ -75,12 +83,17 @@ fun ListaLugares(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    // Punto azul
-                    androidx.compose.foundation.Canvas(
+                    // Punto verde para el más cercano
+                    // Azul para los demás
+                    Canvas(
                         modifier = Modifier.size(7.dp)
                     ) {
                         drawCircle(
-                            color = Color(0xFF2584C1)
+                            color = if (esMasCercano) {
+                                Color(0xFF2EA050)
+                            } else {
+                                Color(0xFF2584C1)
+                            }
                         )
                     }
 
