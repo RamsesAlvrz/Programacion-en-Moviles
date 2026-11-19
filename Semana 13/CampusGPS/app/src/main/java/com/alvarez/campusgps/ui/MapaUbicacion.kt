@@ -309,6 +309,19 @@ fun MapaUbicacion(
         modifier = modifier.fillMaxSize(),
         update = { vista ->
 
+            // Cerrar ventanas de lugares que ya no están visibles.
+            val ventanaAbierta =
+                vista.overlays
+                    .filterIsInstance<Marker>()
+                    .firstOrNull { it.isInfoWindowShown }
+
+            if (ventanaAbierta != null &&
+                ventanaAbierta !== marcador &&
+                marcadoresLugares.none { it === ventanaAbierta }
+            ) {
+                InfoWindow.closeAllInfoWindowsOn(vista)
+            }
+
             val marcadoresAnteriores =
                 vista.overlays
                     .filterIsInstance<Marker>()

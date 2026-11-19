@@ -1,3 +1,4 @@
+
 package com.alvarez.campusgps.ui
 
 import android.Manifest
@@ -5,6 +6,8 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -24,10 +27,12 @@ import com.alvarez.campusgps.viewmodel.MapaViewModel
 
 @Composable
 fun PantallaMapa(vm: MapaViewModel) {
+
     val estado by vm.estado.collectAsStateWithLifecycle()
-    val lugares by vm.lugares.collectAsStateWithLifecycle()
+    val lugares by vm.lugaresFiltrados.collectAsStateWithLifecycle()
+    val categoria by vm.categoriaSeleccionada.collectAsStateWithLifecycle()
     val seleccionado by vm.seleccionado.collectAsStateWithLifecycle()
-    val masCercano by vm.masCercano.collectAsStateWithLifecycle()
+    val masCercano by vm.masCercanoVisible.collectAsStateWithLifecycle()
 
     val contexto = LocalContext.current
     val colores = MaterialTheme.colorScheme
@@ -62,15 +67,19 @@ fun PantallaMapa(vm: MapaViewModel) {
         }
     }
 
-    val posicion = (estado as? UbicacionUi.Lista)?.posicion
-    val error = estado as? UbicacionUi.Error
+    val posicion =
+        (estado as? UbicacionUi.Lista)?.posicion
+
+    val error =
+        estado as? UbicacionUi.Error
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colores.background)
     ) {
-        // Encabezado de CampusGPS 2.0
+
+        // Encabezado CampusGPS 2.0
         Surface(
             color = colores.primary,
             shape = RoundedCornerShape(
@@ -105,6 +114,7 @@ fun PantallaMapa(vm: MapaViewModel) {
         }
 
         if (error != null) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -132,7 +142,61 @@ fun PantallaMapa(vm: MapaViewModel) {
                     onReintentar = { solicitarUbicacion() }
                 )
             }
+
         } else {
+
+            // Filtros por categorias - COMMIT 12
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                Text(
+                    text = "Explorar por categoría",
+                    modifier = Modifier.padding(
+                        horizontal = 18.dp,
+                        vertical = 4.dp
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colores.onBackground,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(
+                            horizontal = 14.dp,
+                            vertical = 4.dp
+                        ),
+                    horizontalArrangement =
+                        Arrangement.spacedBy(8.dp)
+                ) {
+                    MapaViewModel.CATEGORIAS.forEach { opcion ->
+                        FilterChip(
+                            selected = categoria == opcion,
+                            onClick = {
+                                vm.seleccionarCategoria(opcion)
+                            },
+                            label = {
+                                Text(
+                                    text = opcion,
+                                    fontSize = 12.sp
+                                )
+                            },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = colores.primary,
+                                selectedLabelColor = colores.onPrimary,
+                                containerColor = colores.surface,
+                                labelColor = colores.onSurface
+                            )
+                        )
+                    }
+                }
+            }
+
             // Mapa principal
             Card(
                 modifier = Modifier
@@ -141,7 +205,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                     .padding(
                         start = 12.dp,
                         end = 12.dp,
-                        top = 14.dp
+                        top = 8.dp
                     ),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -192,9 +256,9 @@ fun PantallaMapa(vm: MapaViewModel) {
                     .fillMaxWidth()
                     .padding(
                         horizontal = 16.dp,
-                        vertical = 12.dp
+                        vertical = 10.dp
                     ),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -242,6 +306,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth()
                     )
+
                     Text(
                         text = "Buscando tu ubicación...",
                         color = colores.onSurfaceVariant,
@@ -270,7 +335,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Panel inferior
+            // Panel inferior de lugares
             Surface(
                 color = colores.surface,
                 shape = RoundedCornerShape(
@@ -286,7 +351,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                             .padding(
                                 start = 18.dp,
                                 end = 18.dp,
-                                top = 16.dp,
+                                top = 14.dp,
                                 bottom = 8.dp
                             ),
                         horizontalArrangement =
@@ -306,13 +371,30 @@ fun PantallaMapa(vm: MapaViewModel) {
                         )
                     }
 
-                    ListaLugares(
-                        lugares = lugares,
-                        seleccionado = seleccionado,
-                        masCercanoId = masCercano?.lugar?.id,
-                        onClick = { id -> vm.seleccionar(id) },
-                        modifier = Modifier.height(210.dp)
-                    )
+                    if (lugares.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(110.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No hay lugares en esta categoría",
+                                color = colores.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    } else {
+                        ListaLugares(
+                            lugares = lugares,
+                            seleccionado = seleccionado,
+                            masCercanoId = masCercano?.lugar?.id,
+                            onClick = { id ->
+                                vm.seleccionar(id)
+                            },
+                            modifier = Modifier.height(190.dp)
+                        )
+                    }
 
                     Spacer(Modifier.height(8.dp))
                 }

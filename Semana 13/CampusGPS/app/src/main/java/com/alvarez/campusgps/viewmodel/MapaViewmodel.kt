@@ -1,3 +1,4 @@
+
 package com.alvarez.campusgps.viewmodel
 
 import android.util.Log
@@ -15,15 +16,25 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class
-MapaViewModel(
+class MapaViewModel(
     private val ubicacionRepo: UbicacionRepository,
     private val lugaresRepo: LugaresRepository
 ) : ViewModel() {
+
+    companion object {
+        val CATEGORIAS = listOf(
+            "Todos",
+            "Estudio",
+            "Comida",
+            "Eventos",
+            "Servicios"
+        )
+    }
 
     private val _estado =
         MutableStateFlow<UbicacionUi>(UbicacionUi.Inicial)
@@ -31,6 +42,7 @@ MapaViewModel(
     val estado: StateFlow<UbicacionUi> =
         _estado.asStateFlow()
 
+    // Lista completa: no se modifica al filtrar.
     private val _lugares = MutableStateFlow(
         lugaresRepo.obtenerLugares().map {
             LugarConDistancia(it, null)
@@ -40,12 +52,39 @@ MapaViewModel(
     val lugares: StateFlow<List<LugarConDistancia>> =
         _lugares.asStateFlow()
 
-    private val _seleccionado = MutableStateFlow<Int?>(null)
+    // Categoria seleccionada.
+    private val _categoriaSeleccionada =
+        MutableStateFlow("Todos")
+
+    val categoriaSeleccionada: StateFlow<String> =
+        _categoriaSeleccionada.asStateFlow()
+
+    // Filtrado reactivo dentro del ViewModel.
+    val lugaresFiltrados: StateFlow<List<LugarConDistancia>> =
+        combine(
+            lugares,
+            categoriaSeleccionada
+        ) { lista, categoria ->
+            if (categoria == "Todos") {
+                lista
+            } else {
+                lista.filter {
+                    it.lugar.categoria == categoria
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = _lugares.value
+        )
+
+    private val _seleccionado =
+        MutableStateFlow<Int?>(null)
 
     val seleccionado: StateFlow<Int?> =
         _seleccionado.asStateFlow()
 
-    // Lugar más cercano del COMMIT 8
+    // Lugar mas cercano de todos los lugares.
     val masCercano: StateFlow<LugarConDistancia?> =
         lugares.map { lista ->
             lista.firstOrNull { it.metros != null }
@@ -55,7 +94,40 @@ MapaViewModel(
             initialValue = null
         )
 
-    // Calcular y ordenar lugares por distancia
+    // Lugar mas cercano dentro del filtro activo.
+    val masCercanoVisible: StateFlow<LugarConDistancia?> =
+        lugaresFiltrados.map { lista ->
+            lista.firstOrNull { it.metros != null }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null
+        )
+
+    // Cambiar la categoria activa.
+    fun seleccionarCategoria(categoria: String) {
+        if (categoria !in CATEGORIAS) return
+
+        _categoriaSeleccionada.value = categoria
+
+        // Si el lugar seleccionado queda oculto,
+        // se elimina la seleccion anterior.
+        val seleccionadoActual = _seleccionado.value
+
+        if (seleccionadoActual != null) {
+            val sigueVisible = _lugares.value.any {
+                it.lugar.id == seleccionadoActual &&
+                        (categoria == "Todos" ||
+                                it.lugar.categoria == categoria)
+            }
+
+            if (!sigueVisible) {
+                _seleccionado.value = null
+            }
+        }
+    }
+
+    // Calcular y ordenar las distancias.
     private fun actualizarDistancias(pos: Posicion) {
         val listaOrdenada = lugaresRepo.obtenerLugares()
             .map { lugar ->
@@ -77,25 +149,24 @@ MapaViewModel(
         }
     }
 
-    // Reiniciar distancias al iniciar otra búsqueda
+    // Reiniciar distancias al iniciar una busqueda.
     private fun limpiarDistancias() {
         _lugares.value = lugaresRepo.obtenerLugares().map {
             LugarConDistancia(it, null)
         }
+
         _seleccionado.value = null
     }
 
-    // Buscar ubicación con manejo de errores
+    // Buscar ubicacion con manejo de errores.
     fun buscar() {
         if (_estado.value == UbicacionUi.Buscando) return
 
         _estado.value = UbicacionUi.Buscando
-
         limpiarDistancias()
 
         viewModelScope.launch {
 
-            // Comprobar Google Play Services
             if (!ubicacionRepo.playServicesDisponible()) {
                 _estado.value = UbicacionUi.Error(
                     mensaje = "Este dispositivo no tiene Google Play Services",
@@ -104,7 +175,6 @@ MapaViewModel(
                 return@launch
             }
 
-            // Comprobar si el GPS está apagado
             if (!ubicacionRepo.gpsDisponible()) {
                 _estado.value = UbicacionUi.Error(
                     mensaje = "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
@@ -113,14 +183,12 @@ MapaViewModel(
                 return@launch
             }
 
-            // Obtener la ubicación
             ubicacionRepo.obtenerPosicion()
                 .onSuccess { posicion ->
                     actualizarDistancias(posicion)
                     _estado.value = UbicacionUi.Lista(posicion)
                 }
                 .onFailure { error ->
-
                     _estado.value = when (error) {
 
                         is SecurityException -> {
@@ -149,7 +217,6 @@ MapaViewModel(
         }
     }
 
-    // Permiso denegado
     fun permisoDenegado() {
         limpiarDistancias()
 
@@ -159,8 +226,23 @@ MapaViewModel(
         )
     }
 
-    // Seleccionar un lugar
+    // Seleccionar un lugar visible.
     fun seleccionar(id: Int?) {
-        _seleccionado.value = id
+        if (id == null) {
+            _seleccionado.value = null
+            return
+        }
+
+        val categoria = _categoriaSeleccionada.value
+
+        val esVisible = _lugares.value.any {
+            it.lugar.id == id &&
+                    (categoria == "Todos" ||
+                            it.lugar.categoria == categoria)
+        }
+
+        if (esVisible) {
+            _seleccionado.value = id
+        }
     }
 }
