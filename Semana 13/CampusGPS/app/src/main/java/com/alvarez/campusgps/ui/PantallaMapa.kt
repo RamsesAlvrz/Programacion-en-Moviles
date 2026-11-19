@@ -1,14 +1,20 @@
 package com.alvarez.campusgps.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.campusgps.model.UbicacionUi
 import com.alvarez.campusgps.viewmodel.MapaViewModel
@@ -17,6 +23,37 @@ import com.alvarez.campusgps.viewmodel.MapaViewModel
 fun PantallaMapa(vm: MapaViewModel) {
 
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val contexto = LocalContext.current
+
+    val permisos = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    )
+
+    val lanzador = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { resultado ->
+        if (resultado.values.any { it }) {
+            vm.buscar()
+        } else {
+            vm.permisoDenegado()
+        }
+    }
+
+    fun alPulsar() {
+        val tienePermiso = permisos.any { permiso ->
+            ContextCompat.checkSelfPermission(
+                contexto,
+                permiso
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+
+        if (tienePermiso) {
+            vm.buscar()
+        } else {
+            lanzador.launch(permisos)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -51,8 +88,8 @@ fun PantallaMapa(vm: MapaViewModel) {
             Spacer(Modifier.height(20.dp))
 
             Button(
-                onClick = { vm.buscar() },
-                enabled = false,
+                onClick = { alPulsar() },
+                enabled = estado !is UbicacionUi.Buscando,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF176B9A)
                 )
@@ -70,6 +107,8 @@ fun PantallaMapa(vm: MapaViewModel) {
 
                 UbicacionUi.Buscando -> {
                     CircularProgressIndicator()
+                    Spacer(Modifier.height(8.dp))
+                    Text("Buscando ubicación...")
                 }
 
                 is UbicacionUi.Error -> {
@@ -81,7 +120,7 @@ fun PantallaMapa(vm: MapaViewModel) {
 
                 UbicacionUi.Inicial -> {
                     Text(
-                        "Activa la ubicación en los siguientes pasos",
+                        "Pulsa el botón para obtener tu ubicación",
                         color = Color.Gray
                     )
                 }
