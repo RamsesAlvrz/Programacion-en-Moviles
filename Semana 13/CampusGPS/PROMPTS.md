@@ -157,12 +157,129 @@ Al finalizar, proporciona un resumen de los archivos modificados, la lógica imp
 
 ---
 
+### Prompt 03 — Radio de proximidad de CampusGPS
+
+> Actúa como desarrollador Android senior especializado en Kotlin, Jetpack Compose, Material 3, StateFlow, osmdroid y arquitectura MVVM + Repository.
+
+#### CONTEXTO DEL PROYECTO
+
+Estoy desarrollando CampusGPS 2.0, una aplicación Android de ubicación y exploración de lugares del campus que utiliza osmdroid (OpenStreetMap), FusedLocationProviderClient, StateFlow y MVVM + Repository.
+
+Estoy trabajando en la rama `mejora-ia-gps`.
+
+La Fase 1 está terminada. El COMMIT 11 incorporó un rediseño visual profesional y el COMMIT 12 implementó filtros por categorías que actualizan simultáneamente el mapa y la lista.
+
+#### OBJETIVO
+
+Implementa directamente en el proyecto una mejora de proximidad que permita seleccionar radios de 100, 200 y 500 metros alrededor de la ubicación actual del usuario, visualizar el área correspondiente en el mapa y filtrar los lugares según su distancia.
+
+Conserva todas las funcionalidades existentes.
+
+#### 1. OPCIONES DE RADIO
+
+Implementa cuatro opciones:
+
+- Sin límite
+- 100 m
+- 200 m
+- 500 m
+
+La opción predeterminada será Sin límite.
+
+Cuando se seleccione un radio, solo deben aparecer los lugares cuya distancia calculada sea menor o igual al valor seleccionado.
+
+Cuando se seleccione Sin límite, deben mostrarse nuevamente todos los lugares que correspondan al filtro de categoría activo.
+
+#### 2. LÓGICA EN EL VIEWMODEL
+
+Modifica `MapaViewmodel.kt` para:
+
+- Crear un `MutableStateFlow<Int?>` privado que almacene el radio seleccionado.
+- Utilizar `null` para representar la opción Sin límite.
+- Exponer el estado mediante `StateFlow`.
+- Crear la función `seleccionarRadio(radio: Int?)`.
+- Validar que los valores permitidos sean únicamente `null`, 100, 200 y 500.
+- Combinar la lista de lugares, la categoría seleccionada y el radio mediante `combine` y `stateIn`.
+- Mantener la lista original de lugares y sus distancias sin modificaciones.
+- Aplicar simultáneamente los filtros de categoría y radio.
+- Limpiar la selección si el lugar seleccionado deja de estar visible.
+- Conservar el cálculo de distancias y el ordenamiento existente.
+- Mantener el lugar más cercano global y el más cercano dentro de los resultados visibles.
+- No realizar cálculos de distancia dentro de los Composables.
+
+#### 3. INTERFAZ DE RADIO
+
+Modifica `PantallaMapa.kt` para:
+
+- Agregar una sección titulada "Radio de proximidad".
+- Colocarla debajo de los filtros por categorías y antes del mapa.
+- Mostrar chips de Material 3 para Sin límite, 100 m, 200 m y 500 m.
+- Resaltar el radio seleccionado utilizando la paleta verde esmeralda.
+- Permitir desplazamiento horizontal si es necesario.
+- Conectar las opciones con `seleccionarRadio()` del ViewModel.
+- Enviar el radio seleccionado al componente `MapaUbicacion`.
+- Mantener el contador de lugares actualizado.
+- Mostrar un mensaje informativo cuando no existan lugares dentro del radio.
+- Conservar el diseño adaptable y el funcionamiento de los botones existentes.
+
+#### 4. CÍRCULO DE PROXIMIDAD EN EL MAPA
+
+Modifica `MapaUbicacion.kt` para:
+
+- Recibir el radio seleccionado mediante un parámetro opcional.
+- Dibujar un círculo de osmdroid centrado en la ubicación actual del usuario.
+- Utilizar un borde verde esmeralda y un relleno semitransparente.
+- Actualizar el círculo al cambiar entre 100, 200 y 500 metros.
+- Eliminar el círculo cuando se seleccione Sin límite.
+- Evitar la acumulación de círculos anteriores.
+- Mantener visibles los marcadores correspondientes al filtro activo.
+- Conservar el marcador de ubicación del usuario.
+- Mantener la corrección del COMMIT 12 que cierra las ventanas de información de lugares ocultos.
+- No sustituir osmdroid por Google Maps.
+
+#### 5. ARCHIVOS PERMITIDOS
+
+- `viewmodel/MapaViewmodel.kt`
+- `ui/PantallaMapa.kt`
+- `ui/MapaUbicacion.kt`
+
+#### 6. RESTRICCIONES OBLIGATORIAS
+
+- No modifiques los repositorios ni los modelos.
+- No modifiques las dependencias del proyecto.
+- No cambies la biblioteca osmdroid por Google Maps.
+- No elimines los filtros por categorías del COMMIT 12.
+- No modifiques la identidad visual del COMMIT 11.
+- Conserva los cinco lugares originales.
+- Mantén la arquitectura MVVM + Repository.
+- No agregues Context al ViewModel.
+- No realices filtrados ni cálculos de distancia dentro de los Composables.
+- Conserva los permisos de ubicación, GPS, distancias, selección, errores y botón Más cercano.
+- No implementes DataStore ni navegación; corresponden a otros commits.
+- No modifiques `local.properties` ni expongas claves API.
+- No realices commits ni cambies de rama.
+
+#### 7. RESULTADO ESPERADO
+
+Aplica los cambios directamente en los archivos indicados, sin duplicar implementaciones.
+
+Verifica que el proyecto compile y que los radios de 100, 200 y 500 metros actualicen correctamente la lista, los marcadores y el círculo del mapa.
+
+Comprueba que los filtros por categorías sigan funcionando junto con el radio.
+
+Al finalizar, resume los archivos modificados, las decisiones técnicas y las funcionalidades conservadas.
+
+Si los cambios ya existen y cumplen los requisitos, consérvalos y evita sobrescribirlos.
+
+---
+
 ## Registro de resultados y decisiones
 
 | Prompt que escribí | Qué respondió Gemini | Qué cambié o descarté | Por qué |
 |---|---|---|---|
 | Prompt 01 — Rediseño visual de CampusGPS | Pendiente de registrar la respuesta real de Gemini. | Se actualizaron Color.kt, Theme.kt, PantallaMapa.kt, ListaLugares.kt y MensajeError.kt. Se conservó la lógica de ubicación. | Mejorar la presentación visual sin afectar las funciones existentes ni la arquitectura MVVM. |
-| Prompt 02 — Filtros por categorías | Pendiente de registrar la respuesta real de Gemini. | Pendiente de verificar la implementación. | Permitir explorar lugares por categoría manteniendo sincronizados el mapa y la lista. |
+| Prompt 02 — Filtros por categorías | Pendiente de registrar la respuesta real de Gemini. | Se implementaron los filtros en MapaViewmodel.kt y PantallaMapa.kt. Se corrigió en MapaUbicacion.kt el cierre de ventanas de información anteriores. | Permitir explorar lugares por categoría manteniendo sincronizados el mapa y la lista. |
+| Prompt 03 — Radio de proximidad | Pendiente de registrar la respuesta real de Gemini. | Pendiente de verificar la implementación. | Permitir consultar lugares cercanos dentro de un radio seleccionado, conservando los filtros por categorías. |
 
 ---
 
@@ -180,18 +297,43 @@ Al finalizar, proporciona un resumen de los archivos modificados, la lógica imp
 
 ### Commit 12 — Filtros por categorías
 
+**Estado:** Implementado y probado.
+
+**Archivos modificados:**
+
+- `viewmodel/MapaViewmodel.kt`
+- `ui/PantallaMapa.kt`
+- `ui/MapaUbicacion.kt`
+
+**Pruebas realizadas:**
+
+- Mostrar los cinco lugares con Todos.
+- Filtrar Estudio, Comida, Eventos y Servicios.
+- Actualizar simultáneamente la lista y los marcadores.
+- Conservar la selección y el botón Más cercano.
+- Corregir las ventanas de información anteriores.
+- Ejecutar la aplicación sin errores visibles.
+
+### Commit 13 — Radio de proximidad
+
 **Estado:** Pendiente de pruebas.
 
 **Archivos previstos:**
 
 - `viewmodel/MapaViewmodel.kt`
 - `ui/PantallaMapa.kt`
+- `ui/MapaUbicacion.kt`
 
 **Pruebas pendientes:**
 
-- Mostrar los cinco lugares con Todos.
-- Filtrar correctamente Estudio, Comida, Eventos y Servicios.
-- Actualizar simultáneamente la lista y los marcadores.
+- Mostrar todos los lugares con Sin límite.
+- Dibujar un círculo de 100 metros.
+- Dibujar un círculo de 200 metros.
+- Dibujar un círculo de 500 metros.
+- Mostrar únicamente los lugares dentro del radio.
+- Combinar correctamente radio y categoría.
 - Mantener visible la ubicación del usuario.
-- Conservar la selección y el botón Más cercano.
+- Eliminar el círculo al seleccionar Sin límite.
+- Evitar círculos y marcadores duplicados.
+- Mantener el funcionamiento del botón Más cercano.
 - Compilar y ejecutar sin errores.

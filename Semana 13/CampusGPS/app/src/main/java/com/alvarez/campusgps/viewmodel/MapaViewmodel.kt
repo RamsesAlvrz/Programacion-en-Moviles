@@ -34,6 +34,8 @@ class MapaViewModel(
             "Eventos",
             "Servicios"
         )
+
+        val RADIOS = listOf(100, 200, 500)
     }
 
     private val _estado =
@@ -42,7 +44,7 @@ class MapaViewModel(
     val estado: StateFlow<UbicacionUi> =
         _estado.asStateFlow()
 
-    // Lista completa: no se modifica al filtrar.
+    // Lista completa de lugares y distancias.
     private val _lugares = MutableStateFlow(
         lugaresRepo.obtenerLugares().map {
             LugarConDistancia(it, null)
@@ -52,25 +54,41 @@ class MapaViewModel(
     val lugares: StateFlow<List<LugarConDistancia>> =
         _lugares.asStateFlow()
 
-    // Categoria seleccionada.
+    // Filtro por categoria del COMMIT 12.
     private val _categoriaSeleccionada =
         MutableStateFlow("Todos")
 
     val categoriaSeleccionada: StateFlow<String> =
         _categoriaSeleccionada.asStateFlow()
 
-    // Filtrado reactivo dentro del ViewModel.
+    // Radio del COMMIT 13.
+    // null significa que no hay limite de distancia.
+    private val _radioSeleccionado =
+        MutableStateFlow<Int?>(null)
+
+    val radioSeleccionado: StateFlow<Int?> =
+        _radioSeleccionado.asStateFlow()
+
+    // Combina categoria y radio sin modificar
+    // la lista original de lugares.
     val lugaresFiltrados: StateFlow<List<LugarConDistancia>> =
         combine(
             lugares,
-            categoriaSeleccionada
-        ) { lista, categoria ->
-            if (categoria == "Todos") {
-                lista
-            } else {
-                lista.filter {
-                    it.lugar.categoria == categoria
-                }
+            categoriaSeleccionada,
+            radioSeleccionado
+        ) { lista, categoria, radio ->
+
+            lista.filter { item ->
+                val coincideCategoria =
+                    categoria == "Todos" ||
+                            item.lugar.categoria == categoria
+
+                val coincideRadio =
+                    radio == null ||
+                            (item.metros != null &&
+                                    item.metros <= radio.toFloat())
+
+                coincideCategoria && coincideRadio
             }
         }.stateIn(
             scope = viewModelScope,
@@ -84,7 +102,7 @@ class MapaViewModel(
     val seleccionado: StateFlow<Int?> =
         _seleccionado.asStateFlow()
 
-    // Lugar mas cercano de todos los lugares.
+    // Lugar mas cercano global.
     val masCercano: StateFlow<LugarConDistancia?> =
         lugares.map { lista ->
             lista.firstOrNull { it.metros != null }
@@ -94,7 +112,7 @@ class MapaViewModel(
             initialValue = null
         )
 
-    // Lugar mas cercano dentro del filtro activo.
+    // Lugar mas cercano entre los resultados visibles.
     val masCercanoVisible: StateFlow<LugarConDistancia?> =
         lugaresFiltrados.map { lista ->
             lista.firstOrNull { it.metros != null }
@@ -104,30 +122,50 @@ class MapaViewModel(
             initialValue = null
         )
 
-    // Cambiar la categoria activa.
+    // Cambiar filtro de categoria.
     fun seleccionarCategoria(categoria: String) {
         if (categoria !in CATEGORIAS) return
 
         _categoriaSeleccionada.value = categoria
+        validarSeleccion()
+    }
 
-        // Si el lugar seleccionado queda oculto,
-        // se elimina la seleccion anterior.
-        val seleccionadoActual = _seleccionado.value
+    // Cambiar radio: null, 100, 200 o 500 metros.
+    fun seleccionarRadio(radio: Int?) {
+        if (radio != null && radio !in RADIOS) return
 
-        if (seleccionadoActual != null) {
-            val sigueVisible = _lugares.value.any {
-                it.lugar.id == seleccionadoActual &&
-                        (categoria == "Todos" ||
-                                it.lugar.categoria == categoria)
-            }
+        _radioSeleccionado.value = radio
+        validarSeleccion()
+    }
 
-            if (!sigueVisible) {
-                _seleccionado.value = null
-            }
+    // Evitar que quede seleccionado un lugar oculto.
+    private fun validarSeleccion() {
+        val idActual = _seleccionado.value ?: return
+
+        val categoria = _categoriaSeleccionada.value
+        val radio = _radioSeleccionado.value
+
+        val sigueVisible = _lugares.value.any { item ->
+            val coincideCategoria =
+                categoria == "Todos" ||
+                        item.lugar.categoria == categoria
+
+            val coincideRadio =
+                radio == null ||
+                        (item.metros != null &&
+                                item.metros <= radio.toFloat())
+
+            item.lugar.id == idActual &&
+                    coincideCategoria &&
+                    coincideRadio
+        }
+
+        if (!sigueVisible) {
+            _seleccionado.value = null
         }
     }
 
-    // Calcular y ordenar las distancias.
+    // Calcular y ordenar lugares por distancia.
     private fun actualizarDistancias(pos: Posicion) {
         val listaOrdenada = lugaresRepo.obtenerLugares()
             .map { lugar ->
@@ -140,6 +178,8 @@ class MapaViewModel(
 
         _lugares.value = listaOrdenada
 
+        validarSeleccion()
+
         listaOrdenada.forEach { item ->
             Log.d(
                 "CampusGPS",
@@ -149,7 +189,7 @@ class MapaViewModel(
         }
     }
 
-    // Reiniciar distancias al iniciar una busqueda.
+    // Reiniciar distancias sin eliminar filtros.
     private fun limpiarDistancias() {
         _lugares.value = lugaresRepo.obtenerLugares().map {
             LugarConDistancia(it, null)
@@ -226,7 +266,7 @@ class MapaViewModel(
         )
     }
 
-    // Seleccionar un lugar visible.
+    // Solo permite seleccionar lugares visibles.
     fun seleccionar(id: Int?) {
         if (id == null) {
             _seleccionado.value = null
@@ -234,11 +274,21 @@ class MapaViewModel(
         }
 
         val categoria = _categoriaSeleccionada.value
+        val radio = _radioSeleccionado.value
 
-        val esVisible = _lugares.value.any {
-            it.lugar.id == id &&
-                    (categoria == "Todos" ||
-                            it.lugar.categoria == categoria)
+        val esVisible = _lugares.value.any { item ->
+            val coincideCategoria =
+                categoria == "Todos" ||
+                        item.lugar.categoria == categoria
+
+            val coincideRadio =
+                radio == null ||
+                        (item.metros != null &&
+                                item.metros <= radio.toFloat())
+
+            item.lugar.id == id &&
+                    coincideCategoria &&
+                    coincideRadio
         }
 
         if (esVisible) {

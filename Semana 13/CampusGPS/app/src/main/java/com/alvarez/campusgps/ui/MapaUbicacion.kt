@@ -27,6 +27,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.infowindow.InfoWindow
 
 @Composable
@@ -35,6 +36,7 @@ fun MapaUbicacion(
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
     masCercanoId: Int?,
+    radioMetros: Int? = null,
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
@@ -43,7 +45,7 @@ fun MapaUbicacion(
     val rojo = Color.rgb(229, 57, 53)
     val verde = Color.rgb(46, 160, 80)
 
-    // Configuración inicial del mapa
+    // Configuracion inicial del mapa.
     val mapa = remember(contexto) {
         Configuration.getInstance().userAgentValue =
             contexto.packageName
@@ -59,7 +61,7 @@ fun MapaUbicacion(
         }
     }
 
-    // Dibujar pin con círculo blanco en el centro
+    // Dibujar icono de marcador.
     fun crearIconoPin(color: Int): BitmapDrawable {
         val densidad =
             contexto.resources.displayMetrics.density
@@ -86,7 +88,6 @@ fun MapaUbicacion(
         lienzo.save()
         lienzo.scale(escalaX, escalaY)
 
-        // Cuerpo del marcador
         val forma = Path().apply {
             moveTo(17f, 42f)
             cubicTo(13f, 35f, 3f, 23f, 3f, 16f)
@@ -98,7 +99,6 @@ fun MapaUbicacion(
 
         lienzo.drawPath(forma, pintura)
 
-        // Bolita blanca central
         pintura.color = Color.WHITE
         lienzo.drawCircle(
             17f,
@@ -115,7 +115,7 @@ fun MapaUbicacion(
         )
     }
 
-    // Ventana de información personalizada
+    // Ventana de informacion personalizada.
     fun crearVentana(
         nombre: String,
         categoria: String? = null
@@ -146,7 +146,6 @@ fun MapaUbicacion(
             }
         }
 
-        // Nombre en negrita
         val titulo = TextView(contexto).apply {
             text = nombre
             setTextColor(Color.BLACK)
@@ -157,7 +156,6 @@ fun MapaUbicacion(
 
         contenedor.addView(titulo)
 
-        // Categoría debajo
         if (!categoria.isNullOrBlank()) {
             val subtitulo = TextView(contexto).apply {
                 text = categoria
@@ -171,16 +169,16 @@ fun MapaUbicacion(
 
         return object : InfoWindow(contenedor, mapa) {
             override fun onOpen(item: Any?) {
-                // Contenido configurado
+                // Contenido configurado.
             }
 
             override fun onClose() {
-                // Sin acciones adicionales
+                // Sin acciones adicionales.
             }
         }
     }
 
-    // Marcador rojo de ubicación actual
+    // Marcador de ubicacion actual.
     val marcador = remember(mapa) {
         Marker(mapa).apply {
             title = "Estás aquí"
@@ -201,7 +199,7 @@ fun MapaUbicacion(
         }
     }
 
-    // Marcadores del campus
+    // Marcadores filtrados.
     val marcadoresLugares = remember(
         mapa,
         lugares,
@@ -222,7 +220,6 @@ fun MapaUbicacion(
                     Marker.ANCHOR_BOTTOM
                 )
 
-                // Verde para el más cercano
                 val colorMarcador =
                     if (item.lugar.id == masCercanoId) {
                         verde
@@ -237,7 +234,6 @@ fun MapaUbicacion(
                     categoria = item.lugar.categoria
                 )
 
-                // Solo una ventana abierta
                 setOnMarkerClickListener { marcadorTocado, mapaActual ->
                     InfoWindow.closeAllInfoWindowsOn(mapaActual)
                     marcadorTocado.showInfoWindow()
@@ -247,7 +243,7 @@ fun MapaUbicacion(
         }
     }
 
-    // Centrar al obtener ubicación
+    // Centrar al obtener la ubicacion.
     LaunchedEffect(posicion) {
         if (posicion != null) {
             mapa.controller.setZoom(16.0)
@@ -261,10 +257,9 @@ fun MapaUbicacion(
         }
     }
 
-    // Mover cámara al lugar seleccionado
+    // Centrar en un lugar seleccionado.
     LaunchedEffect(seleccionado, marcadoresLugares) {
         if (seleccionado != null) {
-
             val lugar = lugares.firstOrNull {
                 it.lugar.id == seleccionado
             }?.lugar
@@ -284,16 +279,13 @@ fun MapaUbicacion(
                         it.title == lugar.nombre
                     }
 
-                // Cerrar ventanas anteriores
                 InfoWindow.closeAllInfoWindowsOn(mapa)
-
-                // Mostrar solo la seleccionada
                 marcadorSeleccionado?.showInfoWindow()
             }
         }
     }
 
-    // Ciclo de vida del mapa
+    // Ciclo de vida del mapa.
     DisposableEffect(mapa) {
         mapa.onResume()
 
@@ -303,13 +295,12 @@ fun MapaUbicacion(
         }
     }
 
-    // Mostrar mapa y marcadores
     AndroidView(
         factory = { mapa },
         modifier = modifier.fillMaxSize(),
         update = { vista ->
 
-            // Cerrar ventanas de lugares que ya no están visibles.
+            // Cerrar ventanas de lugares ocultos.
             val ventanaAbierta =
                 vista.overlays
                     .filterIsInstance<Marker>()
@@ -317,27 +308,66 @@ fun MapaUbicacion(
 
             if (ventanaAbierta != null &&
                 ventanaAbierta !== marcador &&
-                marcadoresLugares.none { it === ventanaAbierta }
+                marcadoresLugares.none {
+                    it === ventanaAbierta
+                }
             ) {
                 InfoWindow.closeAllInfoWindowsOn(vista)
             }
 
+            // Eliminar marcadores anteriores.
             val marcadoresAnteriores =
                 vista.overlays
                     .filterIsInstance<Marker>()
                     .filter { it !== marcador }
 
-            // Quitar marcadores anteriores
             vista.overlays.removeAll(
                 marcadoresAnteriores
             )
 
-            // Agregar marcadores actualizados
+            // Eliminar circulos anteriores.
+            val circulosAnteriores =
+                vista.overlays.filterIsInstance<Polygon>()
+
+            vista.overlays.removeAll(
+                circulosAnteriores
+            )
+
+            // Dibujar el radio alrededor del usuario.
+            if (posicion != null && radioMetros != null) {
+                val centro = GeoPoint(
+                    posicion.latitud,
+                    posicion.longitud
+                )
+
+                val circulo = Polygon(vista).apply {
+                    points = Polygon.pointsAsCircle(
+                        centro,
+                        radioMetros.toDouble()
+                    )
+
+                    fillPaint.color =
+                        Color.argb(45, 17, 94, 89)
+
+                    outlinePaint.color =
+                        Color.rgb(17, 94, 89)
+
+                    outlinePaint.strokeWidth =
+                        3f * contexto.resources
+                            .displayMetrics.density
+                }
+
+                // Agregar primero para que quede
+                // debajo de los marcadores.
+                vista.overlays.add(0, circulo)
+            }
+
+            // Agregar los lugares visibles.
             vista.overlays.addAll(
                 marcadoresLugares
             )
 
-            // Marcador rojo
+            // Mantener el marcador del usuario.
             if (posicion != null) {
                 marcador.position = GeoPoint(
                     posicion.latitud,

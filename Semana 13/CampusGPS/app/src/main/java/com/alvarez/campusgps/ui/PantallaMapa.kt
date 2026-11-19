@@ -31,6 +31,7 @@ fun PantallaMapa(vm: MapaViewModel) {
     val estado by vm.estado.collectAsStateWithLifecycle()
     val lugares by vm.lugaresFiltrados.collectAsStateWithLifecycle()
     val categoria by vm.categoriaSeleccionada.collectAsStateWithLifecycle()
+    val radio by vm.radioSeleccionado.collectAsStateWithLifecycle()
     val seleccionado by vm.seleccionado.collectAsStateWithLifecycle()
     val masCercano by vm.masCercanoVisible.collectAsStateWithLifecycle()
 
@@ -79,7 +80,7 @@ fun PantallaMapa(vm: MapaViewModel) {
             .background(colores.background)
     ) {
 
-        // Encabezado CampusGPS 2.0
+        // Encabezado de CampusGPS 2.0
         Surface(
             color = colores.primary,
             shape = RoundedCornerShape(
@@ -145,17 +146,17 @@ fun PantallaMapa(vm: MapaViewModel) {
 
         } else {
 
-            // Filtros por categorias - COMMIT 12
+            // Filtros por categorias del COMMIT 12.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp)
+                    .padding(top = 8.dp)
             ) {
                 Text(
                     text = "Explorar por categoría",
                     modifier = Modifier.padding(
                         horizontal = 18.dp,
-                        vertical = 4.dp
+                        vertical = 3.dp
                     ),
                     style = MaterialTheme.typography.labelLarge,
                     color = colores.onBackground,
@@ -168,7 +169,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                         .horizontalScroll(rememberScrollState())
                         .padding(
                             horizontal = 14.dp,
-                            vertical = 4.dp
+                            vertical = 2.dp
                         ),
                     horizontalArrangement =
                         Arrangement.spacedBy(8.dp)
@@ -197,7 +198,75 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Mapa principal
+            // Selector de radio del COMMIT 13.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp)
+            ) {
+                Text(
+                    text = "Radio de proximidad",
+                    modifier = Modifier.padding(
+                        horizontal = 18.dp,
+                        vertical = 3.dp
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colores.onBackground,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(
+                            horizontal = 14.dp,
+                            vertical = 2.dp
+                        ),
+                    horizontalArrangement =
+                        Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = radio == null,
+                        onClick = {
+                            vm.seleccionarRadio(null)
+                        },
+                        label = {
+                            Text(
+                                text = "Sin límite",
+                                fontSize = 12.sp
+                            )
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = colores.primary,
+                            selectedLabelColor = colores.onPrimary
+                        )
+                    )
+
+                    MapaViewModel.RADIOS.forEach { opcion ->
+                        FilterChip(
+                            selected = radio == opcion,
+                            onClick = {
+                                vm.seleccionarRadio(opcion)
+                            },
+                            label = {
+                                Text(
+                                    text = "$opcion m",
+                                    fontSize = 12.sp
+                                )
+                            },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = colores.primary,
+                                selectedLabelColor = colores.onPrimary
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Mapa principal.
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -205,7 +274,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                     .padding(
                         start = 12.dp,
                         end = 12.dp,
-                        top = 8.dp
+                        top = 6.dp
                     ),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -225,6 +294,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                         lugares = lugares,
                         seleccionado = seleccionado,
                         masCercanoId = masCercano?.lugar?.id,
+                        radioMetros = radio,
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -250,15 +320,15 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Acciones principales
+            // Acciones principales.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
                         horizontal = 16.dp,
-                        vertical = 10.dp
+                        vertical = 8.dp
                     ),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -271,7 +341,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                         shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(
                             horizontal = 8.dp,
-                            vertical = 12.dp
+                            vertical = 10.dp
                         )
                     ) {
                         Text(
@@ -292,7 +362,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                         shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(
                             horizontal = 8.dp,
-                            vertical = 12.dp
+                            vertical = 10.dp
                         )
                     ) {
                         Text(
@@ -314,6 +384,14 @@ fun PantallaMapa(vm: MapaViewModel) {
                     )
                 }
 
+                if (radio != null && posicion == null) {
+                    Text(
+                        text = "Obtén tu ubicación para aplicar el radio.",
+                        fontSize = 11.sp,
+                        color = colores.onSurfaceVariant
+                    )
+                }
+
                 masCercano?.let { item ->
                     Surface(
                         color = colores.primaryContainer,
@@ -326,7 +404,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                                     } ?: "Sin calcular"),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(10.dp),
                             color = colores.onPrimaryContainer,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -335,7 +413,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Panel inferior de lugares
+            // Panel inferior.
             Surface(
                 color = colores.surface,
                 shape = RoundedCornerShape(
@@ -351,8 +429,8 @@ fun PantallaMapa(vm: MapaViewModel) {
                             .padding(
                                 start = 18.dp,
                                 end = 18.dp,
-                                top = 14.dp,
-                                bottom = 8.dp
+                                top = 12.dp,
+                                bottom = 6.dp
                             ),
                         horizontalArrangement =
                             Arrangement.SpaceBetween,
@@ -375,11 +453,15 @@ fun PantallaMapa(vm: MapaViewModel) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(110.dp),
+                                .height(90.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No hay lugares en esta categoría",
+                                text = if (radio != null) {
+                                    "No hay lugares dentro de $radio m"
+                                } else {
+                                    "No hay lugares en esta categoría"
+                                },
                                 color = colores.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodyMedium
                             )
@@ -392,11 +474,11 @@ fun PantallaMapa(vm: MapaViewModel) {
                             onClick = { id ->
                                 vm.seleccionar(id)
                             },
-                            modifier = Modifier.height(190.dp)
+                            modifier = Modifier.height(170.dp)
                         )
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(6.dp))
                 }
             }
         }
