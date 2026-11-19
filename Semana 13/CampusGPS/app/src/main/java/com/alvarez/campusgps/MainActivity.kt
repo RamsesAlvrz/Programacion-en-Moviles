@@ -18,7 +18,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val ubicacionRepo = UbicacionRepositoryGoogle(
-            LocationServices.getFusedLocationProviderClient(this)
+            cliente = LocationServices
+                .getFusedLocationProviderClient(this),
+            context = applicationContext
         )
 
         val lugaresRepo = LugaresRepositoryLocal()
@@ -30,7 +32,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CampusGPSTheme {
-                val vm: MapaViewModel = viewModel(factory = factory)
+                val vm: MapaViewModel = viewModel(
+                    factory = factory
+                )
+
                 PantallaMapa(vm)
             }
         }

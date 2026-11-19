@@ -1,10 +1,10 @@
-
 package com.alvarez.campusgps.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -67,10 +67,15 @@ fun PantallaMapa(vm: MapaViewModel) {
     val posicion =
         (estado as? UbicacionUi.Lista)?.posicion
 
+    val esError = estado is UbicacionUi.Error
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(
+                if (esError) Color(0xFFFCFAFC)
+                else Color.White
+            )
     ) {
 
         // Encabezado azul
@@ -89,127 +94,154 @@ fun PantallaMapa(vm: MapaViewModel) {
             )
         }
 
-        // Mapa
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .clipToBounds()
-        ) {
-            MapaUbicacion(
-                posicion = posicion,
-                lugares = lugares,
-                seleccionado = seleccionado,
-                masCercanoId = masCercano?.lugar?.id,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        if (esError) {
 
-        // Botones y texto informativo
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    top = 5.dp,
-                    bottom = 4.dp
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-
-            // Botón para obtener ubicación
-            Button(
-                onClick = { alPulsar() },
-                enabled = estado !is UbicacionUi.Buscando,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF176B9A)
-                ),
-                contentPadding = PaddingValues(
-                    horizontal = 20.dp,
-                    vertical = 4.dp
-                ),
-                modifier = Modifier.height(38.dp)
+            // Pantalla de error como en la guía
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        horizontal = 16.dp,
+                        vertical = 18.dp
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text(
-                    text = "Obtener mi ubicación",
-                    fontSize = 12.sp
+
+                Button(
+                    onClick = { alPulsar() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF176B9A)
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = 20.dp,
+                        vertical = 4.dp
+                    ),
+                    modifier = Modifier.height(38.dp)
+                ) {
+                    Text(
+                        text = "Obtener mi ubicación",
+                        fontSize = 12.sp
+                    )
+                }
+
+                val error = estado as UbicacionUi.Error
+
+                MensajeError(
+                    error = error,
+                    onReintentar = { alPulsar() }
                 )
             }
 
-            // Botón para ir al lugar más cercano
-            OutlinedButton(
-                onClick = {
-                    masCercano?.let { item ->
-                        vm.seleccionar(item.lugar.id)
-                    }
-                },
-                enabled = masCercano != null &&
-                        estado is UbicacionUi.Lista,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    Color(0xFF176B9A)
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFF176B9A)
-                ),
-                contentPadding = PaddingValues(
-                    horizontal = 18.dp,
-                    vertical = 3.dp
-                ),
-                modifier = Modifier.height(34.dp)
+        } else {
+
+            // Mapa original del COMMIT 8
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clipToBounds()
             ) {
-                Text(
-                    text = "Ir al más cercano",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                MapaUbicacion(
+                    posicion = posicion,
+                    lugares = lugares,
+                    seleccionado = seleccionado,
+                    masCercanoId = masCercano?.lugar?.id,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
 
-            // Nombre y distancia del más cercano
-            if (masCercano != null) {
-                val item = masCercano!!
+            // Botones debajo del mapa
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = 5.dp,
+                        bottom = 4.dp
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
 
-                Text(
-                    text = "Más cercano: ${item.lugar.nombre} " +
-                            "(${item.metros?.let {
-                                formatearDistancia(it)
-                            } ?: "Sin calcular"})",
-                    fontSize = 11.sp,
-                    color = Color(0xFF263746),
-                    fontWeight = FontWeight.Medium
-                )
-            }
+                Button(
+                    onClick = { alPulsar() },
+                    enabled = estado !is UbicacionUi.Buscando,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF176B9A)
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = 20.dp,
+                        vertical = 4.dp
+                    ),
+                    modifier = Modifier.height(38.dp)
+                ) {
+                    Text(
+                        text = "Obtener mi ubicación",
+                        fontSize = 12.sp
+                    )
+                }
 
-            // Mensajes de búsqueda o error
-            when (val actual = estado) {
-                UbicacionUi.Buscando -> {
+                // Botón para ir al lugar más cercano
+                OutlinedButton(
+                    onClick = {
+                        masCercano?.let { item ->
+                            vm.seleccionar(item.lugar.id)
+                        }
+                    },
+                    enabled = masCercano != null &&
+                            estado is UbicacionUi.Lista,
+                    border = BorderStroke(
+                        1.dp,
+                        Color(0xFF176B9A)
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFF176B9A)
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = 18.dp,
+                        vertical = 3.dp
+                    ),
+                    modifier = Modifier.height(34.dp)
+                ) {
+                    Text(
+                        text = "Ir al más cercano",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // Nombre y distancia del más cercano
+                masCercano?.let { item ->
+                    Text(
+                        text = "Más cercano: ${item.lugar.nombre} " +
+                                "(${item.metros?.let {
+                                    formatearDistancia(it)
+                                } ?: "Sin calcular"})",
+                        fontSize = 11.sp,
+                        color = Color(0xFF263746),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                // Estado de búsqueda
+                if (estado is UbicacionUi.Buscando) {
                     Text(
                         text = "Buscando ubicación...",
                         fontSize = 12.sp
                     )
                 }
-
-                is UbicacionUi.Error -> {
-                    Text(
-                        text = actual.mensaje,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                else -> Unit
             }
-        }
 
-        // Lista de lugares
-        ListaLugares(
-            lugares = lugares,
-            seleccionado = seleccionado,
-            masCercanoId = masCercano?.lugar?.id,
-            onClick = { id ->
-                vm.seleccionar(id)
-            },
-            modifier = Modifier.height(220.dp)
-        )
+            // Lista original de lugares
+            ListaLugares(
+                lugares = lugares,
+                seleccionado = seleccionado,
+                masCercanoId = masCercano?.lugar?.id,
+                onClick = { id ->
+                    vm.seleccionar(id)
+                },
+                modifier = Modifier.height(220.dp)
+            )
+        }
     }
 }

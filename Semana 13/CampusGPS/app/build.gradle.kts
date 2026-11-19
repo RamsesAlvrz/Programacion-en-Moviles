@@ -56,4 +56,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
     implementation("org.osmdroid:osmdroid-android:6.1.20")
+    implementation("com.google.android.gms:play-services-base:18.5.0")
 }
