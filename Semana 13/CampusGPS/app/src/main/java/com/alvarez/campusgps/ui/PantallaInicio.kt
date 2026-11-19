@@ -1,6 +1,7 @@
 
 package com.alvarez.campusgps.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,10 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.alvarez.campusgps.R
 import com.alvarez.campusgps.model.LugarConDistancia
 import com.alvarez.campusgps.util.formatearDistancia
 
@@ -39,26 +45,26 @@ fun PantallaInicio(
             modifier = Modifier.fillMaxWidth(),
             color = colores.primary,
             shape = RoundedCornerShape(
-                bottomStart = 30.dp,
-                bottomEnd = 30.dp
+                bottomStart = 26.dp,
+                bottomEnd = 26.dp
             ),
-            shadowElevation = 5.dp
+            shadowElevation = 4.dp
         ) {
             Column(
                 modifier = Modifier.padding(
-                    start = 24.dp,
-                    end = 24.dp,
-                    top = 28.dp,
-                    bottom = 30.dp
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = 18.dp,
+                    bottom = 20.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(9.dp)
             ) {
                 Text(
                     text = "CAMPUSGPS  2.0",
                     color = Color(0xFF9DF1DD),
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp,
-                    fontSize = 12.sp
+                    fontSize = 11.sp
                 )
 
                 Text(
@@ -68,8 +74,8 @@ fun PantallaInicio(
                         "Tu campus,\nsiempre cerca."
                     },
                     color = Color.White,
-                    fontSize = 31.sp,
-                    lineHeight = 37.sp,
+                    fontSize = 29.sp,
+                    lineHeight = 34.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
 
@@ -81,20 +87,34 @@ fun PantallaInicio(
                                 "rutas para llegar caminando."
                     },
                     color = Color.White.copy(alpha = 0.88f),
-                    fontSize = 14.sp,
-                    lineHeight = 21.sp
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
                 )
+
+                if (!mostrarUltimoLugar) {
+                    Image(
+                        painter = painterResource(
+                            id = R.drawable.campus_ilustracion
+                        ),
+                        contentDescription =
+                            "Ilustración del campus TECSUP y navegación GPS",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(155.dp)
+                            .clip(RoundedCornerShape(18.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
         }
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(15.dp)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(11.dp)
         ) {
             if (mostrarUltimoLugar) {
-
                 Text(
                     "Último lugar seleccionado",
                     style = MaterialTheme.typography.titleLarge,
@@ -103,15 +123,16 @@ fun PantallaInicio(
 
                 if (ultimoLugar != null) {
                     Card(
-                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = colores.surface
                         )
                     ) {
                         Column(
-                            modifier = Modifier.padding(20.dp),
+                            modifier = Modifier.padding(18.dp),
                             verticalArrangement =
-                                Arrangement.spacedBy(12.dp)
+                                Arrangement.spacedBy(11.dp)
                         ) {
                             Text(
                                 "DESTINO RECIENTE",
@@ -149,6 +170,7 @@ fun PantallaInicio(
                     }
                 } else {
                     Card(
+                        modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
                             containerColor = colores.surface
                         ),
@@ -162,9 +184,7 @@ fun PantallaInicio(
                         )
                     }
                 }
-
             } else {
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -174,10 +194,11 @@ fun PantallaInicio(
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold
                         )
+
                         Text(
                             "Elige lo que quieres hacer",
                             color = colores.onSurfaceVariant,
-                            fontSize = 13.sp
+                            fontSize = 12.sp
                         )
                     }
 
@@ -188,8 +209,8 @@ fun PantallaInicio(
                         Text(
                             "4 opciones",
                             modifier = Modifier.padding(
-                                horizontal = 11.dp,
-                                vertical = 8.dp
+                                horizontal = 10.dp,
+                                vertical = 7.dp
                             ),
                             color = colores.primary,
                             fontWeight = FontWeight.Bold,
@@ -202,7 +223,8 @@ fun PantallaInicio(
                     numero = "01",
                     simbolo = "⌖",
                     titulo = "Explorar el mapa",
-                    descripcion = "Visualiza todos los lugares del campus.",
+                    descripcion =
+                        "Visualiza todos los lugares del campus.",
                     onClick = onExplorarMapa
                 )
 
@@ -210,7 +232,8 @@ fun PantallaInicio(
                     numero = "02",
                     simbolo = "↝",
                     titulo = "Rutas a pie",
-                    descripcion = "Selecciona un destino y calcula tu recorrido.",
+                    descripcion =
+                        "Selecciona un destino y calcula tu recorrido.",
                     onClick = onAbrirRutas
                 )
 
@@ -218,7 +241,8 @@ fun PantallaInicio(
                     numero = "03",
                     simbolo = "◎",
                     titulo = "Lugares cercanos",
-                    descripcion = "Filtra lugares dentro de un radio de 200 m.",
+                    descripcion =
+                        "Filtra lugares dentro de un radio de 200 m.",
                     onClick = onAbrirCercanos
                 )
 
@@ -226,7 +250,8 @@ fun PantallaInicio(
                     numero = "04",
                     simbolo = "◉",
                     titulo = "Último lugar",
-                    descripcion = "Consulta tu destino seleccionado anteriormente.",
+                    descripcion =
+                        "Consulta tu destino seleccionado anteriormente.",
                     onClick = onVerUltimoLugar
                 )
 
@@ -237,7 +262,7 @@ fun PantallaInicio(
                         .padding(top = 8.dp),
                     color = colores.onSurfaceVariant,
                     style = MaterialTheme.typography.labelSmall,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                     letterSpacing = 1.sp
                 )
             }
@@ -259,7 +284,7 @@ private fun AccesoCampus(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = colores.surface
         ),
@@ -270,19 +295,22 @@ private fun AccesoCampus(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(
+                    horizontal = 14.dp,
+                    vertical = 12.dp
+                ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Surface(
-                modifier = Modifier.size(52.dp),
+                modifier = Modifier.size(46.dp),
                 color = colores.primaryContainer,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         simbolo,
-                        fontSize = 28.sp,
+                        fontSize = 25.sp,
                         fontWeight = FontWeight.Bold,
                         color = colores.primary
                     )
@@ -291,26 +319,26 @@ private fun AccesoCampus(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
                     titulo,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     color = colores.onSurface
                 )
 
                 Text(
                     descripcion,
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
                     color = colores.onSurfaceVariant
                 )
             }
 
             Text(
                 "›",
-                fontSize = 28.sp,
+                fontSize = 26.sp,
                 color = colores.primary
             )
         }
