@@ -13,8 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -27,13 +27,17 @@ import com.alvarez.campusgps.viewmodel.MapaViewModel
 fun PantallaMapa(vm: MapaViewModel) {
 
     val estado by vm.estado.collectAsStateWithLifecycle()
+    val lugares by vm.lugares.collectAsStateWithLifecycle()
+
     val contexto = LocalContext.current
 
+    // Permisos de ubicación
     val permisos = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
 
+    // Solicitar permisos al usuario
     val lanzador = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { resultado ->
@@ -65,7 +69,7 @@ fun PantallaMapa(vm: MapaViewModel) {
             .background(Color.White)
     ) {
 
-        // Encabezado azul original
+        // Barra superior azul
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,10 +85,11 @@ fun PantallaMapa(vm: MapaViewModel) {
             )
         }
 
+        // Ubicación actual
         val posicion =
             (estado as? UbicacionUi.Lista)?.posicion
 
-        // Mapa en el espacio disponible
+        // Mapa con ubicación y lugares del campus
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,6 +98,7 @@ fun PantallaMapa(vm: MapaViewModel) {
         ) {
             MapaUbicacion(
                 posicion = posicion,
+                lugares = lugares,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -123,11 +129,12 @@ fun PantallaMapa(vm: MapaViewModel) {
 
                 is UbicacionUi.Lista -> {
                     Text(
-                        "Latitud: ${actual.posicion.latitud}",
+                        text = "Latitud: ${actual.posicion.latitud}",
                         fontSize = 13.sp
                     )
+
                     Text(
-                        "Longitud: ${actual.posicion.longitud}",
+                        text = "Longitud: ${actual.posicion.longitud}",
                         fontSize = 13.sp
                     )
                 }
@@ -147,7 +154,7 @@ fun PantallaMapa(vm: MapaViewModel) {
 
                 UbicacionUi.Inicial -> {
                     Text(
-                        "Pulsa el botón para obtener tu ubicación",
+                        text = "Pulsa el botón para obtener tu ubicación",
                         color = Color.Gray,
                         fontSize = 13.sp
                     )
