@@ -1,4 +1,3 @@
-
 package com.alvarez.campusgps.ui
 
 import androidx.compose.foundation.BorderStroke
@@ -8,13 +7,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,106 +25,110 @@ fun ListaLugares(
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colores = MaterialTheme.colorScheme
+
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(
-            horizontal = 10.dp,
-            vertical = 4.dp
+            horizontal = 14.dp,
+            vertical = 6.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         items(
             items = lugares,
             key = { it.lugar.id }
         ) { item ->
-
             val activo = seleccionado == item.lugar.id
-
-            val esMasCercano =
-                item.lugar.id == masCercanoId
+            val esMasCercano = item.lugar.id == masCercanoId
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
-                        onClick(item.lugar.id)
-                    },
-                shape = RoundedCornerShape(9.dp),
+                    .clickable { onClick(item.lugar.id) },
+                shape = RoundedCornerShape(16.dp),
                 border = if (activo) {
-                    BorderStroke(
-                        1.dp,
-                        Color(0xFF2584C1)
-                    )
+                    BorderStroke(1.5.dp, colores.primary)
                 } else {
-                    null
+                    BorderStroke(1.dp, colores.outline)
                 },
                 colors = CardDefaults.cardColors(
                     containerColor = if (activo) {
-                        Color(0xFFDDEFFA)
+                        colores.primaryContainer
                     } else {
-                        Color(0xFFF0F3F7)
+                        colores.surface
                     }
                 ),
                 elevation = CardDefaults.cardElevation(
-                    defaultElevation = 0.dp
+                    defaultElevation = if (activo) 3.dp else 1.dp
                 )
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            horizontal = 10.dp,
-                            vertical = 6.dp
-                        ),
+                        .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    // Punto verde para el más cercano
-                    // Azul para los demás
-                    Canvas(
-                        modifier = Modifier.size(7.dp)
+                    Surface(
+                        color = if (esMasCercano) {
+                            colores.primary
+                        } else {
+                            colores.secondaryContainer
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(38.dp)
                     ) {
-                        drawCircle(
-                            color = if (esMasCercano) {
-                                Color(0xFF2EA050)
-                            } else {
-                                Color(0xFF2584C1)
+                        Box(contentAlignment = Alignment.Center) {
+                            Canvas(Modifier.size(10.dp)) {
+                                drawCircle(
+                                    color = if (esMasCercano) {
+                                        colores.onPrimary
+                                    } else {
+                                        colores.onSecondaryContainer
+                                    }
+                                )
                             }
-                        )
+                        }
                     }
 
-                    Spacer(Modifier.width(9.dp))
+                    Spacer(Modifier.width(12.dp))
 
-                    // Nombre y categoría
                     Column(
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
                             text = item.lugar.nombre,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF172A3A),
-                            lineHeight = 14.sp
+                            color = colores.onSurface
                         )
 
                         Text(
                             text = item.lugar.categoria,
-                            fontSize = 10.sp,
-                            color = Color.Gray,
-                            lineHeight = 12.sp
+                            fontSize = 11.sp,
+                            color = colores.onSurfaceVariant
                         )
+
+                        if (esMasCercano) {
+                            Text(
+                                text = "MÁS CERCANO",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colores.primary
+                            )
+                        }
                     }
 
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(8.dp))
 
-                    // Distancia a la derecha
                     Text(
                         text = item.metros?.let {
                             formatearDistancia(it)
-                        } ?: "Sin calcular",
-                        fontSize = 11.sp,
+                        } ?: "--",
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF176B9A)
+                        color = colores.primary
                     )
                 }
             }

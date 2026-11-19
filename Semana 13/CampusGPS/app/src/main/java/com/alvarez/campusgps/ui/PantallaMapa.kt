@@ -4,20 +4,18 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.campusgps.model.UbicacionUi
@@ -26,13 +24,13 @@ import com.alvarez.campusgps.viewmodel.MapaViewModel
 
 @Composable
 fun PantallaMapa(vm: MapaViewModel) {
-
     val estado by vm.estado.collectAsStateWithLifecycle()
     val lugares by vm.lugares.collectAsStateWithLifecycle()
     val seleccionado by vm.seleccionado.collectAsStateWithLifecycle()
     val masCercano by vm.masCercano.collectAsStateWithLifecycle()
 
     val contexto = LocalContext.current
+    val colores = MaterialTheme.colorScheme
 
     val permisos = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -49,7 +47,7 @@ fun PantallaMapa(vm: MapaViewModel) {
         }
     }
 
-    fun alPulsar() {
+    fun solicitarUbicacion() {
         val tienePermiso = permisos.any { permiso ->
             ContextCompat.checkSelfPermission(
                 contexto,
@@ -64,184 +62,261 @@ fun PantallaMapa(vm: MapaViewModel) {
         }
     }
 
-    val posicion =
-        (estado as? UbicacionUi.Lista)?.posicion
-
-    val esError = estado is UbicacionUi.Error
+    val posicion = (estado as? UbicacionUi.Lista)?.posicion
+    val error = estado as? UbicacionUi.Error
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                if (esError) Color(0xFFFCFAFC)
-                else Color.White
-            )
+            .background(colores.background)
     ) {
-
-        // Encabezado azul
+        // Encabezado de CampusGPS 2.0
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .zIndex(1f),
-            color = Color(0xFF176B9A)
+            color = colores.primary,
+            shape = RoundedCornerShape(
+                bottomStart = 24.dp,
+                bottomEnd = 24.dp
+            ),
+            shadowElevation = 4.dp
         ) {
-            Text(
-                text = "CampusGPS",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.padding(16.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 20.dp,
+                        vertical = 18.dp
+                    )
+            ) {
+                Text(
+                    text = "CampusGPS",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colores.onPrimary
+                )
+
+                Spacer(Modifier.height(3.dp))
+
+                Text(
+                    text = "Explora los lugares de tu campus",
+                    fontSize = 13.sp,
+                    color = colores.onPrimary.copy(alpha = 0.85f)
+                )
+            }
         }
 
-        if (esError) {
-
-            // Pantalla de error como en la guía
+        if (error != null) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = 18.dp
-                    ),
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Text(
+                    text = "No pudimos mostrar tu ubicación",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colores.onBackground,
+                    fontWeight = FontWeight.SemiBold
+                )
 
                 Button(
-                    onClick = { alPulsar() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF176B9A)
-                    ),
-                    contentPadding = PaddingValues(
-                        horizontal = 20.dp,
-                        vertical = 4.dp
-                    ),
-                    modifier = Modifier.height(38.dp)
+                    onClick = { solicitarUbicacion() },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text(
-                        text = "Obtener mi ubicación",
-                        fontSize = 12.sp
-                    )
+                    Text("Obtener mi ubicación")
                 }
-
-                val error = estado as UbicacionUi.Error
 
                 MensajeError(
                     error = error,
-                    onReintentar = { alPulsar() }
+                    onReintentar = { solicitarUbicacion() }
                 )
             }
-
         } else {
-
-            // Mapa original del COMMIT 8
-            Box(
+            // Mapa principal
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .clipToBounds()
-            ) {
-                MapaUbicacion(
-                    posicion = posicion,
-                    lugares = lugares,
-                    seleccionado = seleccionado,
-                    masCercanoId = masCercano?.lugar?.id,
-                    modifier = Modifier.fillMaxSize()
+                    .padding(
+                        start = 12.dp,
+                        end = 12.dp,
+                        top = 14.dp
+                    ),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = colores.surface
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 3.dp
                 )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(20.dp))
+                ) {
+                    MapaUbicacion(
+                        posicion = posicion,
+                        lugares = lugares,
+                        seleccionado = seleccionado,
+                        masCercanoId = masCercano?.lugar?.id,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = colores.surface.copy(alpha = 0.95f),
+                        shadowElevation = 2.dp
+                    ) {
+                        Text(
+                            text = "MAPA DEL CAMPUS",
+                            modifier = Modifier.padding(
+                                horizontal = 12.dp,
+                                vertical = 8.dp
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colores.primary
+                        )
+                    }
+                }
             }
 
-            // Botones debajo del mapa
+            // Acciones principales
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        top = 5.dp,
-                        bottom = 4.dp
+                        horizontal = 16.dp,
+                        vertical = 12.dp
                     ),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-
-                Button(
-                    onClick = { alPulsar() },
-                    enabled = estado !is UbicacionUi.Buscando,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF176B9A)
-                    ),
-                    contentPadding = PaddingValues(
-                        horizontal = 20.dp,
-                        vertical = 4.dp
-                    ),
-                    modifier = Modifier.height(38.dp)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Obtener mi ubicación",
-                        fontSize = 12.sp
-                    )
+                    Button(
+                        onClick = { solicitarUbicacion() },
+                        enabled = estado !is UbicacionUi.Buscando,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(
+                            horizontal = 8.dp,
+                            vertical = 12.dp
+                        )
+                    ) {
+                        Text(
+                            text = "Mi ubicación",
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            masCercano?.let {
+                                vm.seleccionar(it.lugar.id)
+                            }
+                        },
+                        enabled = masCercano != null &&
+                                estado is UbicacionUi.Lista,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(
+                            horizontal = 8.dp,
+                            vertical = 12.dp
+                        )
+                    ) {
+                        Text(
+                            text = "Más cercano",
+                            fontSize = 12.sp
+                        )
+                    }
                 }
 
-                // Botón para ir al lugar más cercano
-                OutlinedButton(
-                    onClick = {
-                        masCercano?.let { item ->
-                            vm.seleccionar(item.lugar.id)
-                        }
-                    },
-                    enabled = masCercano != null &&
-                            estado is UbicacionUi.Lista,
-                    border = BorderStroke(
-                        1.dp,
-                        Color(0xFF176B9A)
-                    ),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF176B9A)
-                    ),
-                    contentPadding = PaddingValues(
-                        horizontal = 18.dp,
-                        vertical = 3.dp
-                    ),
-                    modifier = Modifier.height(34.dp)
-                ) {
-                    Text(
-                        text = "Ir al más cercano",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                // Nombre y distancia del más cercano
-                masCercano?.let { item ->
-                    Text(
-                        text = "Más cercano: ${item.lugar.nombre} " +
-                                "(${item.metros?.let {
-                                    formatearDistancia(it)
-                                } ?: "Sin calcular"})",
-                        fontSize = 11.sp,
-                        color = Color(0xFF263746),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                // Estado de búsqueda
                 if (estado is UbicacionUi.Buscando) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Text(
-                        text = "Buscando ubicación...",
+                        text = "Buscando tu ubicación...",
+                        color = colores.onSurfaceVariant,
                         fontSize = 12.sp
                     )
+                }
+
+                masCercano?.let { item ->
+                    Surface(
+                        color = colores.primaryContainer,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Más cercano: ${item.lugar.nombre} · " +
+                                    (item.metros?.let {
+                                        formatearDistancia(it)
+                                    } ?: "Sin calcular"),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            color = colores.onPrimaryContainer,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
-            // Lista original de lugares
-            ListaLugares(
-                lugares = lugares,
-                seleccionado = seleccionado,
-                masCercanoId = masCercano?.lugar?.id,
-                onClick = { id ->
-                    vm.seleccionar(id)
-                },
-                modifier = Modifier.height(220.dp)
-            )
+            // Panel inferior
+            Surface(
+                color = colores.surface,
+                shape = RoundedCornerShape(
+                    topStart = 22.dp,
+                    topEnd = 22.dp
+                ),
+                shadowElevation = 5.dp
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = 18.dp,
+                                end = 18.dp,
+                                top = 16.dp,
+                                bottom = 8.dp
+                            ),
+                        horizontalArrangement =
+                            Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Lugares del campus",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "${lugares.size} lugares",
+                            color = colores.onSurfaceVariant,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    ListaLugares(
+                        lugares = lugares,
+                        seleccionado = seleccionado,
+                        masCercanoId = masCercano?.lugar?.id,
+                        onClick = { id -> vm.seleccionar(id) },
+                        modifier = Modifier.height(210.dp)
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
         }
     }
 }
