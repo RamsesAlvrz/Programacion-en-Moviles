@@ -1,11 +1,15 @@
 package com.alvarez.campusgps.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alvarez.campusgps.data.LugaresRepository
 import com.alvarez.campusgps.data.UbicacionRepository
 import com.alvarez.campusgps.model.LugarConDistancia
+import com.alvarez.campusgps.model.Posicion
 import com.alvarez.campusgps.model.UbicacionUi
+import com.alvarez.campusgps.util.distanciaMetros
+import com.alvarez.campusgps.util.formatearDistancia
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +23,8 @@ class MapaViewModel(
     private val _estado =
         MutableStateFlow<UbicacionUi>(UbicacionUi.Inicial)
 
-    val estado: StateFlow<UbicacionUi> = _estado.asStateFlow()
+    val estado: StateFlow<UbicacionUi> =
+        _estado.asStateFlow()
 
     private val _lugares = MutableStateFlow(
         lugaresRepo.obtenerLugares().map {
@@ -35,17 +40,42 @@ class MapaViewModel(
     val seleccionado: StateFlow<Int?> =
         _seleccionado.asStateFlow()
 
+    // Calcular y ordenar lugares por distancia
+    private fun actualizarDistancias(pos: Posicion) {
+        val listaOrdenada = lugaresRepo.obtenerLugares()
+            .map { lugar ->
+                LugarConDistancia(
+                    lugar = lugar,
+                    metros = distanciaMetros(pos, lugar)
+                )
+            }
+            .sortedBy { it.metros }
+
+        _lugares.value = listaOrdenada
+
+        // Mostrar resultados en Logcat
+        listaOrdenada.forEach { item ->
+            Log.d(
+                "CampusGPS",
+                "${item.lugar.nombre}: " +
+                        formatearDistancia(item.metros!!)
+            )
+        }
+    }
+
     fun buscar() {
         _estado.value = UbicacionUi.Buscando
 
         viewModelScope.launch {
             ubicacionRepo.obtenerPosicion()
-                .onSuccess {
-                    _estado.value = UbicacionUi.Lista(it)
+                .onSuccess { posicion ->
+                    actualizarDistancias(posicion)
+                    _estado.value = UbicacionUi.Lista(posicion)
                 }
                 .onFailure {
                     _estado.value = UbicacionUi.Error(
-                        it.message ?: "No se pudo obtener la ubicación"
+                        it.message
+                            ?: "No se pudo obtener la ubicación"
                     )
                 }
         }
