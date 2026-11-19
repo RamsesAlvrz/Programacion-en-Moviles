@@ -1,3 +1,4 @@
+
 package com.alvarez.campusgps.ui
 
 import android.graphics.Bitmap
@@ -41,6 +42,7 @@ fun MapaUbicacion(
     masCercanoId: Int?,
     radioMetros: Int? = null,
     ruta: RutaPeatonal? = null,
+    solicitudCentrado: Int = 0,
     onLugarClick: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -51,6 +53,7 @@ fun MapaUbicacion(
     val rojo = Color.rgb(229, 57, 53)
     val verde = Color.rgb(46, 160, 80)
 
+    // Centro inicial: TECSUP Santa Anita.
     val mapa = remember(contexto) {
         Configuration.getInstance().userAgentValue =
             contexto.packageName
@@ -59,9 +62,9 @@ fun MapaUbicacion(
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
 
-            controller.setZoom(12.0)
+            controller.setZoom(18.0)
             controller.setCenter(
-                GeoPoint(-12.0464, -77.0428)
+                GeoPoint(-12.04398, -76.95291)
             )
         }
     }
@@ -168,6 +171,7 @@ fun MapaUbicacion(
         }
     }
 
+    // Marcador rojo: ubicación GPS real.
     val marcador = remember(mapa) {
         Marker(mapa).apply {
             title = "Estás aquí"
@@ -188,6 +192,7 @@ fun MapaUbicacion(
         }
     }
 
+    // Marcadores de los lugares del campus.
     val marcadoresLugares = remember(
         mapa,
         lugares,
@@ -221,19 +226,23 @@ fun MapaUbicacion(
                     categoria = item.lugar.categoria
                 )
 
-                setOnMarkerClickListener { _, vista ->
+                setOnMarkerClickListener { tocado, vista ->
                     InfoWindow.closeAllInfoWindowsOn(vista)
+                    tocado.showInfoWindow()
+
                     alPulsarLugar.value(item.lugar.id)
+
                     true
                 }
             }
         }
     }
 
-    // Conservar el comportamiento de centrado original.
-    LaunchedEffect(posicion) {
-        if (posicion != null && ruta == null) {
-            mapa.controller.setZoom(16.0)
+    // Centrar en la ubicación GPS únicamente
+    // cuando el usuario lo solicite.
+    LaunchedEffect(solicitudCentrado, posicion) {
+        if (solicitudCentrado > 0 && posicion != null) {
+            mapa.controller.setZoom(17.0)
 
             mapa.controller.animateTo(
                 GeoPoint(
@@ -244,6 +253,7 @@ fun MapaUbicacion(
         }
     }
 
+    // Centrar cuando se selecciona un lugar.
     LaunchedEffect(seleccionado, marcadoresLugares) {
         if (seleccionado != null && ruta == null) {
             val lugar = lugares.firstOrNull {
@@ -265,7 +275,7 @@ fun MapaUbicacion(
         }
     }
 
-    // COMMIT 15: mostrar todo el recorrido.
+    // Mostrar el recorrido peatonal completo.
     LaunchedEffect(ruta) {
         if (ruta != null && ruta.puntos.size >= 2) {
             val latitudes = ruta.puntos.map { it.latitud }
@@ -307,7 +317,8 @@ fun MapaUbicacion(
                     .filterIsInstance<Marker>()
                     .firstOrNull { it.isInfoWindowShown }
 
-            if (ventanaAbierta != null &&
+            if (
+                ventanaAbierta != null &&
                 ventanaAbierta !== marcador &&
                 marcadoresLugares.none {
                     it === ventanaAbierta
@@ -316,7 +327,7 @@ fun MapaUbicacion(
                 InfoWindow.closeAllInfoWindowsOn(vista)
             }
 
-            // Retirar marcadores antiguos.
+            // Eliminar marcadores anteriores.
             val marcadoresAnteriores =
                 vista.overlays
                     .filterIsInstance<Marker>()
@@ -326,16 +337,17 @@ fun MapaUbicacion(
                 marcadoresAnteriores
             )
 
-            // Retirar circulos antiguos.
+            // Eliminar círculos anteriores.
             vista.overlays.removeAll(
                 vista.overlays.filterIsInstance<Polygon>()
             )
 
-            // Retirar rutas anteriores.
+            // Eliminar rutas anteriores.
             vista.overlays.removeAll(
                 vista.overlays.filterIsInstance<Polyline>()
             )
 
+            // Círculo de proximidad.
             if (posicion != null && radioMetros != null) {
                 val circulo = Polygon(vista).apply {
                     points = Polygon.pointsAsCircle(
@@ -360,8 +372,7 @@ fun MapaUbicacion(
                 vista.overlays.add(0, circulo)
             }
 
-            // Dibujar la ruta sobre el circulo
-            // y debajo de los marcadores.
+            // Ruta peatonal OSRM.
             if (ruta != null) {
                 val linea = Polyline(vista).apply {
                     setPoints(
@@ -386,8 +397,10 @@ fun MapaUbicacion(
                 vista.overlays.add(linea)
             }
 
+            // Mostrar lugares del campus.
             vista.overlays.addAll(marcadoresLugares)
 
+            // Mostrar ubicación GPS si está disponible.
             if (posicion != null) {
                 marcador.position = GeoPoint(
                     posicion.latitud,
