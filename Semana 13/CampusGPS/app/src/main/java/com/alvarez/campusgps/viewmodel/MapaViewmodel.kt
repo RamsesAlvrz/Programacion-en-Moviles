@@ -86,4 +86,8 @@ class MapaViewModel(
             "Sin permiso de ubicación no puedo mostrar dónde estás"
         )
     }
+
+    fun seleccionar(id: Int?) {
+        _seleccionado.value = id
+    }
 }

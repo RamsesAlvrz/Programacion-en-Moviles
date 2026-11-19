@@ -31,6 +31,7 @@ import org.osmdroid.views.overlay.infowindow.InfoWindow
 fun MapaUbicacion(
     posicion: Posicion?,
     lugares: List<LugarConDistancia>,
+    seleccionado: Int?,
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
@@ -51,7 +52,7 @@ fun MapaUbicacion(
         }
     }
 
-    // Crear una ventana de información personalizada
+    // Crear una ventana personalizada
     fun crearVentana(
         nombre: String,
         categoria: String? = null
@@ -82,7 +83,7 @@ fun MapaUbicacion(
             }
         }
 
-        // Nombre en negrita y centrado
+        // Nombre centrado y en negrita
         val titulo = TextView(contexto).apply {
             text = nombre
             setTextColor(Color.BLACK)
@@ -93,7 +94,7 @@ fun MapaUbicacion(
 
         contenedor.addView(titulo)
 
-        // Categoría debajo, en texto normal
+        // Categoría centrada debajo del nombre
         if (!categoria.isNullOrBlank()) {
             val subtitulo = TextView(contexto).apply {
                 text = categoria
@@ -143,8 +144,14 @@ fun MapaUbicacion(
                         ColorMatrixColorFilter(filtroRojo)
                 }
 
-            // Ventana roja: título en negrita
             infoWindow = crearVentana("Estás aquí")
+
+            // Cerrar las otras ventanas al tocar el rojo
+            setOnMarkerClickListener { marcadorTocado, mapaActual ->
+                InfoWindow.closeAllInfoWindowsOn(mapaActual)
+                marcadorTocado.showInfoWindow()
+                true
+            }
         }
     }
 
@@ -176,11 +183,17 @@ fun MapaUbicacion(
                         )
                     }
 
-                // Ventana azul: nombre y categoría
                 infoWindow = crearVentana(
                     nombre = item.lugar.nombre,
                     categoria = item.lugar.categoria
                 )
+
+                // Cerrar las otras ventanas al tocar un azul
+                setOnMarkerClickListener { marcadorTocado, mapaActual ->
+                    InfoWindow.closeAllInfoWindowsOn(mapaActual)
+                    marcadorTocado.showInfoWindow()
+                    true
+                }
             }
         }
     }
@@ -198,6 +211,39 @@ fun MapaUbicacion(
         }
     }
 
+    // Mover el mapa al lugar seleccionado
+    LaunchedEffect(seleccionado, marcadoresLugares) {
+        if (seleccionado != null) {
+
+            val lugar = lugares.firstOrNull {
+                it.lugar.id == seleccionado
+            }?.lugar
+
+            if (lugar != null) {
+                mapa.controller.setZoom(17.0)
+
+                mapa.controller.animateTo(
+                    GeoPoint(
+                        lugar.latitud,
+                        lugar.longitud
+                    )
+                )
+
+                // Buscar el marcador correspondiente
+                val marcadorSeleccionado =
+                    marcadoresLugares.firstOrNull {
+                        it.title == lugar.nombre
+                    }
+
+                // Cerrar todas las ventanas anteriores
+                InfoWindow.closeAllInfoWindowsOn(mapa)
+
+                // Abrir solo la ventana seleccionada
+                marcadorSeleccionado?.showInfoWindow()
+            }
+        }
+    }
+
     // Ciclo de vida del mapa
     DisposableEffect(mapa) {
         mapa.onResume()
@@ -208,7 +254,7 @@ fun MapaUbicacion(
         }
     }
 
-    // Mostrar el mapa y los marcadores
+    // Mostrar mapa y marcadores
     AndroidView(
         factory = { mapa },
         modifier = modifier.fillMaxSize(),
@@ -220,14 +266,10 @@ fun MapaUbicacion(
                     .filterIsInstance<Marker>()
                     .filter { it !== marcador }
 
-            vista.overlays.removeAll(
-                marcadoresAnteriores
-            )
+            vista.overlays.removeAll(marcadoresAnteriores)
 
             // Agregar los cinco marcadores azules
-            vista.overlays.addAll(
-                marcadoresLugares
-            )
+            vista.overlays.addAll(marcadoresLugares)
 
             // Mantener el marcador rojo
             if (posicion != null) {

@@ -28,16 +28,15 @@ fun PantallaMapa(vm: MapaViewModel) {
 
     val estado by vm.estado.collectAsStateWithLifecycle()
     val lugares by vm.lugares.collectAsStateWithLifecycle()
+    val seleccionado by vm.seleccionado.collectAsStateWithLifecycle()
 
     val contexto = LocalContext.current
 
-    // Permisos de ubicación
     val permisos = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION
     )
 
-    // Solicitar permisos al usuario
     val lanzador = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { resultado ->
@@ -63,13 +62,16 @@ fun PantallaMapa(vm: MapaViewModel) {
         }
     }
 
+    val posicion =
+        (estado as? UbicacionUi.Lista)?.posicion
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
 
-        // Barra superior azul
+        // Encabezado azul
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,15 +83,11 @@ fun PantallaMapa(vm: MapaViewModel) {
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier.padding(20.dp)
+                modifier = Modifier.padding(16.dp)
             )
         }
 
-        // Ubicación actual
-        val posicion =
-            (estado as? UbicacionUi.Lista)?.posicion
-
-        // Mapa con ubicación y lugares del campus
+        // Mapa en la parte superior
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,67 +97,66 @@ fun PantallaMapa(vm: MapaViewModel) {
             MapaUbicacion(
                 posicion = posicion,
                 lugares = lugares,
+                seleccionado = seleccionado,
                 modifier = Modifier.fillMaxSize()
             )
         }
 
-        // Botón y coordenadas debajo del mapa
+        // Botón de ubicación
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(190.dp)
-                .background(Color.White)
-                .padding(top = 12.dp),
+                .padding(
+                    top = 5.dp,
+                    bottom = 4.dp
+                ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Button(
                 onClick = { alPulsar() },
                 enabled = estado !is UbicacionUi.Buscando,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF176B9A)
+                ),
+                contentPadding = PaddingValues(
+                    horizontal = 20.dp,
+                    vertical = 4.dp
                 )
             ) {
-                Text("Obtener mi ubicación")
+                Text(
+                    text = "Obtener mi ubicación",
+                    fontSize = 12.sp
+                )
             }
 
-            Spacer(Modifier.height(8.dp))
-
             when (val actual = estado) {
-
-                is UbicacionUi.Lista -> {
-                    Text(
-                        text = "Latitud: ${actual.posicion.latitud}",
-                        fontSize = 13.sp
-                    )
-
-                    Text(
-                        text = "Longitud: ${actual.posicion.longitud}",
-                        fontSize = 13.sp
-                    )
-                }
-
                 UbicacionUi.Buscando -> {
-                    CircularProgressIndicator()
-                    Text("Buscando ubicación...")
+                    Text(
+                        text = "Buscando ubicación...",
+                        fontSize = 12.sp
+                    )
                 }
 
                 is UbicacionUi.Error -> {
                     Text(
                         text = actual.mensaje,
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 13.sp
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
 
-                UbicacionUi.Inicial -> {
-                    Text(
-                        text = "Pulsa el botón para obtener tu ubicación",
-                        color = Color.Gray,
-                        fontSize = 13.sp
-                    )
-                }
+                else -> Unit
             }
         }
+
+        // Lista compacta debajo del botón
+        ListaLugares(
+            lugares = lugares,
+            seleccionado = seleccionado,
+            onClick = { id ->
+                vm.seleccionar(id)
+            },
+            modifier = Modifier.height(220.dp)
+        )
     }
 }
