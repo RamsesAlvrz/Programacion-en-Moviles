@@ -1,13 +1,15 @@
+
 package com.alvarez.campusgps
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alvarez.campusgps.data.LugaresRepositoryLocal
 import com.alvarez.campusgps.data.PreferenciasRepository
 import com.alvarez.campusgps.data.UbicacionRepositoryGoogle
-import com.alvarez.campusgps.ui.PantallaMapa
+import com.alvarez.campusgps.ui.NavegacionCampus
 import com.alvarez.campusgps.ui.theme.CampusGPSTheme
 import com.alvarez.campusgps.viewmodel.CampusViewModelFactory
 import com.alvarez.campusgps.viewmodel.MapaViewModel
@@ -18,6 +20,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Permite dibujar detrás de la barra de estado.
+        WindowCompat.setDecorFitsSystemWindows(
+            window,
+            false
+        )
+
+        // Iconos blancos para combinar con el verde esmeralda.
+        WindowCompat.getInsetsController(
+            window,
+            window.decorView
+        ).isAppearanceLightStatusBars = false
+
         val ubicacionRepo = UbicacionRepositoryGoogle(
             cliente = LocationServices
                 .getFusedLocationProviderClient(this),
@@ -26,7 +40,6 @@ class MainActivity : ComponentActivity() {
 
         val lugaresRepo = LugaresRepositoryLocal()
 
-        // COMMIT 14: repositorio de preferencias.
         val preferenciasRepo = PreferenciasRepository(
             applicationContext
         )
@@ -43,7 +56,7 @@ class MainActivity : ComponentActivity() {
                     factory = factory
                 )
 
-                PantallaMapa(vm)
+                NavegacionCampus(vm)
             }
         }
     }

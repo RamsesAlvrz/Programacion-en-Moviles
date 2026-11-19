@@ -1,3 +1,4 @@
+```
 # Registro de prompts de Gemini — CampusGPS
 
 **Proyecto:** CampusGPS  
@@ -439,6 +440,77 @@ Revisar el código existente y aplicar la mejora sin duplicar funcionalidades. C
 
 ---
 
+### Prompt 06 — Pantalla de Inicio y navegación inferior de CampusGPS 2.0
+
+> Actúa como desarrollador Android senior especializado en Kotlin, Jetpack Compose, Material 3, StateFlow y arquitectura MVVM + Repository.
+
+#### CONTEXTO DEL PROYECTO
+
+Estoy desarrollando CampusGPS 2.0 en la rama `mejora-ia-gps`. Los COMMIT 11 al 15 incorporaron el rediseño visual esmeralda, los filtros por categorías, los radios de proximidad, la persistencia del último lugar con Preferences DataStore y las rutas peatonales dentro del mapa con OSRM y osmdroid.
+
+#### OBJETIVO
+
+Crear una pantalla de Inicio profesional y una navegación inferior para acceder a las funciones existentes sin modificar la arquitectura MVVM + Repository ni romper el mapa y sus rutas.
+
+#### 1. PANTALLA DE INICIO
+
+Crear `ui/PantallaInicio.kt` con encabezado verde esmeralda, título «Tu campus, siempre cerca», descripción y cuatro tarjetas de acceso rápido:
+
+- **Explorar el mapa:** abrir el mapa con categoría Todos y radio Sin límite.
+- **Rutas a pie:** abrir el mapa y mostrar instrucciones para seleccionar un destino y usar «Cómo llegar».
+- **Lugares cercanos:** abrir el mapa con categoría Todos y radio de 200 metros; solicitar ubicación si todavía no está disponible mediante el control existente.
+- **Último lugar:** mostrar la selección recuperada desde el ViewModel y persistida mediante DataStore.
+
+Utilizar tarjetas redondeadas, espaciados coherentes y la paleta existente. Evitar duplicar el botón «Explorar mapa» dentro del encabezado, porque ya existe una tarjeta y una pestaña de mapa.
+
+#### 2. NAVEGACIÓN INFERIOR
+
+Crear `ui/NavegacionCampus.kt` con `NavigationBar` de Material 3 y tres secciones: Inicio, Mapa y Último lugar. Conservar la misma instancia de `MapaViewModel` al cambiar de sección. Permitir volver a Inicio con el botón Atrás. Mantener los colores esmeralda y evitar indicadores con tonos ajenos a la aplicación.
+
+#### 3. INTEGRACIÓN EN MAINACTIVITY
+
+Modificar `MainActivity.kt` para presentar `NavegacionCampus` dentro de `CampusGPSTheme`, reutilizando la fábrica y los repositorios existentes. Configurar el dibujo detrás de la barra de estado mediante `WindowCompat` y utilizar iconos de estado claros sobre el fondo esmeralda.
+
+#### 4. CORRECCIONES VISUALES
+
+- Corregir la franja blanca superior para integrar visualmente el encabezado con la barra de estado.
+- Mantener el encabezado verde y las tarjetas del mapa.
+- Quitar el botón duplicado «Explorar mapa» del encabezado de Inicio.
+- Mejorar la presentación de las tarjetas y los colores de la navegación inferior.
+- Evitar elementos que tapen el título o desplacen innecesariamente el mapa.
+
+#### 5. AYUDA PARA RUTAS A PIE
+
+Modificar `NavegacionCampus.kt` y `PantallaMapa.kt` para que la ayuda no aparezca como una banda encima del encabezado. En su lugar, mostrar una tarjeta compacta **debajo del mapa y encima de los botones «Mi ubicación» y «Más cercano»** cuando el usuario ingrese desde «Rutas a pie».
+
+- Mostrar el título «Ruta a pie» y una indicación para seleccionar un destino y pulsar «Cómo llegar».
+- Permitir cerrar la tarjeta manualmente.
+- Ocultarla automáticamente cuando el usuario seleccione un lugar.
+- No mostrarla al entrar mediante «Explorar el mapa».
+- Conservar `DetalleLugarSheet`, el cálculo OSRM y la polilínea de la ruta.
+
+#### 6. ARCHIVOS PERMITIDOS
+
+- `MainActivity.kt` (modificado)
+- `ui/NavegacionCampus.kt` (nuevo)
+- `ui/PantallaInicio.kt` (nuevo)
+- `ui/PantallaMapa.kt` (modificado)
+
+#### 7. RESTRICCIONES OBLIGATORIAS
+
+- Conservar MVVM + Repository y los cinco lugares existentes.
+- Mantener osmdroid y OpenStreetMap; no sustituirlos por Google Maps.
+- No modificar el repositorio de rutas OSRM ni la persistencia con DataStore.
+- Conservar categorías, radios, permisos de ubicación, marcadores, distancias, botón «Más cercano» y panel de detalles.
+- No introducir nuevas dependencias innecesarias ni exponer credenciales.
+- No modificar `local.properties`, cambiar de rama ni realizar commits automáticamente.
+
+#### 8. RESULTADO ESPERADO
+
+La aplicación debe abrir en Inicio, permitir navegar a Mapa y Último lugar, ejecutar acciones diferenciadas desde las tarjetas y mantener el mapa funcional. El encabezado debe conservar la identidad esmeralda sin franja blanca; la ayuda para rutas debe quedar debajo del mapa y desaparecer al seleccionar un destino. Verificar la compilación mediante Gradle y probar las pantallas en el emulador.
+
+---
+
 ## Registro de resultados y decisiones
 
 | Prompt que escribí | Qué respondió Gemini | Qué cambié o descarté | Por qué |
@@ -448,6 +520,10 @@ Revisar el código existente y aplicar la mejora sin duplicar funcionalidades. C
 | Prompt 03 — Radio de proximidad | Pendiente de registrar la respuesta real de Gemini. | Cambios subidos a GitHub; pruebas funcionales aún sin confirmar. | Permitir consultar lugares cercanos dentro de un radio seleccionado, conservando los filtros por categorías. |
 | Prompt 04 — Persistencia con DataStore | Pendiente de registrar la respuesta real de Gemini. | Implementación preparada; pendiente de compilación y pruebas. | Recordar el último lugar seleccionado entre aperturas de la aplicación. |
 | Prompt 05 — Ruta peatonal y panel de detalles | Pendiente de registrar la respuesta real de Gemini. | Se integró OSRM con osmdroid, se agregó EstadoRuta y un ModalBottomSheet con las acciones «Cómo llegar» y «Limpiar ruta». | Permitir recorrer el campus dentro de la aplicación sin depender de Google Maps y mejorar la experiencia de selección de destinos. |
+
+---
+
+| Prompt 06 — Pantalla de Inicio y navegación | No se registró una respuesta de Gemini; los cambios se desarrollaron y ajustaron durante la implementación. | Se crearon PantallaInicio.kt y NavegacionCampus.kt; se modificaron MainActivity.kt y PantallaMapa.kt. Se eliminaron accesos duplicados, se integró la barra de estado y se movió la ayuda de rutas debajo del mapa. | Organizar el acceso a las funciones y mejorar la interfaz sin alterar los repositorios ni el trazado de rutas. |
 
 ---
 
@@ -538,3 +614,43 @@ Revisar el código existente y aplicar la mejora sin duplicar funcionalidades. C
 - Confirmar que el servicio OSRM responde con conexión a Internet.
 
 **Decisión técnica:** OSRM proporciona el trazado peatonal a partir de OpenStreetMap y osmdroid lo representa en la aplicación. No se utiliza Google Maps como aplicación externa. La distancia en línea recta puede ser menor que la distancia real del recorrido.
+
+```
+
+---
+
+### Commit 16 — Pantalla de Inicio y navegación inferior
+
+**Estado:** Implementado; compilación y pruebas visuales comunicadas como satisfactorias. Commit y push pendientes de confirmar.
+
+**Archivos creados:**
+
+- `ui/NavegacionCampus.kt`
+- `ui/PantallaInicio.kt`
+
+**Archivos modificados:**
+
+- `MainActivity.kt`
+- `ui/PantallaMapa.kt`
+
+**Mejoras implementadas:**
+
+- Pantalla de Inicio con encabezado esmeralda y cuatro accesos rápidos.
+- Navegación inferior entre Inicio, Mapa y Último lugar.
+- Acceso al mapa con filtros restablecidos.
+- Acceso a lugares cercanos con filtro de 200 metros.
+- Visualización del último lugar seleccionado mediante el ViewModel.
+- Corrección visual de la franja blanca de la barra de estado.
+- Eliminación del botón «Explorar mapa» duplicado en el encabezado.
+- Tarjeta de ayuda para rutas a pie debajo del mapa, con cierre manual y automático al seleccionar un lugar.
+
+**Pruebas comunicadas:**
+
+- Compilación correcta con Gradle.
+- Pantalla de Inicio y navegación inferior visibles en el emulador.
+- Revisión visual de la barra superior y los accesos rápidos.
+- Ayuda de rutas reubicada y funcionando según confirmación del desarrollador.
+
+**Decisión técnica:** Se reutilizó una sola instancia de `MapaViewModel` para las distintas secciones y se mantuvieron la lógica de ubicación, los filtros, osmdroid, OSRM y DataStore. La navegación entre secciones utiliza estado de Compose, sin introducir una dependencia adicional.
+
+**Verificación final pendiente:** Confirmar `git status` limpio y el push del COMMIT 16 a `origin/mejora-ia-gps`.

@@ -25,9 +25,12 @@ import com.alvarez.campusgps.model.UbicacionUi
 import com.alvarez.campusgps.util.formatearDistancia
 import com.alvarez.campusgps.viewmodel.MapaViewModel
 
-
 @Composable
-fun PantallaMapa(vm: MapaViewModel) {
+fun PantallaMapa(
+    vm: MapaViewModel,
+    mostrarAyudaRuta: Boolean = false,
+    onCerrarAyudaRuta: () -> Unit = {}
+) {
 
     val estado by vm.estado.collectAsStateWithLifecycle()
     val lugares by vm.lugaresFiltrados.collectAsStateWithLifecycle()
@@ -47,10 +50,13 @@ fun PantallaMapa(vm: MapaViewModel) {
     }
 
     LaunchedEffect(seleccionado, lugares) {
-        if (mostrarDetalle && lugarSeleccionado == null) mostrarDetalle = false
+        if (mostrarDetalle && lugarSeleccionado == null) {
+            mostrarDetalle = false
+        }
     }
 
     fun abrirDetalle(id: Int) {
+        onCerrarAyudaRuta()
         vm.seleccionar(id)
         mostrarDetalle = true
     }
@@ -162,7 +168,7 @@ fun PantallaMapa(vm: MapaViewModel) {
             }
         } else {
 
-            // Filtros de categoria del COMMIT 12.
+            // Filtros de categoría.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -214,7 +220,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Filtros de radio del COMMIT 13.
+            // Filtros de proximidad.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -282,7 +288,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Mapa principal con recorrido.
+            // Mapa principal con rutas OSRM.
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -312,7 +318,9 @@ fun PantallaMapa(vm: MapaViewModel) {
                         masCercanoId = masCercano?.lugar?.id,
                         radioMetros = radio,
                         ruta = rutaActual,
-                        onLugarClick = { id -> abrirDetalle(id) },
+                        onLugarClick = { id ->
+                            abrirDetalle(id)
+                        },
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -342,6 +350,74 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
+            // Ayuda integrada debajo del mapa.
+            if (mostrarAyudaRuta) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 9.dp
+                        ),
+                    color = colores.primaryContainer,
+                    shape = RoundedCornerShape(15.dp),
+                    shadowElevation = 2.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(
+                            start = 13.dp,
+                            end = 5.dp,
+                            top = 7.dp,
+                            bottom = 7.dp
+                        ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "↝",
+                            color = colores.primary,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement =
+                                Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text(
+                                text = "Ruta a pie",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = colores.onPrimaryContainer
+                            )
+
+                            Text(
+                                text = "Selecciona un lugar y pulsa " +
+                                        "\"Cómo llegar\".",
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp,
+                                color = colores.onPrimaryContainer
+                            )
+                        }
+
+                        TextButton(
+                            onClick = onCerrarAyudaRuta,
+                            contentPadding = PaddingValues(
+                                horizontal = 8.dp,
+                                vertical = 6.dp
+                            )
+                        ) {
+                            Text(
+                                text = "Cerrar",
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             // Botones y resultados.
             Column(
                 modifier = Modifier
@@ -353,7 +429,8 @@ fun PantallaMapa(vm: MapaViewModel) {
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement =
+                        Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Button(
@@ -416,23 +493,43 @@ fun PantallaMapa(vm: MapaViewModel) {
 
                 when (val resultado = estadoRuta) {
                     EstadoRuta.Cargando -> {
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                        Text("Calculando ruta peatonal...", fontSize = 12.sp, color = colores.primary)
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            "Calculando ruta peatonal...",
+                            fontSize = 12.sp,
+                            color = colores.primary
+                        )
                     }
+
                     is EstadoRuta.Lista -> {
-                        Surface(color = colores.primaryContainer, shape = RoundedCornerShape(12.dp)) {
+                        Surface(
+                            color = colores.primaryContainer,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
                             Text(
                                 text = "Ruta a ${resultado.destinoNombre} · " +
-                                        formatearDistancia(resultado.ruta.distanciaMetros.toFloat()),
-                                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                        formatearDistancia(
+                                            resultado.ruta.distanciaMetros.toFloat()
+                                        ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp),
                                 fontSize = 12.sp,
                                 color = colores.onPrimaryContainer
                             )
                         }
                     }
-                    is EstadoRuta.Error -> Text(
-                        resultado.mensaje, fontSize = 12.sp, color = colores.error
-                    )
+
+                    is EstadoRuta.Error -> {
+                        Text(
+                            text = resultado.mensaje,
+                            fontSize = 12.sp,
+                            color = colores.error
+                        )
+                    }
+
                     EstadoRuta.SinRuta -> Unit
                 }
 
@@ -459,7 +556,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Lista inferior original.
+            // Lista inferior de lugares.
             Surface(
                 color = colores.surface,
                 shape = RoundedCornerShape(
@@ -529,17 +626,23 @@ fun PantallaMapa(vm: MapaViewModel) {
             }
         }
     }
+
     if (mostrarDetalle && lugarSeleccionado != null) {
         DetalleLugarSheet(
             item = lugarSeleccionado,
             estadoRuta = estadoRuta,
             tieneUbicacion = posicion != null,
-            onCerrar = { mostrarDetalle = false },
+            onCerrar = {
+                mostrarDetalle = false
+            },
             onComoLlegar = {
+                onCerrarAyudaRuta()
                 vm.calcularRuta()
                 mostrarDetalle = false
             },
-            onLimpiarRuta = { vm.limpiarRuta() }
+            onLimpiarRuta = {
+                vm.limpiarRuta()
+            }
         )
     }
 }
