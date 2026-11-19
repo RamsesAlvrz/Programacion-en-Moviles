@@ -1,4 +1,3 @@
-
 package com.alvarez.campusgps.ui
 
 import android.graphics.Bitmap
@@ -17,17 +16,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import com.alvarez.campusgps.data.RutaPeatonal
 import com.alvarez.campusgps.model.LugarConDistancia
 import com.alvarez.campusgps.model.Posicion
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.infowindow.InfoWindow
 
 @Composable
@@ -37,15 +40,17 @@ fun MapaUbicacion(
     seleccionado: Int?,
     masCercanoId: Int?,
     radioMetros: Int? = null,
+    ruta: RutaPeatonal? = null,
+    onLugarClick: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val contexto = LocalContext.current
+    val alPulsarLugar = rememberUpdatedState(onLugarClick)
 
     val azul = Color.rgb(30, 144, 255)
     val rojo = Color.rgb(229, 57, 53)
     val verde = Color.rgb(46, 160, 80)
 
-    // Configuracion inicial del mapa.
     val mapa = remember(contexto) {
         Configuration.getInstance().userAgentValue =
             contexto.packageName
@@ -61,7 +66,6 @@ fun MapaUbicacion(
         }
     }
 
-    // Dibujar icono de marcador.
     fun crearIconoPin(color: Int): BitmapDrawable {
         val densidad =
             contexto.resources.displayMetrics.density
@@ -82,11 +86,8 @@ fun MapaUbicacion(
             style = Paint.Style.FILL
         }
 
-        val escalaX = ancho / 34f
-        val escalaY = alto / 44f
-
         lienzo.save()
-        lienzo.scale(escalaX, escalaY)
+        lienzo.scale(ancho / 34f, alto / 44f)
 
         val forma = Path().apply {
             moveTo(17f, 42f)
@@ -100,12 +101,7 @@ fun MapaUbicacion(
         lienzo.drawPath(forma, pintura)
 
         pintura.color = Color.WHITE
-        lienzo.drawCircle(
-            17f,
-            16f,
-            6f,
-            pintura
-        )
+        lienzo.drawCircle(17f, 16f, 6f, pintura)
 
         lienzo.restore()
 
@@ -115,7 +111,6 @@ fun MapaUbicacion(
         )
     }
 
-    // Ventana de informacion personalizada.
     fun crearVentana(
         nombre: String,
         categoria: String? = null
@@ -168,17 +163,11 @@ fun MapaUbicacion(
         }
 
         return object : InfoWindow(contenedor, mapa) {
-            override fun onOpen(item: Any?) {
-                // Contenido configurado.
-            }
-
-            override fun onClose() {
-                // Sin acciones adicionales.
-            }
+            override fun onOpen(item: Any?) = Unit
+            override fun onClose() = Unit
         }
     }
 
-    // Marcador de ubicacion actual.
     val marcador = remember(mapa) {
         Marker(mapa).apply {
             title = "Estás aquí"
@@ -191,15 +180,14 @@ fun MapaUbicacion(
             icon = crearIconoPin(rojo)
             infoWindow = crearVentana("Estás aquí")
 
-            setOnMarkerClickListener { marcadorTocado, mapaActual ->
-                InfoWindow.closeAllInfoWindowsOn(mapaActual)
-                marcadorTocado.showInfoWindow()
+            setOnMarkerClickListener { tocado, vista ->
+                InfoWindow.closeAllInfoWindowsOn(vista)
+                tocado.showInfoWindow()
                 true
             }
         }
     }
 
-    // Marcadores filtrados.
     val marcadoresLugares = remember(
         mapa,
         lugares,
@@ -220,32 +208,31 @@ fun MapaUbicacion(
                     Marker.ANCHOR_BOTTOM
                 )
 
-                val colorMarcador =
+                icon = crearIconoPin(
                     if (item.lugar.id == masCercanoId) {
                         verde
                     } else {
                         azul
                     }
-
-                icon = crearIconoPin(colorMarcador)
+                )
 
                 infoWindow = crearVentana(
                     nombre = item.lugar.nombre,
                     categoria = item.lugar.categoria
                 )
 
-                setOnMarkerClickListener { marcadorTocado, mapaActual ->
-                    InfoWindow.closeAllInfoWindowsOn(mapaActual)
-                    marcadorTocado.showInfoWindow()
+                setOnMarkerClickListener { _, vista ->
+                    InfoWindow.closeAllInfoWindowsOn(vista)
+                    alPulsarLugar.value(item.lugar.id)
                     true
                 }
             }
         }
     }
 
-    // Centrar al obtener la ubicacion.
+    // Conservar el comportamiento de centrado original.
     LaunchedEffect(posicion) {
-        if (posicion != null) {
+        if (posicion != null && ruta == null) {
             mapa.controller.setZoom(16.0)
 
             mapa.controller.animateTo(
@@ -257,9 +244,8 @@ fun MapaUbicacion(
         }
     }
 
-    // Centrar en un lugar seleccionado.
     LaunchedEffect(seleccionado, marcadoresLugares) {
-        if (seleccionado != null) {
+        if (seleccionado != null && ruta == null) {
             val lugar = lugares.firstOrNull {
                 it.lugar.id == seleccionado
             }?.lugar
@@ -274,18 +260,34 @@ fun MapaUbicacion(
                     )
                 )
 
-                val marcadorSeleccionado =
-                    marcadoresLugares.firstOrNull {
-                        it.title == lugar.nombre
-                    }
-
                 InfoWindow.closeAllInfoWindowsOn(mapa)
-                marcadorSeleccionado?.showInfoWindow()
             }
         }
     }
 
-    // Ciclo de vida del mapa.
+    // COMMIT 15: mostrar todo el recorrido.
+    LaunchedEffect(ruta) {
+        if (ruta != null && ruta.puntos.size >= 2) {
+            val latitudes = ruta.puntos.map { it.latitud }
+            val longitudes = ruta.puntos.map { it.longitud }
+
+            val limites = BoundingBox(
+                latitudes.maxOrNull()!!,
+                longitudes.maxOrNull()!!,
+                latitudes.minOrNull()!!,
+                longitudes.minOrNull()!!
+            )
+
+            mapa.post {
+                mapa.zoomToBoundingBox(
+                    limites,
+                    true,
+                    70
+                )
+            }
+        }
+    }
+
     DisposableEffect(mapa) {
         mapa.onResume()
 
@@ -300,7 +302,6 @@ fun MapaUbicacion(
         modifier = modifier.fillMaxSize(),
         update = { vista ->
 
-            // Cerrar ventanas de lugares ocultos.
             val ventanaAbierta =
                 vista.overlays
                     .filterIsInstance<Marker>()
@@ -315,7 +316,7 @@ fun MapaUbicacion(
                 InfoWindow.closeAllInfoWindowsOn(vista)
             }
 
-            // Eliminar marcadores anteriores.
+            // Retirar marcadores antiguos.
             val marcadoresAnteriores =
                 vista.overlays
                     .filterIsInstance<Marker>()
@@ -325,24 +326,23 @@ fun MapaUbicacion(
                 marcadoresAnteriores
             )
 
-            // Eliminar circulos anteriores.
-            val circulosAnteriores =
-                vista.overlays.filterIsInstance<Polygon>()
-
+            // Retirar circulos antiguos.
             vista.overlays.removeAll(
-                circulosAnteriores
+                vista.overlays.filterIsInstance<Polygon>()
             )
 
-            // Dibujar el radio alrededor del usuario.
-            if (posicion != null && radioMetros != null) {
-                val centro = GeoPoint(
-                    posicion.latitud,
-                    posicion.longitud
-                )
+            // Retirar rutas anteriores.
+            vista.overlays.removeAll(
+                vista.overlays.filterIsInstance<Polyline>()
+            )
 
+            if (posicion != null && radioMetros != null) {
                 val circulo = Polygon(vista).apply {
                     points = Polygon.pointsAsCircle(
-                        centro,
+                        GeoPoint(
+                            posicion.latitud,
+                            posicion.longitud
+                        ),
                         radioMetros.toDouble()
                     )
 
@@ -357,17 +357,37 @@ fun MapaUbicacion(
                             .displayMetrics.density
                 }
 
-                // Agregar primero para que quede
-                // debajo de los marcadores.
                 vista.overlays.add(0, circulo)
             }
 
-            // Agregar los lugares visibles.
-            vista.overlays.addAll(
-                marcadoresLugares
-            )
+            // Dibujar la ruta sobre el circulo
+            // y debajo de los marcadores.
+            if (ruta != null) {
+                val linea = Polyline(vista).apply {
+                    setPoints(
+                        ruta.puntos.map { punto ->
+                            GeoPoint(
+                                punto.latitud,
+                                punto.longitud
+                            )
+                        }
+                    )
 
-            // Mantener el marcador del usuario.
+                    outlinePaint.color =
+                        Color.rgb(13, 148, 136)
+
+                    outlinePaint.strokeWidth =
+                        6f * contexto.resources
+                            .displayMetrics.density
+
+                    outlinePaint.isAntiAlias = true
+                }
+
+                vista.overlays.add(linea)
+            }
+
+            vista.overlays.addAll(marcadoresLugares)
+
             if (posicion != null) {
                 marcador.position = GeoPoint(
                     posicion.latitud,

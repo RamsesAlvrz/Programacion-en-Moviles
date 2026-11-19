@@ -1,4 +1,3 @@
-
 # Registro de prompts de Gemini — CampusGPS
 
 **Proyecto:** CampusGPS  
@@ -352,6 +351,94 @@ Verificar que la selección persista tras cerrar y reabrir la aplicación y que 
 
 ---
 
+### Prompt 05 — Rutas peatonales dentro de CampusGPS y panel de detalles
+
+> Actúa como desarrollador Android senior especializado en Kotlin, Jetpack Compose, Material 3, osmdroid, OpenStreetMap, OSRM, corrutinas y arquitectura MVVM + Repository.
+
+#### CONTEXTO DEL PROYECTO
+
+Estoy desarrollando CampusGPS 2.0 en la rama `mejora-ia-gps`. Los COMMIT 11, 12, 13 y 14 incorporaron el rediseño visual, filtros por categorías, radio de proximidad y persistencia del último lugar seleccionado con Preferences DataStore.
+
+La aplicación ya muestra la ubicación actual, cinco lugares del campus, marcadores, distancias en línea recta y selección de destinos. Quiero que el recorrido se dibuje **dentro de CampusGPS**, sin abrir Google Maps ni depender de una API de Google Maps de pago.
+
+#### OBJETIVO
+
+Implementar una ruta peatonal entre la ubicación actual y un lugar seleccionado, calculada con el servicio de enrutamiento OSRM para peatones basado en datos OpenStreetMap. Mostrar el recorrido en el mapa osmdroid y ofrecer las acciones de navegación desde una ventana inferior de detalles (`ModalBottomSheet`).
+
+#### 1. REPOSITORIO DE RUTAS
+
+Crear `data/RutaRepository.kt` con los modelos `PuntoRuta` y `RutaPeatonal`, una interfaz `RutaRepository` y su implementación `RutaRepositoryOSRM`.
+
+- Consultar el servidor `https://routing.openstreetmap.de/routed-foot/route/v1/driving/` con las coordenadas de origen y destino en orden **longitud,latitud**.
+- Utilizar `overview=full&geometries=geojson` para obtener la geometría completa del recorrido.
+- Ejecutar la petición HTTP con `Dispatchers.IO`, tiempos de espera y cierre de la conexión.
+- Interpretar el GeoJSON y devolver puntos, distancia en metros y duración estimada en segundos.
+- Manejar errores HTTP, respuestas sin rutas y datos incompletos.
+- No exponer claves API ni introducir dependencias de Google Maps.
+
+#### 2. ESTADO Y LÓGICA EN MVVM
+
+Crear `model/EstadoRuta.kt` con los estados `SinRuta`, `Cargando`, `Lista` y `Error`.
+
+Modificar `viewmodel/MapaViewmodel.kt` para:
+
+- Inyectar `RutaRepository` sin romper la fábrica actual del ViewModel.
+- Exponer `estadoRuta` como `StateFlow`.
+- Implementar `calcularRuta()` y `limpiarRuta()`.
+- Calcular el recorrido desde la última ubicación obtenida hasta el lugar seleccionado y visible.
+- Evitar solicitudes repetidas en intervalos demasiado cortos y cancelar las solicitudes obsoletas.
+- Limpiar la ruta al cambiar de destino, ocultarlo con filtros o volver a obtener la ubicación.
+- Conservar las categorías, radios, ordenamiento por distancia y DataStore.
+
+#### 3. DIBUJAR LA RUTA EN EL MAPA
+
+Modificar `ui/MapaUbicacion.kt` para:
+
+- Recibir opcionalmente la ruta calculada.
+- Dibujar sus puntos mediante `Polyline` de osmdroid con un trazo turquesa visible.
+- Ajustar el encuadre del mapa para mostrar el recorrido completo, sin impedir que el usuario haga zoom o mueva el mapa.
+- Eliminar polilíneas antiguas al limpiar o cambiar la ruta.
+- Conservar el marcador de ubicación actual, los marcadores de lugares y el círculo de proximidad.
+- Permitir que al tocar un marcador de lugar se notifique su ID a la pantalla principal.
+
+#### 4. VENTANA INFERIOR DE DETALLES
+
+Crear `ui/DetalleLugarSheet.kt` y modificar `ui/PantallaMapa.kt` para:
+
+- Abrir un `ModalBottomSheet` de Material 3 al tocar un lugar en la lista, un marcador o el botón «Más cercano».
+- Mostrar nombre, categoría y distancia directa del lugar seleccionado.
+- Cuando exista una ruta calculada para ese destino, mostrar también distancia real del recorrido y duración aproximada a pie.
+- Colocar los botones **«Cómo llegar»** y **«Limpiar ruta»** dentro del panel inferior, **no como botones fijos debajo del mapa**.
+- Al pulsar «Cómo llegar», calcular el recorrido y cerrar el panel para permitir ver el mapa.
+- Al pulsar «Limpiar ruta», quitar la polilínea sin eliminar los lugares ni sus filtros.
+- Mostrar carga, resultado y errores del servicio de rutas de forma clara.
+- No abrir automáticamente el panel al restaurar desde DataStore la selección guardada.
+
+#### 5. ARCHIVOS PERMITIDOS
+
+- `data/RutaRepository.kt` (nuevo)
+- `model/EstadoRuta.kt` (nuevo)
+- `ui/DetalleLugarSheet.kt` (nuevo)
+- `ui/MapaUbicacion.kt`
+- `ui/PantallaMapa.kt`
+- `viewmodel/MapaViewmodel.kt`
+
+#### 6. RESTRICCIONES OBLIGATORIAS
+
+- Mantener la arquitectura MVVM + Repository y los cinco lugares originales.
+- Conservar el diseño esmeralda, filtros por categorías, radios de 100/200/500 m y DataStore.
+- Mantener los permisos de ubicación, errores de GPS y la opción «Mi ubicación».
+- No sustituir osmdroid por Google Maps ni abrir una aplicación externa para calcular la ruta.
+- No prometer navegación GPS en tiempo real ni precisión idéntica a Google Maps: el recorrido depende de los datos de OpenStreetMap y del servicio OSRM.
+- No modificar `local.properties`, no agregar credenciales y no realizar commits ni cambiar de rama.
+- Si alguna parte ya funciona, conservarla y modificar únicamente lo necesario.
+
+#### 7. RESULTADO ESPERADO
+
+Revisar el código existente y aplicar la mejora sin duplicar funcionalidades. Comprobar errores evidentes de compilación. Verificar que la selección desde lista y marcadores abra el panel, que «Cómo llegar» dibuje la ruta dentro de CampusGPS, que «Limpiar ruta» la retire y que sigan funcionando los filtros, los marcadores y DataStore.
+
+---
+
 ## Registro de resultados y decisiones
 
 | Prompt que escribí | Qué respondió Gemini | Qué cambié o descarté | Por qué |
@@ -360,6 +447,7 @@ Verificar que la selección persista tras cerrar y reabrir la aplicación y que 
 | Prompt 02 — Filtros por categorías | Pendiente de registrar la respuesta real de Gemini. | Se implementaron los filtros en MapaViewmodel.kt y PantallaMapa.kt. Se corrigió en MapaUbicacion.kt el cierre de ventanas de información anteriores. | Permitir explorar lugares por categoría manteniendo sincronizados el mapa y la lista. |
 | Prompt 03 — Radio de proximidad | Pendiente de registrar la respuesta real de Gemini. | Cambios subidos a GitHub; pruebas funcionales aún sin confirmar. | Permitir consultar lugares cercanos dentro de un radio seleccionado, conservando los filtros por categorías. |
 | Prompt 04 — Persistencia con DataStore | Pendiente de registrar la respuesta real de Gemini. | Implementación preparada; pendiente de compilación y pruebas. | Recordar el último lugar seleccionado entre aperturas de la aplicación. |
+| Prompt 05 — Ruta peatonal y panel de detalles | Pendiente de registrar la respuesta real de Gemini. | Se integró OSRM con osmdroid, se agregó EstadoRuta y un ModalBottomSheet con las acciones «Cómo llegar» y «Limpiar ruta». | Permitir recorrer el campus dentro de la aplicación sin depender de Google Maps y mejorar la experiencia de selección de destinos. |
 
 ---
 
@@ -417,3 +505,36 @@ Verificar que la selección persista tras cerrar y reabrir la aplicación y que 
 - Evitar círculos y marcadores duplicados.
 - Mantener el funcionamiento del botón Más cercano.
 - Compilar y ejecutar sin errores.
+
+### Commit 15 — Rutas peatonales y panel de detalles
+
+**Estado:** Implementado y probado visualmente en Android Studio; commit y push pendientes de confirmar.
+
+**Archivos creados:**
+
+- `data/RutaRepository.kt`
+- `model/EstadoRuta.kt`
+- `ui/DetalleLugarSheet.kt`
+
+**Archivos modificados:**
+
+- `viewmodel/MapaViewmodel.kt`
+- `ui/MapaUbicacion.kt`
+- `ui/PantallaMapa.kt`
+
+**Pruebas funcionales comunicadas:**
+
+- Visualización del recorrido peatonal sobre el mapa de CampusGPS.
+- Apertura del panel de detalles y uso de los controles de ruta.
+- Presentación de la distancia de la ruta y duración estimada.
+- Revisión visual de la interfaz actualizada.
+
+**Verificaciones recomendadas antes del commit:**
+
+- Ejecutar `./gradlew assembleDebug` o `./gradlew.bat assembleDebug` según el sistema operativo.
+- Comprobar «Cómo llegar» desde la lista, los marcadores y «Más cercano».
+- Comprobar «Limpiar ruta» y cambiar de destino.
+- Revisar categorías, radios, ubicación y restauración de DataStore.
+- Confirmar que el servicio OSRM responde con conexión a Internet.
+
+**Decisión técnica:** OSRM proporciona el trazado peatonal a partir de OpenStreetMap y osmdroid lo representa en la aplicación. No se utiliza Google Maps como aplicación externa. La distancia en línea recta puede ser menor que la distancia real del recorrido.

@@ -1,4 +1,3 @@
-
 package com.alvarez.campusgps.ui
 
 import android.Manifest
@@ -21,9 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.alvarez.campusgps.model.EstadoRuta
 import com.alvarez.campusgps.model.UbicacionUi
 import com.alvarez.campusgps.util.formatearDistancia
 import com.alvarez.campusgps.viewmodel.MapaViewModel
+
 
 @Composable
 fun PantallaMapa(vm: MapaViewModel) {
@@ -34,9 +35,28 @@ fun PantallaMapa(vm: MapaViewModel) {
     val radio by vm.radioSeleccionado.collectAsStateWithLifecycle()
     val seleccionado by vm.seleccionado.collectAsStateWithLifecycle()
     val masCercano by vm.masCercanoVisible.collectAsStateWithLifecycle()
+    val estadoRuta by vm.estadoRuta.collectAsStateWithLifecycle()
 
     val contexto = LocalContext.current
     val colores = MaterialTheme.colorScheme
+
+    var mostrarDetalle by remember { mutableStateOf(false) }
+
+    val lugarSeleccionado = lugares.firstOrNull {
+        it.lugar.id == seleccionado
+    }
+
+    LaunchedEffect(seleccionado, lugares) {
+        if (mostrarDetalle && lugarSeleccionado == null) mostrarDetalle = false
+    }
+
+    fun abrirDetalle(id: Int) {
+        vm.seleccionar(id)
+        mostrarDetalle = true
+    }
+
+    val rutaActual =
+        (estadoRuta as? EstadoRuta.Lista)?.ruta
 
     val permisos = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -79,8 +99,6 @@ fun PantallaMapa(vm: MapaViewModel) {
             .fillMaxSize()
             .background(colores.background)
     ) {
-
-        // Encabezado de CampusGPS 2.0
         Surface(
             color = colores.primary,
             shape = RoundedCornerShape(
@@ -115,7 +133,6 @@ fun PantallaMapa(vm: MapaViewModel) {
         }
 
         if (error != null) {
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -143,10 +160,9 @@ fun PantallaMapa(vm: MapaViewModel) {
                     onReintentar = { solicitarUbicacion() }
                 )
             }
-
         } else {
 
-            // Filtros por categorias del COMMIT 12.
+            // Filtros de categoria del COMMIT 12.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -198,7 +214,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Selector de radio del COMMIT 13.
+            // Filtros de radio del COMMIT 13.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -266,7 +282,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Mapa principal.
+            // Mapa principal con recorrido.
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -295,6 +311,8 @@ fun PantallaMapa(vm: MapaViewModel) {
                         seleccionado = seleccionado,
                         masCercanoId = masCercano?.lugar?.id,
                         radioMetros = radio,
+                        ruta = rutaActual,
+                        onLugarClick = { id -> abrirDetalle(id) },
                         modifier = Modifier.fillMaxSize()
                     )
 
@@ -307,7 +325,11 @@ fun PantallaMapa(vm: MapaViewModel) {
                         shadowElevation = 2.dp
                     ) {
                         Text(
-                            text = "MAPA DEL CAMPUS",
+                            text = if (rutaActual != null) {
+                                "RUTA PEATONAL"
+                            } else {
+                                "MAPA DEL CAMPUS"
+                            },
                             modifier = Modifier.padding(
                                 horizontal = 12.dp,
                                 vertical = 8.dp
@@ -320,15 +342,15 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
 
-            // Acciones principales.
+            // Botones y resultados.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
                         horizontal = 16.dp,
-                        vertical = 8.dp
+                        vertical = 7.dp
                     ),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -353,7 +375,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                     OutlinedButton(
                         onClick = {
                             masCercano?.let {
-                                vm.seleccionar(it.lugar.id)
+                                abrirDetalle(it.lugar.id)
                             }
                         },
                         enabled = masCercano != null &&
@@ -379,8 +401,8 @@ fun PantallaMapa(vm: MapaViewModel) {
 
                     Text(
                         text = "Buscando tu ubicación...",
-                        color = colores.onSurfaceVariant,
-                        fontSize = 12.sp
+                        fontSize = 12.sp,
+                        color = colores.onSurfaceVariant
                     )
                 }
 
@@ -392,28 +414,52 @@ fun PantallaMapa(vm: MapaViewModel) {
                     )
                 }
 
-                masCercano?.let { item ->
-                    Surface(
-                        color = colores.primaryContainer,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "Más cercano: ${item.lugar.nombre} · " +
-                                    (item.metros?.let {
-                                        formatearDistancia(it)
-                                    } ?: "Sin calcular"),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp),
-                            color = colores.onPrimaryContainer,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                when (val resultado = estadoRuta) {
+                    EstadoRuta.Cargando -> {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Text("Calculando ruta peatonal...", fontSize = 12.sp, color = colores.primary)
+                    }
+                    is EstadoRuta.Lista -> {
+                        Surface(color = colores.primaryContainer, shape = RoundedCornerShape(12.dp)) {
+                            Text(
+                                text = "Ruta a ${resultado.destinoNombre} · " +
+                                        formatearDistancia(resultado.ruta.distanciaMetros.toFloat()),
+                                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                fontSize = 12.sp,
+                                color = colores.onPrimaryContainer
+                            )
+                        }
+                    }
+                    is EstadoRuta.Error -> Text(
+                        resultado.mensaje, fontSize = 12.sp, color = colores.error
+                    )
+                    EstadoRuta.SinRuta -> Unit
+                }
+
+                if (estadoRuta is EstadoRuta.SinRuta) {
+                    masCercano?.let { item ->
+                        Surface(
+                            color = colores.primaryContainer,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Más cercano: ${item.lugar.nombre} · " +
+                                        (item.metros?.let {
+                                            formatearDistancia(it)
+                                        } ?: "Sin calcular"),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp),
+                                color = colores.onPrimaryContainer,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
 
-            // Panel inferior.
+            // Lista inferior original.
             Surface(
                 color = colores.surface,
                 shape = RoundedCornerShape(
@@ -472,7 +518,7 @@ fun PantallaMapa(vm: MapaViewModel) {
                             seleccionado = seleccionado,
                             masCercanoId = masCercano?.lugar?.id,
                             onClick = { id ->
-                                vm.seleccionar(id)
+                                abrirDetalle(id)
                             },
                             modifier = Modifier.height(170.dp)
                         )
@@ -482,5 +528,18 @@ fun PantallaMapa(vm: MapaViewModel) {
                 }
             }
         }
+    }
+    if (mostrarDetalle && lugarSeleccionado != null) {
+        DetalleLugarSheet(
+            item = lugarSeleccionado,
+            estadoRuta = estadoRuta,
+            tieneUbicacion = posicion != null,
+            onCerrar = { mostrarDetalle = false },
+            onComoLlegar = {
+                vm.calcularRuta()
+                mostrarDetalle = false
+            },
+            onLimpiarRuta = { vm.limpiarRuta() }
+        )
     }
 }

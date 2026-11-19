@@ -1,17 +1,23 @@
 package com.alvarez.campusgps.viewmodel
 
+import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alvarez.campusgps.data.LugaresRepository
 import com.alvarez.campusgps.data.PreferenciasRepository
+import com.alvarez.campusgps.data.RutaRepository
+import com.alvarez.campusgps.data.RutaRepositoryOSRM
 import com.alvarez.campusgps.data.UbicacionRepository
+import com.alvarez.campusgps.model.EstadoRuta
 import com.alvarez.campusgps.model.LugarConDistancia
 import com.alvarez.campusgps.model.Posicion
 import com.alvarez.campusgps.model.TipoError
 import com.alvarez.campusgps.model.UbicacionUi
 import com.alvarez.campusgps.util.distanciaMetros
 import com.alvarez.campusgps.util.formatearDistancia
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,16 +31,14 @@ import kotlinx.coroutines.launch
 class MapaViewModel(
     private val ubicacionRepo: UbicacionRepository,
     private val lugaresRepo: LugaresRepository,
-    private val preferenciasRepo: PreferenciasRepository
+    private val preferenciasRepo: PreferenciasRepository,
+    private val rutaRepo: RutaRepository = RutaRepositoryOSRM()
 ) : ViewModel() {
 
     companion object {
         val CATEGORIAS = listOf(
-            "Todos",
-            "Estudio",
-            "Comida",
-            "Eventos",
-            "Servicios"
+            "Todos", "Estudio", "Comida",
+            "Eventos", "Servicios"
         )
 
         val RADIOS = listOf(100, 200, 500)
@@ -46,7 +50,6 @@ class MapaViewModel(
     val estado: StateFlow<UbicacionUi> =
         _estado.asStateFlow()
 
-    // Lista original de lugares.
     private val _lugares = MutableStateFlow(
         lugaresRepo.obtenerLugares().map {
             LugarConDistancia(it, null)
@@ -56,28 +59,24 @@ class MapaViewModel(
     val lugares: StateFlow<List<LugarConDistancia>> =
         _lugares.asStateFlow()
 
-    // Filtro por categoria.
     private val _categoriaSeleccionada =
         MutableStateFlow("Todos")
 
     val categoriaSeleccionada: StateFlow<String> =
         _categoriaSeleccionada.asStateFlow()
 
-    // Radio de proximidad.
     private val _radioSeleccionado =
         MutableStateFlow<Int?>(null)
 
     val radioSeleccionado: StateFlow<Int?> =
         _radioSeleccionado.asStateFlow()
 
-    // Filtrado combinado de categoria y radio.
     val lugaresFiltrados: StateFlow<List<LugarConDistancia>> =
         combine(
             lugares,
             categoriaSeleccionada,
             radioSeleccionado
         ) { lista, categoria, radio ->
-
             lista.filter { item ->
                 val coincideCategoria =
                     categoria == "Todos" ||
@@ -102,11 +101,8 @@ class MapaViewModel(
     val seleccionado: StateFlow<Int?> =
         _seleccionado.asStateFlow()
 
-    // Evita que la lectura inicial sobrescriba
-    // una seleccion realizada durante el arranque.
     private var seleccionManualRealizada = false
 
-    // Lugar mas cercano global.
     val masCercano: StateFlow<LugarConDistancia?> =
         lugares.map { lista ->
             lista.firstOrNull { it.metros != null }
@@ -116,7 +112,6 @@ class MapaViewModel(
             initialValue = null
         )
 
-    // Lugar mas cercano visible.
     val masCercanoVisible: StateFlow<LugarConDistancia?> =
         lugaresFiltrados.map { lista ->
             lista.firstOrNull { it.metros != null }
@@ -126,11 +121,23 @@ class MapaViewModel(
             initialValue = null
         )
 
+    // COMMIT 15: estado del recorrido peatonal.
+    private val _estadoRuta =
+        MutableStateFlow<EstadoRuta>(EstadoRuta.SinRuta)
+
+    val estadoRuta: StateFlow<EstadoRuta> =
+        _estadoRuta.asStateFlow()
+
+    private var trabajoRuta: Job? = null
+
+    // El servidor demo permite como maximo
+    // una solicitud por segundo.
+    private var ultimaSolicitudRuta = 0L
+
     init {
         recuperarUltimoLugar()
     }
 
-    // COMMIT 14: recuperar seleccion guardada.
     private fun recuperarUltimoLugar() {
         viewModelScope.launch {
             try {
@@ -147,11 +154,6 @@ class MapaViewModel(
                     if (existe) {
                         _seleccionado.value = idGuardado
                         validarSeleccion()
-
-                        Log.d(
-                            "CampusGPS",
-                            "Lugar recuperado: $idGuardado"
-                        )
                     } else {
                         preferenciasRepo.limpiarUltimoLugar()
                     }
@@ -159,27 +161,21 @@ class MapaViewModel(
             } catch (error: Exception) {
                 Log.e(
                     "CampusGPS",
-                    "No se pudo recuperar el lugar",
+                    "Error al recuperar seleccion",
                     error
                 )
             }
         }
     }
 
-    // Guardar la seleccion en DataStore.
     private fun guardarSeleccion(id: Int) {
         viewModelScope.launch {
             try {
                 preferenciasRepo.guardarUltimoLugar(id)
-
-                Log.d(
-                    "CampusGPS",
-                    "Lugar guardado: $id"
-                )
             } catch (error: Exception) {
                 Log.e(
                     "CampusGPS",
-                    "No se pudo guardar el lugar",
+                    "Error al guardar seleccion",
                     error
                 )
             }
@@ -200,12 +196,8 @@ class MapaViewModel(
         validarSeleccion()
     }
 
-    // Elimina solo la seleccion visible cuando
-    // el filtro deja de incluir ese lugar.
-    // No borra la preferencia guardada.
     private fun validarSeleccion() {
         val idActual = _seleccionado.value ?: return
-
         val categoria = _categoriaSeleccionada.value
         val radio = _radioSeleccionado.value
 
@@ -220,16 +212,15 @@ class MapaViewModel(
                                 item.metros <= radio.toFloat())
 
             item.lugar.id == idActual &&
-                    coincideCategoria &&
-                    coincideRadio
+                    coincideCategoria && coincideRadio
         }
 
         if (!sigueVisible) {
             _seleccionado.value = null
+            limpiarRuta()
         }
     }
 
-    // Calcular y ordenar distancias.
     private fun actualizarDistancias(pos: Posicion) {
         val listaOrdenada = lugaresRepo.obtenerLugares()
             .map { lugar ->
@@ -258,9 +249,9 @@ class MapaViewModel(
         }
 
         _seleccionado.value = null
+        limpiarRuta()
     }
 
-    // Buscar ubicacion.
     fun buscar() {
         if (_estado.value == UbicacionUi.Buscando) return
 
@@ -268,7 +259,6 @@ class MapaViewModel(
         limpiarDistancias()
 
         viewModelScope.launch {
-
             if (!ubicacionRepo.playServicesDisponible()) {
                 _estado.value = UbicacionUi.Error(
                     mensaje = "Este dispositivo no tiene Google Play Services",
@@ -292,28 +282,24 @@ class MapaViewModel(
                 }
                 .onFailure { error ->
                     _estado.value = when (error) {
-
-                        is SecurityException -> {
+                        is SecurityException ->
                             UbicacionUi.Error(
                                 mensaje = "Sin permiso de ubicación no puedo mostrar dónde estás",
                                 tipo = TipoError.SIN_PERMISO
                             )
-                        }
 
-                        is IllegalStateException -> {
+                        is IllegalStateException ->
                             UbicacionUi.Error(
                                 mensaje = "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
                                 tipo = TipoError.GPS_APAGADO
                             )
-                        }
 
-                        else -> {
+                        else ->
                             UbicacionUi.Error(
                                 mensaje = error.message
                                     ?: "Ocurrió un error al obtener la ubicación",
                                 tipo = TipoError.OTRO
                             )
-                        }
                     }
                 }
         }
@@ -328,12 +314,12 @@ class MapaViewModel(
         )
     }
 
-    // Seleccionar y persistir un lugar visible.
     fun seleccionar(id: Int?) {
         seleccionManualRealizada = true
 
         if (id == null) {
             _seleccionado.value = null
+            limpiarRuta()
             return
         }
 
@@ -351,13 +337,94 @@ class MapaViewModel(
                                 item.metros <= radio.toFloat())
 
             item.lugar.id == id &&
-                    coincideCategoria &&
-                    coincideRadio
+                    coincideCategoria && coincideRadio
         }
 
         if (esVisible) {
+            if (_seleccionado.value != id) {
+                limpiarRuta()
+            }
+
             _seleccionado.value = id
             guardarSeleccion(id)
         }
+    }
+
+    // Solicitar ruta desde la ubicacion actual.
+    fun calcularRuta() {
+        val posicion =
+            (_estado.value as? UbicacionUi.Lista)
+                ?.posicion ?: run {
+                _estadoRuta.value = EstadoRuta.Error(
+                    "Primero obtén tu ubicación."
+                )
+                return
+            }
+
+        val id = _seleccionado.value ?: run {
+            _estadoRuta.value = EstadoRuta.Error(
+                "Selecciona un lugar del campus."
+            )
+            return
+        }
+
+        val destino = lugaresFiltrados.value
+            .firstOrNull { it.lugar.id == id }
+            ?.lugar ?: run {
+            _estadoRuta.value = EstadoRuta.Error(
+                "El lugar seleccionado no está visible."
+            )
+            return
+        }
+
+        if (_estadoRuta.value is EstadoRuta.Cargando) return
+
+        val ahora = SystemClock.elapsedRealtime()
+
+        if (ahora - ultimaSolicitudRuta < 1200L) {
+            _estadoRuta.value = EstadoRuta.Error(
+                "Espera un momento antes de solicitar otra ruta."
+            )
+            return
+        }
+
+        ultimaSolicitudRuta = ahora
+        trabajoRuta?.cancel()
+        _estadoRuta.value = EstadoRuta.Cargando
+
+        trabajoRuta = viewModelScope.launch {
+            try {
+                val ruta = rutaRepo.obtenerRuta(
+                    origen = posicion,
+                    destinoLatitud = destino.latitud,
+                    destinoLongitud = destino.longitud
+                )
+
+                _estadoRuta.value = EstadoRuta.Lista(
+                    ruta = ruta,
+                    destinoId = destino.id,
+                    destinoNombre = destino.nombre
+                )
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Log.e(
+                    "CampusGPS",
+                    "Error calculando ruta",
+                    error
+                )
+
+                _estadoRuta.value = EstadoRuta.Error(
+                    error.message
+                        ?: "No se pudo calcular la ruta."
+                )
+            }
+        }
+    }
+
+    fun limpiarRuta() {
+        trabajoRuta?.cancel()
+        trabajoRuta = null
+        _estadoRuta.value = EstadoRuta.SinRuta
     }
 }
