@@ -1,8 +1,9 @@
+
 package com.alvarez.centrotareas.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,7 +12,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -26,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.alvarez.centrotareas.viewmodel.TareasViewModel
 
@@ -42,6 +44,8 @@ fun PantallaTareas(
     }
 
     val mensaje by viewModel.mensaje.collectAsState()
+    val progreso by viewModel.progreso.collectAsState()
+    val corriendo by viewModel.corriendo.collectAsState()
 
     Scaffold(
         containerColor = Color(0xFFFAF9FC),
@@ -68,8 +72,7 @@ fun PantallaTareas(
                 .padding(
                     horizontal = 12.dp,
                     vertical = 8.dp
-                ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                )
         ) {
 
             Card(
@@ -87,8 +90,16 @@ fun PantallaTareas(
                         .fillMaxWidth()
                         .padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+
+                    Text(
+                        text = "Tarea con progreso",
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Azul,
+                        fontWeight = FontWeight.Bold
+                    )
 
                     Button(
                         onClick = { toques++ },
@@ -99,43 +110,48 @@ fun PantallaTareas(
                         Text("Tócame: $toques")
                     }
 
-                    Button(
-                        onClick = {
-                            viewModel.tareaLarga()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Azul
-                        )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Tarea larga")
+
+                        Button(
+                            onClick = {
+                                viewModel.tareaLarga()
+                            },
+                            enabled = !corriendo,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Azul
+                            )
+                        ) {
+                            Text("Iniciar")
+                        }
+
+                        OutlinedButton(
+                            onClick = {},
+                            enabled = false
+                        ) {
+                            Text("Cancelar")
+                        }
                     }
+
+                    LinearProgressIndicator(
+                        progress = { progreso },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Azul,
+                        trackColor = Color(0xFFDDE2E7)
+                    )
+
+                    Text(
+                        text = "${(progreso * 100).toInt()} %",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
 
                     Text(
                         text = mensaje,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.DarkGray
-                    )
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFEAF5FC)
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Los toques siguen sumando mientras trabaja",
-                        color = Azul,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
