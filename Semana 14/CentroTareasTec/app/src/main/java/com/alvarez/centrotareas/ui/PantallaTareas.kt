@@ -1,17 +1,24 @@
 
 package com.alvarez.centrotareas.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -26,37 +33,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.alvarez.centrotareas.model.CargaUi
 import com.alvarez.centrotareas.viewmodel.TareasViewModel
 
-private val Azul = Color(0xFF2073A9)
-private val VerdeFondo = Color(0xFFE5F5E7)
-private val VerdeTexto = Color(0xFF256D35)
-private val RojoFondo = Color(0xFFFBE4E4)
-private val RojoTexto = Color(0xFFB33B3B)
+private val Azul = Color(0xFF176B9A)
+private val Fondo = Color(0xFFF3F6FA)
+private val Verde = Color(0xFF167448)
+private val Rojo = Color(0xFFB42332)
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaTareas(
-    viewModel: TareasViewModel
-) {
+fun PantallaTareas(viewModel: TareasViewModel) {
+
     val carga by viewModel.carga.collectAsState()
     val simularError by viewModel.simularError.collectAsState()
+    val limiteActivo by viewModel.limiteActivo.collectAsState()
 
     val cargando = carga is CargaUi.Cargando
 
     Scaffold(
-        containerColor = Color(0xFFFAF9FC),
+        containerColor = Fondo,
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "CentroTareas",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            text = "CentroTareas Tec",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Panel de operaciones",
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Azul
@@ -69,79 +81,155 @@ fun PantallaTareas(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(
-                    horizontal = 12.dp,
-                    vertical = 8.dp
-                ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // COMMIT 8: ERROR SIMULADO
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = Azul
                 ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 2.dp
-                )
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    Text(
+                        text = "CENTRO DE CONTROL",
+                        color = Color.White.copy(alpha = 0.75f),
+                        style = MaterialTheme.typography.labelMedium
+                    )
 
                     Text(
-                        text = "Dos cargas",
-                        modifier = Modifier.fillMaxWidth(),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Azul,
+                        text = "Gestión inteligente de tareas",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
 
-                    // INTERRUPTOR SIMULAR ERROR
+                    Text(
+                        text = "Ejecuta cargas, controla tiempos y supervisa resultados.",
+                        color = Color.White.copy(alpha = 0.9f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = "Configuración",
+                        color = Azul,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Switch(
-                            checked = simularError,
-                            onCheckedChange = {
-                                viewModel.cambiarSimularError(it)
-                            },
-                            enabled = !cargando
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Límite de tiempo",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Cancelar después de 2 segundos",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
 
-                        Text(
-                            text = "Simular error",
-                            style = MaterialTheme.typography.bodyMedium
+                        Switch(
+                            checked = limiteActivo,
+                            onCheckedChange = viewModel::cambiarLimiteActivo,
+                            enabled = !cargando
                         )
                     }
 
-                    // BOTONES DE CARGA
+                    HorizontalDivider()
+
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Simular error",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Probar el manejo de fallos",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
+
+                        Switch(
+                            checked = simularError,
+                            onCheckedChange = viewModel::cambiarSimularError,
+                            enabled = !cargando
+                        )
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        text = "Ejecución de cargas",
+                        color = Azul,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "Selecciona cómo deseas procesar el perfil y los pedidos.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedButton(
-                            onClick = {
-                                viewModel.cargarSecuencial()
-                            },
-                            enabled = !cargando
+                            onClick = viewModel::cargarSecuencial,
+                            enabled = !cargando,
+                            modifier = Modifier.weight(1f)
                         ) {
                             Text("Una por una")
                         }
 
                         Button(
-                            onClick = {
-                                viewModel.cargarParalelo()
-                            },
+                            onClick = viewModel::cargarParalelo,
                             enabled = !cargando,
+                            modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Azul
                             )
@@ -152,106 +240,97 @@ fun PantallaTareas(
 
                     when (val estado = carga) {
 
-                        is CargaUi.Inicial -> {
+                        CargaUi.Inicial -> {
                             Text(
-                                text = "Selecciona un tipo de carga",
+                                text = "Listo para iniciar una operación.",
                                 color = Color.Gray,
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
 
-                        is CargaUi.Cargando -> {
-                            Text(
-                                text = "Cargando...",
-                                color = Azul
-                            )
+                        CargaUi.Cargando -> {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    color = Azul
+                                )
+                                Text(
+                                    text = "Procesando información...",
+                                    color = Azul,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
 
                         is CargaUi.Exito -> {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = VerdeFondo
-                                )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        Color(0xFFE7F6EE),
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(3.dp)
-                                ) {
-                                    Text(
-                                        text = "Modo: ${estado.modo}",
-                                        color = VerdeTexto,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                Text(
+                                    text = "OPERACIÓN COMPLETADA",
+                                    color = Verde,
+                                    fontWeight = FontWeight.Bold
+                                )
 
-                                    Text(
-                                        text = "Perfil: ${estado.perfil}",
-                                        color = VerdeTexto
-                                    )
-
-                                    Text(
-                                        text = "Pedidos: ${estado.pedidos}",
-                                        color = VerdeTexto
-                                    )
-
-                                    Text(
-                                        text = "Tiempo: ${estado.milisegundos} ms",
-                                        color = VerdeTexto
-                                    )
-                                }
+                                Text("Modo: ${estado.modo}")
+                                Text("Perfil: ${estado.perfil}")
+                                Text("Pedidos: ${estado.pedidos}")
+                                Text("Duración: ${estado.milisegundos} ms")
                             }
-
-                            Text(
-                                text = if (estado.modo == "A la vez") {
-                                    "Todo por separado = 5000 ms"
-                                } else {
-                                    "En paralelo tarda aproximadamente 3000 ms"
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Azul,
-                                textAlign = TextAlign.Center
-                            )
                         }
 
                         is CargaUi.Error -> {
-
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = RojoFondo
-                                )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        Color(0xFFFFECEE),
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
+                                Text(
+                                    text = "OPERACIÓN INTERRUMPIDA",
+                                    color = Rojo,
+                                    fontWeight = FontWeight.Bold
+                                )
+
                                 Text(
                                     text = estado.mensaje.replace(
                                         "Sin conexion",
                                         "Sin conexión"
                                     ),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    color = RojoTexto,
-                                    textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    color = Rojo
                                 )
-                            }
 
-                            OutlinedButton(
-                                onClick = {
-                                    viewModel.reintentarCarga()
+                                OutlinedButton(
+                                    onClick = viewModel::reintentarCarga
+                                ) {
+                                    Text("Reintentar operación")
                                 }
-                            ) {
-                                Text(
-                                    text = "Reintentar",
-                                    fontWeight = FontWeight.Bold
-                                )
                             }
                         }
                     }
                 }
             }
+
+            Text(
+                text = "CentroTareasTec · Fase 2 · Mejora con IA",
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
         }
     }
 }

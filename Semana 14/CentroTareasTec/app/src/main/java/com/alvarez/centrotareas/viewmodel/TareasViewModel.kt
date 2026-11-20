@@ -10,6 +10,7 @@ import com.alvarez.centrotareas.model.PrimosUi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 class TareasViewModel(
     private val repository: TareasRepository
@@ -32,26 +34,30 @@ class TareasViewModel(
     private val _corriendo = MutableStateFlow(false)
     val corriendo: StateFlow<Boolean> = _corriendo.asStateFlow()
 
-    private val _primos = MutableStateFlow<PrimosUi>(
-        PrimosUi.Inicial
-    )
+    private val _primos = MutableStateFlow<PrimosUi>(PrimosUi.Inicial)
     val primos: StateFlow<PrimosUi> = _primos.asStateFlow()
 
-    private val _carga = MutableStateFlow<CargaUi>(
-        CargaUi.Inicial
-    )
+    private val _carga = MutableStateFlow<CargaUi>(CargaUi.Inicial)
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
 
     private val _simularError = MutableStateFlow(false)
-    val simularError: StateFlow<Boolean> =
-        _simularError.asStateFlow()
+    val simularError: StateFlow<Boolean> = _simularError.asStateFlow()
+
+    // FASE 2: LIMITE DE TIEMPO
+    private val _limiteActivo = MutableStateFlow(false)
+    val limiteActivo: StateFlow<Boolean> = _limiteActivo.asStateFlow()
 
     private var tareaJob: Job? = null
     private var primosJob: Job? = null
-
+    private var cargaJob: Job? = null
     private var ultimoModoParalelo = false
 
-    // TAREA CON PROGRESO - COMMIT ANTERIOR
+    fun cambiarLimiteActivo(activo: Boolean) {
+        if (_carga.value !is CargaUi.Cargando) {
+            _limiteActivo.value = activo
+        }
+    }
+
     fun tareaLarga() {
         if (_corriendo.value) return
 
@@ -60,17 +66,11 @@ class TareasViewModel(
         _mensaje.value = "Trabajando..."
 
         tareaJob = viewModelScope.launch {
-            Log.d(
-                "HILO",
-                "Inicio: ${Thread.currentThread().name}"
-            )
+            Log.d("HILO", "Inicio: ${Thread.currentThread().name}")
 
             try {
                 withContext(Dispatchers.Default) {
-                    Log.d(
-                        "HILO",
-                        "Trabajo: ${Thread.currentThread().name}"
-                    )
+                    Log.d("HILO", "Trabajo: ${Thread.currentThread().name}")
 
                     for (i in 1..100) {
                         delay(40)
@@ -78,11 +78,7 @@ class TareasViewModel(
                     }
                 }
 
-                Log.d(
-                    "HILO",
-                    "Final: ${Thread.currentThread().name}"
-                )
-
+                Log.d("HILO", "Final: ${Thread.currentThread().name}")
                 _mensaje.value = "Terminado"
 
             } catch (e: CancellationException) {
@@ -100,7 +96,6 @@ class TareasViewModel(
         tareaJob?.cancel()
     }
 
-    // NUMEROS PRIMOS - COMMIT ANTERIOR
     fun contarPrimos(hasta: Int) {
         if (hasta < 2 || _primos.value is PrimosUi.Calculando) {
             return
@@ -113,8 +108,7 @@ class TareasViewModel(
 
             try {
                 val cantidad = repository.contarPrimos(hasta)
-                val tiempo =
-                    System.currentTimeMillis() - inicio
+                val tiempo = System.currentTimeMillis() - inicio
 
                 _primos.value = PrimosUi.Listo(
                     cantidad = cantidad,
@@ -135,81 +129,57 @@ class TareasViewModel(
         primosJob?.cancel()
     }
 
-    // COMMIT 8: ACTIVAR O DESACTIVAR ERROR
     fun cambiarSimularError(activar: Boolean) {
-        _simularError.value = activar
+        if (_carga.value !is CargaUi.Cargando) {
+            _simularError.value = activar
+        }
     }
 
-    // CARGA SECUENCIAL
     fun cargarSecuencial() {
         ejecutarCarga(paralelo = false)
     }
 
-    // CARGA PARALELA
     fun cargarParalelo() {
         ejecutarCarga(paralelo = true)
     }
 
-    // COMMIT 8: REINTENTAR LA ULTIMA CARGA
     fun reintentarCarga() {
         ejecutarCarga(paralelo = ultimoModoParalelo)
     }
 
-    // COMMIT 8: MANEJO DE ERRORES
     private fun ejecutarCarga(paralelo: Boolean) {
-        if (_carga.value is CargaUi.Cargando) return
+        if (cargaJob?.isActive == true) return
 
         ultimoModoParalelo = paralelo
         _carga.value = CargaUi.Cargando
 
-        viewModelScope.launch {
+        val usarLimite = _limiteActivo.value
+        val provocarError = _simularError.value
+
+        cargaJob = viewModelScope.launch {
             val inicio = System.currentTimeMillis()
 
             try {
-                val perfil: String
-                val pedidos: List<String>
-
-                if (paralelo) {
-                    val resultado = coroutineScope {
-                        val perfilDeferred = async {
-                            repository.cargarPerfil()
-                        }
-
-                        val pedidosDeferred = async {
-                            repository.cargarPedidos(
-                                _simularError.value
-                            )
-                        }
-
-                        Pair(
-                            perfilDeferred.await(),
-                            pedidosDeferred.await()
-                        )
+                val resultado = if (usarLimite) {
+                    withTimeout(2000L) {
+                        obtenerDatos(paralelo, provocarError)
                     }
-
-                    perfil = resultado.first
-                    pedidos = resultado.second
-
                 } else {
-                    perfil = repository.cargarPerfil()
-
-                    pedidos = repository.cargarPedidos(
-                        _simularError.value
-                    )
+                    obtenerDatos(paralelo, provocarError)
                 }
 
-                val tiempo =
-                    System.currentTimeMillis() - inicio
+                val tiempo = System.currentTimeMillis() - inicio
 
                 _carga.value = CargaUi.Exito(
-                    modo = if (paralelo) {
-                        "A la vez"
-                    } else {
-                        "Una por una"
-                    },
-                    perfil = perfil,
-                    pedidos = pedidos.size,
+                    modo = if (paralelo) "A la vez" else "Una por una",
+                    perfil = resultado.first,
+                    pedidos = resultado.second.size,
                     milisegundos = tiempo
+                )
+
+            } catch (e: TimeoutCancellationException) {
+                _carga.value = CargaUi.Error(
+                    mensaje = "Tiempo máximo superado. La carga tardó más de 2 segundos."
                 )
 
             } catch (e: CancellationException) {
@@ -221,6 +191,31 @@ class TareasViewModel(
                             (e.message ?: "Error desconocido")
                 )
             }
+        }
+    }
+
+    private suspend fun obtenerDatos(
+        paralelo: Boolean,
+        simularError: Boolean
+    ): Pair<String, List<String>> {
+
+        return if (paralelo) {
+            coroutineScope {
+                val perfil = async {
+                    repository.cargarPerfil()
+                }
+
+                val pedidos = async {
+                    repository.cargarPedidos(simularError)
+                }
+
+                Pair(perfil.await(), pedidos.await())
+            }
+        } else {
+            val perfil = repository.cargarPerfil()
+            val pedidos = repository.cargarPedidos(simularError)
+
+            Pair(perfil, pedidos)
         }
     }
 }
