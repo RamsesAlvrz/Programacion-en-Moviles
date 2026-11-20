@@ -1,7 +1,5 @@
 package com.alvarez.centrotareas.ui
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import com.alvarez.centrotareas.viewmodel.TareasViewModel
 
 private val Azul = Color(0xFF2073A9)
-private val Rojo = Color(0xFFC43C3C)
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +65,10 @@ fun PantallaTareas(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(
+                    horizontal = 12.dp,
+                    vertical = 8.dp
+                ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
@@ -101,19 +101,19 @@ fun PantallaTareas(
 
                     Button(
                         onClick = {
-                            viewModel.tareaLargaMal()
+                            viewModel.tareaLarga()
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Azul
                         )
                     ) {
-                        Text("Tarea larga (MAL)")
+                        Text("Tarea larga")
                     }
 
                     Text(
                         text = mensaje,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = Color.DarkGray
                     )
                 }
             }
@@ -121,26 +121,19 @@ fun PantallaTareas(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(
-                    1.dp,
-                    Rojo
-                ),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFF3F3)
+                    containerColor = Color(0xFFEAF5FC)
                 )
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp),
+                        .padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Lo que observas: durante 4 segundos\n" +
-                                "nada responde y el texto\n" +
-                                "«Trabajando...» no aparece",
-                        color = Rojo,
-                        fontWeight = FontWeight.Bold,
+                        text = "Los toques siguen sumando mientras trabaja",
+                        color = Azul,
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodySmall
                     )

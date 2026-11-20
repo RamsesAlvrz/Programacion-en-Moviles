@@ -1,12 +1,18 @@
 package com.alvarez.centrotareas.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.alvarez.centrotareas.data.TareasRepository
 import com.alvarez.centrotareas.model.CargaUi
 import com.alvarez.centrotareas.model.PrimosUi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TareasViewModel(
     private val repository: TareasRepository
@@ -25,13 +31,32 @@ class TareasViewModel(
     )
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
 
-    // COMMIT 2: bloqueo intencional del hilo principal.
-    fun tareaLargaMal() {
-        _mensaje.value = "Trabajando..."
+    // COMMIT 3: tarea larga con corrutina
+    fun tareaLarga() {
+        viewModelScope.launch {
+            _mensaje.value = "Trabajando..."
 
-        Thread.sleep(4000)
+            Log.d(
+                "HILO",
+                "Inicio: ${Thread.currentThread().name}"
+            )
 
-        _mensaje.value = "Listo"
+            withContext(Dispatchers.Default) {
+                Log.d(
+                    "HILO",
+                    "Trabajo: ${Thread.currentThread().name}"
+                )
+
+                delay(4000)
+            }
+
+            Log.d(
+                "HILO",
+                "Final: ${Thread.currentThread().name}"
+            )
+
+            _mensaje.value = "Listo"
+        }
     }
 
     // TODO: progreso y cancelacion
