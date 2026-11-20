@@ -1,4 +1,3 @@
-```
 # Registro de prompts de Gemini — CampusGPS
 
 **Proyecto:** CampusGPS  
@@ -654,3 +653,183 @@ La aplicación debe abrir en Inicio, permitir navegar a Mapa y Último lugar, ej
 **Decisión técnica:** Se reutilizó una sola instancia de `MapaViewModel` para las distintas secciones y se mantuvieron la lógica de ubicación, los filtros, osmdroid, OSRM y DataStore. La navegación entre secciones utiliza estado de Compose, sin introducir una dependencia adicional.
 
 **Verificación final pendiente:** Confirmar `git status` limpio y el push del COMMIT 16 a `origin/mejora-ia-gps`.
+
+````
+
+---
+
+### Prompt 07 — Ubicación real del campus, precisión de rutas y mejora del mapa (COMMIT 17)
+
+> Actúa como desarrollador Android senior especializado en Kotlin, Jetpack Compose, osmdroid, OpenStreetMap, OSRM y arquitectura MVVM + Repository.
+
+#### CONTEXTO DEL PROYECTO
+
+Estoy desarrollando CampusGPS 2.0 en la rama `mejora-ia-gps`, dentro de `Semana 13/CampusGPS`. La aplicación utiliza OpenStreetMap con osmdroid, GPS de Android, rutas peatonales OSRM, filtros por categorías, radios de proximidad y DataStore.
+
+#### OBJETIVO
+
+Adaptar el mapa a TECSUP Santa Anita, Lima, mejorar la presentación de las rutas y dar más espacio al mapa sin eliminar las funciones implementadas anteriormente.
+
+#### 1. UBICACIÓN INICIAL DEL MAPA
+
+- Centrar inicialmente el mapa en el entorno de TECSUP Santa Anita, Lima, Perú.
+- Mantener el botón «Mi ubicación» para centrar el mapa en la posición GPS del usuario.
+- Conservar el marcador rojo de ubicación y los marcadores de los lugares.
+
+#### 2. LUGARES DEL CAMPUS
+
+Actualizar el repositorio local con cinco lugares de referencia: Biblioteca Central, Cafetería Campus, Laboratorio de Cómputo, Auditorio Principal y Estacionamiento Norte. Usar coordenadas aproximadas de referencia, sin presentarlas como levantamiento geográfico exacto.
+
+#### 3. PRECISIÓN DE LAS RUTAS
+
+- Mantener el cálculo de rutas peatonales mediante OSRM y su dibujo en osmdroid.
+- Comprobar la separación entre el punto final devuelto por el servicio y el marcador de destino.
+- Informar cuando la ruta termine cerca del lugar, pero no exactamente sobre el marcador.
+- Ajustar el punto de referencia de Estacionamiento Norte para mejorar la llegada por caminos disponibles en OpenStreetMap.
+- Mantener distancia de ruta, duración estimada y la opción de limpiar el recorrido.
+
+#### 4. MEJORAS DE INTERFAZ DEL MAPA
+
+- Ampliar el espacio visible del mapa.
+- Convertir «Lugares del campus» en una lista desplegable, inicialmente contraída.
+- Añadir un control de mapa ampliado que oculte temporalmente filtros, controles y lista, permitiendo volver a la vista normal.
+- Conservar los filtros por categoría, radio, navegación inferior, marcadores interactivos y panel de detalles.
+
+#### 5. ARCHIVOS INVOLUCRADOS
+
+- `data/LugaresRepositoryLocal.kt`
+- `data/RutaRepository.kt`
+- `ui/MapaUbicacion.kt`
+- `ui/PantallaMapa.kt`
+
+#### 6. RESTRICCIONES
+
+No eliminar funciones existentes, no sustituir osmdroid por Google Maps, conservar MVVM + Repository, DataStore, filtros, navegación y diseño esmeralda. No introducir cambios innecesarios en otros archivos.
+
+#### 7. RESULTADO OBTENIDO
+
+Se ajustó el mapa al entorno de TECSUP Santa Anita, se actualizaron los cinco lugares de referencia y se mejoró la información sobre el final de las rutas. También se incorporaron una lista desplegable y un modo de mapa ampliado. Se probó la ubicación GPS simulada desde el emulador y se confirmó el push del COMMIT 17.
+
+---
+
+### Prompt 08 — Ilustración personalizada y optimización visual de Inicio (COMMIT 18)
+
+> Actúa como desarrollador Android senior especializado en Kotlin, Jetpack Compose, Material 3, diseño UI/UX y arquitectura MVVM + Repository.
+
+#### CONTEXTO DEL PROYECTO
+
+Estoy desarrollando CampusGPS 2.0 en la rama `mejora-ia-gps`, dentro de `Semana 13/CampusGPS`. La aplicación ya tiene pantalla Inicio, navegación inferior, ubicación GPS, cinco lugares del campus, filtros por categoría y radio, rutas peatonales OSRM y persistencia con DataStore.
+
+#### OBJETIVO
+
+Mejorar la presentación visual de la pantalla Inicio mediante una ilustración personalizada relacionada con TECSUP y la navegación GPS, optimizando el encabezado y las tarjetas sin alterar las funciones existentes.
+
+#### 1. ILUSTRACIÓN PERSONALIZADA
+
+- Crear una ilustración moderna de un campus educativo con edificios, estudiantes, áreas verdes, un mapa digital, rutas y marcadores GPS.
+- Usar una paleta coherente con CampusGPS: verde esmeralda, turquesa, verde menta y blanco.
+- Diseñar una composición horizontal adecuada para el encabezado de una aplicación móvil.
+- Evitar detalles pequeños que dificulten la lectura en pantalla reducida.
+- Guardar el recurso definitivo como `app/src/main/res/drawable/campus_ilustracion.png`.
+
+#### 2. INTEGRACIÓN EN JETPACK COMPOSE
+
+Modificar `ui/PantallaInicio.kt` para mostrar la imagen con `Image`, `painterResource`, `ContentScale.Crop`, `Modifier.fillMaxWidth()`, altura controlada y `RoundedCornerShape`.
+
+Colocar la ilustración debajo del título «Tu campus, siempre cerca» y de su descripción, dentro del encabezado esmeralda.
+
+#### 3. OPTIMIZACIÓN DEL ENCABEZADO
+
+- Conservar «CAMPUSGPS 2.0», el título y la descripción.
+- Reducir los márgenes superior e inferior y el espacio entre componentes.
+- Ajustar el tamaño de la tipografía y el interlineado.
+- Usar una altura aproximada de 155 dp para la ilustración.
+- Mantener los bordes inferiores redondeados.
+- Evitar que el encabezado ocupe demasiado espacio vertical.
+
+#### 4. TARJETAS DE ACCESO RÁPIDO
+
+Mantener las cuatro opciones existentes y sus acciones:
+
+1. **Explorar el mapa:** mostrar los lugares del campus.
+2. **Rutas a pie:** acceder al mapa para seleccionar un destino y calcular la ruta.
+3. **Lugares cercanos:** consultar lugares dentro de un radio de 200 metros.
+4. **Último lugar:** consultar el destino seleccionado anteriormente.
+
+Reducir ligeramente los espacios y dimensiones de las tarjetas, manteniendo sus títulos, descripciones, íconos y flechas. Conservar el desplazamiento vertical.
+
+#### 5. ÚLTIMO DESTINO
+
+Conservar la sección de último lugar con nombre, categoría, distancia directa, botón «Abrir mapa» y mensaje cuando no existe selección. Mantener su integración con el ViewModel y DataStore.
+
+#### 6. AJUSTES Y DECISIONES DEL DESARROLLO
+
+Se creó una primera ilustración y se integró en Inicio. Tras revisarla en el emulador, se decidió sustituirla por una segunda versión mejor adaptada y compactar el encabezado y las tarjetas.
+
+También se generó y probó un logo personalizado mediante Image Asset, pero finalmente se descartó. Se restauró un ícono genérico de Android. Se decidió no implementar el Splash Screen personalizado.
+
+Por lo tanto, **el logo personalizado y el Splash Screen no forman parte de las mejoras definitivas del COMMIT 18**.
+
+#### 7. ARCHIVOS DE LA MEJORA DEFINITIVA
+
+- `ui/PantallaInicio.kt`
+- `res/drawable/campus_ilustracion.png`
+
+Antes de confirmar el commit, revisar `git status` para identificar y excluir o restaurar los recursos adicionales que haya dejado Image Asset. No incluir documentación en el COMMIT 18.
+
+#### 8. RESTRICCIONES
+
+- Conservar MVVM + Repository.
+- No modificar repositorios, ViewModel, lógica de GPS ni rutas.
+- Mantener los cinco lugares, categorías, radios, osmdroid, OSRM y DataStore.
+- Conservar la navegación inferior y la paleta esmeralda.
+- No añadir dependencias innecesarias.
+- No implementar Splash Screen.
+- No subir recursos del logo personalizado descartado.
+- Reservar la actualización de `PROMPTS.md` para el COMMIT 19.
+
+#### 9. RESULTADO OBTENIDO
+
+Se incorporó una nueva ilustración a la pantalla Inicio y se compactaron el encabezado y las tarjetas. El resultado visual fue revisado y aprobado en el emulador. Se mantuvieron los cuatro accesos rápidos y la sección de último lugar. Se descartaron el logo personalizado y el Splash Screen. El cierre del COMMIT 18 queda sujeto a la revisión final de los archivos modificados y al push.
+
+---
+
+## Registro complementario de resultados y decisiones
+
+| Prompt | Qué se implementó | Qué se ajustó o descartó | Motivo |
+|---|---|---|---|
+| Prompt 07 — Ubicación, rutas y mapa | Mapa centrado en TECSUP Santa Anita, cinco lugares de referencia, información de separación al destino, lista desplegable y modo ampliado. | Ajuste de Estacionamiento Norte y pruebas con GPS simulado. | Mejorar la utilidad y visualización del mapa dentro del campus. |
+| Prompt 08 — Ilustración y pantalla Inicio | Ilustración personalizada, encabezado más compacto y tarjetas ajustadas. | Se sustituyó la primera ilustración; se descartaron el logo personalizado y el Splash Screen. | Mantener un diseño atractivo sin agregar complejidad innecesaria. |
+
+---
+
+### Commit 17 — Ubicación del campus, rutas y visualización del mapa
+
+**Estado:** Commit y push confirmados por el desarrollador.
+
+**Archivos modificados:**
+- `data/LugaresRepositoryLocal.kt`
+- `data/RutaRepository.kt`
+- `ui/MapaUbicacion.kt`
+- `ui/PantallaMapa.kt`
+
+**Resultados:** mapa adaptado al entorno del campus, cinco referencias, mejora de precisión de rutas, lista desplegable y mapa ampliado. Se verificó el funcionamiento con GPS simulado.
+
+### Commit 18 — Ilustración y optimización de Inicio
+
+**Estado:** Cambios visuales implementados y aprobados; pendiente de verificar `git status`, realizar commit y push.
+
+**Archivos previstos:**
+- `ui/PantallaInicio.kt`
+- `res/drawable/campus_ilustracion.png`
+
+**Verificaciones antes del commit:**
+- Comprobar que Inicio muestre correctamente la nueva ilustración.
+- Confirmar que los cuatro accesos rápidos funcionen.
+- Comprobar la sección Último lugar.
+- Revisar que el mapa, las rutas y la navegación sigan operativos.
+- Excluir o restaurar cualquier recurso no deseado generado durante la prueba del ícono.
+- Confirmar que `PROMPTS.md` no se incluya en este commit.
+
+**Decisión:** El registro actualizado de prompts y las conclusiones se subirán en el COMMIT 19 de documentación.
+

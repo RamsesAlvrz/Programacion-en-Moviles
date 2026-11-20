@@ -1,182 +1,77 @@
-# CampusGPS
+# CampusGPS 2.0 — Fase 2: Mejoras con IA
 
-## Descripción
+## Descripción de la fase
 
-CampusGPS es una aplicación Android desarrollada con Kotlin y Jetpack Compose. Permite obtener la ubicación del usuario, mostrar un mapa y consultar cinco lugares del campus.
+En esta segunda fase trabajé en la rama `mejora-ia-gps` para mejorar CampusGPS con apoyo de herramientas de inteligencia artificial. El objetivo fue hacer que la aplicación sea más fácil de usar, tenga una presentación más ordenada y ofrezca nuevas opciones para explorar los lugares del campus.
 
-La aplicación calcula la distancia desde nuestra ubicación hasta cada lugar, ordena la lista del más cercano al más lejano y permite seleccionar un lugar para mover la cámara del mapa.
+Las mejoras se realizaron por etapas y se organizaron en commits separados. Se mantuvo la arquitectura **MVVM + Repository** durante el desarrollo.
 
-También identifica el lugar más cercano con un marcador verde y muestra mensajes cuando hay problemas con los permisos o el GPS.
+## Mejoras realizadas
 
-## Tecnologías utilizadas
+### Commit 11 — Rediseño visual
 
-- Kotlin
-- Jetpack Compose y Material 3
-- Arquitectura MVVM
-- Repository
-- OpenStreetMap con osmdroid
-- Google Play Services Location
-- StateFlow y corrutinas
-- Android Studio y GitHub
+Se cambió la apariencia de la aplicación con una paleta verde esmeralda, turquesa y fondos claros. Se mejoraron el encabezado, las tarjetas de lugares, los botones y los mensajes de error usando Jetpack Compose y Material 3.
 
-## Funcionalidades
+**Archivos principales:** `ui/theme/Color.kt`, `ui/theme/Theme.kt`, `ui/PantallaMapa.kt`, `ui/ListaLugares.kt` y `ui/MensajeError.kt`.
 
-1. Solicitar permiso de ubicación al usuario.
-2. Obtener la ubicación actual y mostrarla con un marcador rojo.
-3. Mostrar cinco lugares del campus mediante marcadores.
-4. Calcular las distancias en metros o kilómetros.
-5. Ordenar los lugares por distancia.
-6. Seleccionar un lugar desde la lista y mover la cámara.
-7. Identificar el lugar más cercano con un marcador verde.
-8. Mostrar mensajes de error cuando se deniega el permiso, se apaga el GPS o faltan los servicios de Google.
+### Commit 12 — Filtros por categorías
 
-## Estructura del proyecto
+Se agregaron los filtros **Todos, Estudio, Comida, Eventos y Servicios**. Al seleccionar una categoría, se actualizan tanto los marcadores del mapa como la lista de lugares. La lógica de filtrado se maneja desde el ViewModel con StateFlow.
 
-```text
-com.alvarez.campusgps
-│
-├── data
-│   ├── LugaresRepository.kt
-│   ├── LugaresRepositoryLocal.kt
-│   ├── UbicacionRepository.kt
-│   └── UbicacionRepositoryGoogle.kt
-│
-├── model
-│   └── Modelos.kt
-│
-├── ui
-│   ├── ListaLugares.kt
-│   ├── MapaUbicacion.kt
-│   ├── MensajeError.kt
-│   ├── PantallaMapa.kt
-│   └── theme
-│
-├── util
-│   ├── Distancia.kt
-│   └── Formato.kt
-│
-├── viewmodel
-│   ├── CampusViewModelFactory.kt
-│   └── MapaViewmodel.kt
-│
-└── MainActivity.kt
-```
+**Archivos principales:** `viewmodel/MapaViewmodel.kt`, `ui/PantallaMapa.kt` y `ui/MapaUbicacion.kt`.
 
-## Arquitectura MVVM + Repository
+### Commit 13 — Radio de proximidad
 
-El proyecto está organizado por capas para separar la interfaz, la lógica y el acceso a los datos.
+Se incorporaron las opciones **Sin límite, 100 m, 200 m y 500 m** para consultar lugares según su distancia a la ubicación actual. El mapa dibuja un círculo que representa el radio elegido. Este filtro funciona junto con el filtro por categorías.
 
-```text
-             USUARIO
-                |
-                v
-        VIEW (Jetpack Compose)
-          PantallaMapa.kt
-          MapaUbicacion.kt
-          ListaLugares.kt
-          MensajeError.kt
-                |
-                v
-             VIEWMODEL
-          MapaViewModel
-                |
-                v
-           REPOSITORY
-       UbicacionRepository
-         LugaresRepository
-                |
-                v
-              DATOS
-     Google Play Services Location
-         Lugares locales
-```
+**Archivos principales:** `viewmodel/MapaViewmodel.kt`, `ui/PantallaMapa.kt` y `ui/MapaUbicacion.kt`.
 
-**View:** muestra el mapa, los botones, las tarjetas y los mensajes de error.
+### Commit 14 — Último lugar con DataStore
 
-**ViewModel:** administra los estados de la pantalla, calcula y ordena las distancias, identifica el lugar más cercano y controla la selección.
+Se agregó **Preferences DataStore** para guardar el último lugar seleccionado y recuperarlo al volver a abrir la aplicación. Se creó un repositorio de preferencias y se conectó con el ViewModel sin guardar datos directamente desde la interfaz.
 
-**Repository:** obtiene la ubicación del dispositivo y proporciona los lugares del campus.
+**Archivos principales:** `data/PreferenciasRepository.kt`, `viewmodel/MapaViewmodel.kt`, `viewmodel/CampusViewModelFactory.kt` y `MainActivity.kt`, además de los archivos de dependencias.
 
-**Model:** contiene las clases de datos y los estados utilizados por la aplicación.
+### Commit 15 — Rutas peatonales y detalles
 
-## Capturas de funcionamiento
+Se incorporó el cálculo de **rutas a pie mediante OSRM**, utilizando los datos de OpenStreetMap. La ruta se dibuja dentro del mapa con osmdroid. También se añadió un panel inferior con información del destino y las opciones **Cómo llegar** y **Limpiar ruta**.
 
-### 1. Permiso de ubicación
+**Archivos principales:** `data/RutaRepository.kt`, `model/EstadoRuta.kt`, `ui/DetalleLugarSheet.kt`, `ui/MapaUbicacion.kt`, `ui/PantallaMapa.kt` y `viewmodel/MapaViewmodel.kt`.
 
-Al pulsar el botón por primera vez, Android solicita autorización para acceder a la ubicación.
+### Commit 16 — Pantalla Inicio y navegación inferior
 
-![Solicitud de permiso](capturas/01-permiso.png)
+Se creó una pantalla Inicio con cuatro accesos rápidos: **Explorar el mapa, Rutas a pie, Lugares cercanos y Último lugar**. También se agregó una barra de navegación inferior para cambiar entre Inicio, Mapa y Último lugar. Se ajustó la barra superior y se ubicó la ayuda de rutas debajo del mapa.
 
-### 2. Ubicación actual
+**Archivos principales:** `ui/PantallaInicio.kt`, `ui/NavegacionCampus.kt`, `ui/PantallaMapa.kt` y `MainActivity.kt`.
 
-Después de conceder el permiso, la aplicación obtiene la ubicación y la representa en el mapa.
+### Commit 17 — Mejoras del mapa y ubicación del campus
 
-![Ubicación actual](capturas/02-ubicacion.png)
+Se ajustó el mapa al entorno de **TECSUP Santa Anita** y se actualizaron cinco lugares de referencia. También se mejoró la información sobre la llegada de las rutas, se agregó una **lista de lugares desplegable** y una opción para **ampliar el mapa**, ocultando temporalmente algunos controles.
 
-### 3. Marcadores del campus
+**Archivos principales:** `data/LugaresRepositoryLocal.kt`, `data/RutaRepository.kt`, `ui/MapaUbicacion.kt` y `ui/PantallaMapa.kt`.
 
-Se muestran los cinco lugares. El marcador verde identifica el más cercano, los azules representan los demás lugares y el rojo indica nuestra ubicación.
+### Commit 18 — Ilustración y mejoras de Inicio
 
-![Marcadores del campus](capturas/03-marcadores.png)
+Se incorporó una ilustración personalizada relacionada con el campus y la navegación GPS. Además, se redujo el tamaño del encabezado y se ajustaron los espacios de las tarjetas para aprovechar mejor la pantalla.
 
-### 4. Lista ordenada por distancia
+Durante esta etapa también se probó un ícono personalizado, pero se decidió descartarlo y mantener un ícono genérico de Android. Tampoco se añadió un Splash Screen personalizado.
 
-Los lugares aparecen ordenados desde el más cercano hasta el más lejano. Al seleccionar una tarjeta, el mapa se mueve hacia ese lugar.
+**Archivos principales:** `ui/PantallaInicio.kt` y `res/drawable/campus_ilustracion.png`.
 
-![Lista ordenada](capturas/04-lista.png)
+## Cómo se utilizó la IA
 
-### 5. Manejo de errores
+La IA se utilizó como apoyo para proponer cambios de diseño, organizar las mejoras y revisar implementaciones en Kotlin y Jetpack Compose. Cada propuesta se fue ajustando según cómo se veía y funcionaba la aplicación en Android Studio. No se aceptaron todas las ideas: algunas se corrigieron y otras, como el logo personalizado y el Splash Screen, se descartaron.
 
-Cuando se deniega el permiso o no se puede obtener la ubicación, la aplicación muestra un mensaje y una acción para solucionar el problema.
+Los prompts utilizados, las restricciones y las decisiones de cada etapa están registrados en el archivo [`PROMPTS.md`](PROMPTS.md).
 
-![Pantalla de error](capturas/05-error.png)
+## Organización de las mejoras
 
-## Respuestas: Para pensar
-
-### 1. ¿Por qué FusedLocationProviderClient está dentro del Repository y no en el ViewModel?
-
-Porque el Repository se encarga de obtener los datos. En este caso, utiliza FusedLocationProviderClient para consultar la ubicación del dispositivo.
-
-El ViewModel solo recibe el resultado y actualiza el estado de la pantalla. Así mantenemos separadas las responsabilidades y el código es más fácil de mantener.
-
-### 2. ¿Qué diferencia hay entre el permiso de ubicación y la clave de API de Maps? ¿Qué pasa si falta cada uno?
-
-El permiso de ubicación es la autorización que da el usuario para que la aplicación pueda acceder a su posición.
-
-La clave de API de Maps sirve para autorizar el uso de los servicios de Google Maps.
-
-Si el usuario no concede el permiso, no podemos obtener su ubicación. Si falta una clave válida en una aplicación que utiliza Google Maps, el mapa puede no cargarse correctamente.
-
-En nuestro proyecto utilizamos OpenStreetMap con osmdroid para mostrar el mapa, por lo que no dependemos de una clave de Google Maps para visualizarlo.
-
-### 3. ¿Por qué la clave va en local.properties y no en el código? ¿Qué harías si se subiera a GitHub por error?
-
-Porque una clave privada no debe quedar escrita directamente en el código ni publicarse en GitHub.
-
-El archivo local.properties permite mantener configuraciones locales fuera del repositorio.
-
-Si una clave se subiera por error, tendría que revocarla o restringirla, generar una nueva y revisar el historial del repositorio para evitar que siga expuesta.
-
-### 4. ¿Dónde calculas la distancia y por qué no en el Composable?
-
-La distancia se calcula en `util/Distancia.kt`, mediante la función `distanciaMetros()`, que utiliza `Location.distanceBetween()`.
-
-El ViewModel llama a esa función y ordena los lugares por distancia.
-
-No realizamos ese cálculo en el Composable porque la interfaz debe encargarse principalmente de mostrar los datos, no de procesarlos.
-
-### 5. ¿Qué pasa con tu app si el usuario niega el permiso dos veces? ¿Cómo lo manejas?
-
-La aplicación no se cierra. Si el permiso es denegado, mostramos un mensaje indicando que no podemos obtener la ubicación.
-
-También aparece el botón **Abrir ajustes**, que permite entrar a la configuración de CampusGPS para conceder el permiso manualmente.
-
-De esta manera, el usuario puede solucionar el problema sin que la aplicación falle.
+Para mantener el proyecto ordenado, las funciones se incorporaron por commits: primero el diseño, después los filtros y el radio, luego DataStore y las rutas, y finalmente la navegación y los ajustes visuales. Esto facilitó identificar qué se había cambiado en cada etapa y comprobar que las mejoras anteriores siguieran funcionando.
 
 ## Conclusiones
 
-1. Aprendí a obtener la ubicación del dispositivo y mostrarla en un mapa usando Kotlin y Jetpack Compose.
+1. En esta fase aprendí que la IA puede ayudar a mejorar una aplicación, pero igual es necesario revisar el código y probar los cambios en Android Studio para comprobar que funcionen como se espera.
 
-2. La arquitectura MVVM con Repository me permitió separar la interfaz de la lógica y organizar mejor el proyecto.
+2. Al agregar filtros, radios, DataStore y rutas peatonales entendí mejor cómo incorporar nuevas funciones sin mezclar toda la lógica con las pantallas, manteniendo la arquitectura MVVM + Repository.
 
-3. Implementar el cálculo de distancias, la selección de lugares y el manejo de errores ayudó a que la aplicación sea más completa y fácil de utilizar.
+3. También comprobé que una buena interfaz hace que las funciones sean más fáciles de encontrar. Con la pantalla Inicio, la navegación inferior, el mapa ampliado y la ilustración, CampusGPS quedó más organizado y cómodo de utilizar.
