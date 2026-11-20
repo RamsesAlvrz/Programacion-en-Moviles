@@ -4,9 +4,9 @@
 ## 1. Información del proyecto
 
 **Proyecto:** CentroTareasTec  
-**Laboratorio:** Hilos y corrutinas en Android  
+**Laboratorio:** Semana 14 - Programación en Móviles  
 **Fase:** 2 - Mejoras con inteligencia artificial  
-**Rama de trabajo:** `mejora-ia-tareas`  
+**Rama:** `mejora-ia-tareas`  
 **Herramienta de IA:** Gemini en Android Studio
 
 ### Tecnologías utilizadas
@@ -20,112 +20,141 @@
 - StateFlow
 - Git y GitHub
 
-## 2. Objetivo de la Fase 2
+## 2. Objetivo
 
-El objetivo de esta fase es mejorar la aplicación CentroTareasTec utilizando inteligencia artificial como apoyo durante el desarrollo.
+En esta fase se utilizó inteligencia artificial como
+apoyo para implementar nuevas funcionalidades en
+CentroTareasTec.
 
-Para ello, se plantearon nuevas funcionalidades relacionadas con el manejo de corrutinas, el control de tiempos y la recuperación de errores.
+Se trabajó en tres mejoras:
 
-Las propuestas deben revisarse antes de incorporarlas, comprobando que mantengan la arquitectura MVVM y que no afecten las funcionalidades desarrolladas en la Fase 1.
+1. Tiempo máximo de carga.
+2. Reintentos automáticos.
+3. Comparación de tiempos de ejecución.
+
+El objetivo fue mejorar el manejo de errores y
+el rendimiento de las cargas sin perder las
+funcionalidades desarrolladas en la Fase 1.
+
+Las propuestas de IA deben revisarse antes de
+incorporarlas al proyecto.
 
 ---
 
 # MEJORA 1: TIEMPO MÁXIMO DE CARGA
 
-## 3. Descripción de la mejora
+## 3. Funcionalidad
 
-Se implementó un límite opcional de 2 segundos para las operaciones de carga.
+Implementar un límite opcional de 2 segundos
+para las cargas secuenciales y paralelas,
+utilizando `withTimeout(2000L)`.
 
-Esta funcionalidad permite cancelar una operación cuando supera el tiempo establecido, evitando que el usuario espere indefinidamente.
-
-Para realizarlo se utilizó `withTimeout(2000L)`.
+Cuando la operación supera ese tiempo, se
+cancela y se muestra un mensaje de error.
 
 ## 4. Prompt 1 enviado a Gemini
 
 ### Rol
 
-Actúa como un desarrollador Android senior especializado en Kotlin, Jetpack Compose, arquitectura MVVM, Repository y corrutinas.
+Actúa como desarrollador Android senior
+especializado en Kotlin, Jetpack Compose,
+MVVM, Repository y corrutinas.
 
 ### Contexto
 
-Estoy desarrollando CentroTareasTec, ubicado en `Semana 14/CentroTareasTec`, dentro de la rama `mejora-ia-tareas`.
+Estoy desarrollando CentroTareasTec, ubicado
+en `Semana 14/CentroTareasTec`, dentro de la
+rama `mejora-ia-tareas`.
 
-La aplicación ya implementa cargas secuenciales y paralelas, manejo de errores, reintentos manuales, cálculo de números primos y tareas con progreso y cancelación.
+La aplicación ya implementa cargas
+secuenciales y paralelas, manejo de errores,
+reintentos manuales, cálculo de números
+primos y tareas con progreso y cancelación.
 
 ### Objetivo
 
-Implementa directamente en el proyecto una mejora que permita establecer un tiempo máximo de 2 segundos para las cargas simuladas.
+Implementa directamente en el proyecto
+una mejora que permita establecer un tiempo
+máximo de 2 segundos para las cargas.
 
-### Requerimientos funcionales
+### Requerimientos
 
-1. Agregar un interruptor llamado "Límite de tiempo".
-2. Utilizar `withTimeout(2000L)` cuando el límite esté activado.
-3. Cancelar correctamente la operación cuando supere los 2 segundos.
-4. Mostrar el mensaje "Tiempo máximo superado. La carga tardó más de 2 segundos".
-5. Cuando el límite esté desactivado, conservar el funcionamiento original de las cargas.
-6. Mantener la simulación de errores y el botón Reintentar.
-7. Evitar que se ejecuten dos cargas simultáneamente.
-8. Conservar las funcionalidades desarrolladas en la Fase 1.
+1. Agrega un interruptor "Límite de tiempo".
+2. Utiliza `withTimeout(2000L)` cuando esté activo.
+3. Cancela la operación si supera 2 segundos.
+4. Muestra un mensaje indicando que se superó
+   el tiempo máximo.
+5. Mantén el funcionamiento original cuando
+   el límite esté desactivado.
+6. Conserva la simulación de errores.
+7. Conserva el botón de reintento manual.
+8. Evita ejecutar dos cargas simultáneamente.
+9. No elimines funcionalidades anteriores.
 
-### Requerimientos de interfaz
+### Interfaz
 
-Mejora la presentación visual utilizando Material Design 3 y Jetpack Compose.
+Mejora el diseño utilizando Material Design 3.
 
-La interfaz debe incluir:
-
-- Encabezado azul.
-- Tarjetas con bordes redondeados.
-- Controles organizados.
-- Indicador de carga.
-- Mensajes visuales de éxito y error.
-- Diseño limpio y profesional.
+Incluye un encabezado azul, tarjetas con
+bordes redondeados, controles organizados,
+indicadores de carga y mensajes de resultado.
 
 ### Archivos permitidos
 
 - `viewmodel/TareasViewModel.kt`
 - `ui/PantallaTareas.kt`
 
-### Restricciones técnicas
+### Restricciones
 
-- Mantener la arquitectura MVVM + Repository.
+- Mantener MVVM + Repository.
 - Utilizar `viewModelScope`.
 - Utilizar corrutinas estructuradas.
-- Manejar correctamente `TimeoutCancellationException`.
-- Propagar las cancelaciones que no correspondan al tiempo máximo.
-- No utilizar `GlobalScope`, `runBlocking` ni `Thread.sleep`.
+- Manejar `TimeoutCancellationException`.
+- Propagar correctamente otras cancelaciones.
+- No utilizar `GlobalScope`.
+- No utilizar `runBlocking`.
+- No utilizar `Thread.sleep`.
 - No bloquear el hilo principal.
-- No eliminar funcionalidades existentes.
 - No realizar commits automáticamente.
 
-### Instrucciones para el agente
+### Instrucciones al agente
 
-1. Inspecciona los archivos actuales.
-2. Aplica directamente las modificaciones.
-3. Verifica los imports y las referencias.
-4. Comprueba la compilación si tienes acceso a ella.
-5. Explica los cambios realizados y las pruebas necesarias.
+Inspecciona los archivos existentes y
+aplica directamente las modificaciones.
 
-## 5. Respuesta de Gemini - Mejora 1
+Verifica los imports, conserva las funciones
+anteriores y comprueba la compilación si
+tienes acceso a ella.
 
-**Registro de respuesta:**
+Al finalizar, explica los cambios realizados
+y las pruebas recomendadas.
 
-Pendiente de completar con la respuesta real obtenida en Gemini.
+## 5. Respuesta de Gemini
 
-## 6. Cambios implementados
+**Pendiente:** Agregar un resumen de la
+respuesta real obtenida en Gemini.
+
+## 6. Cambios realizados
 
 ### TareasViewModel.kt
 
-Se incorporó un estado para activar o desactivar el límite de tiempo.
+Se agregó un estado `limiteActivo` mediante
+StateFlow para controlar el límite de tiempo.
 
-También se utilizó `withTimeout(2000L)` para controlar la duración de las cargas.
+Se utilizó `withTimeout(2000L)` para limitar
+la duración de las operaciones.
 
-Cuando se supera el tiempo permitido, la aplicación muestra un estado de error.
+También se agregó el manejo de
+`TimeoutCancellationException` para mostrar
+un error cuando se supera el tiempo permitido.
 
 ### PantallaTareas.kt
 
-Se agregó el interruptor "Límite de tiempo".
+Se agregó un interruptor para activar
+o desactivar el límite de tiempo.
 
-Además, se mejoró la presentación utilizando componentes Material 3, tarjetas para los resultados e indicadores visuales.
+También se mejoró el diseño de la pantalla
+con componentes Material 3.
 
 ### Archivos modificados
 
@@ -134,92 +163,288 @@ Además, se mejoró la presentación utilizando componentes Material 3, tarjetas
 
 ## 7. Revisión y decisiones tomadas
 
-Se decidió que el límite de tiempo fuera opcional para conservar las pruebas originales de las cargas secuenciales y paralelas.
+Se decidió que el límite de tiempo fuera
+opcional para poder seguir comparando las
+cargas secuenciales y paralelas.
 
-También se mantuvo el uso de `viewModelScope`, de manera que las corrutinas estén relacionadas con el ciclo de vida del ViewModel.
+Se mantuvo `viewModelScope` para que las
+operaciones respeten el ciclo de vida
+del ViewModel.
 
-Se evitó utilizar operaciones que bloquearan el hilo principal.
+Se evitó bloquear el hilo principal.
 
-## 8. Pruebas de la Mejora 1
+## 8. Pruebas
 
 | Prueba | Resultado esperado |
 |---|---|
-| Límite desactivado + Una por una | Carga exitosa en aproximadamente 5 segundos |
-| Límite desactivado + A la vez | Carga exitosa en aproximadamente 3 segundos |
-| Límite activado | Mensaje de tiempo máximo superado |
-| Desactivar límite y reintentar | La operación puede completarse |
-| Revisar interfaz | La pantalla permanece operativa |
+| Límite desactivado y carga secuencial | Aproximadamente 5 segundos |
+| Límite desactivado y carga paralela | Aproximadamente 3 segundos |
+| Límite activado | Error después de 2 segundos |
+| Desactivar límite y reintentar | Carga exitosa |
+| Interfaz durante la carga | Continúa respondiendo |
 
-**Resultado real:** Registrar los resultados observados durante la ejecución.
+**Resultado real:** Pendiente de registrar
+según las pruebas ejecutadas.
 
-## 9. Commit de la Mejora 1
+## 9. Commit
 
-`feat: agrega tiempo maximo de carga con withTimeout`
+`7254070 - Agrega tiempo maximo de carga con withTimeout`
 
 ---
 
 # MEJORA 2: REINTENTO AUTOMÁTICO
 
-## 10. Descripción de la mejora
+## 10. Funcionalidad
 
-Se incorporó un sistema de reintentos automáticos para las operaciones que presentan errores.
+Implementar un sistema de reintentos
+automáticos cuando una carga presenta errores.
 
-Cuando la funcionalidad está activada, la aplicación puede realizar hasta 3 intentos en total.
+La aplicación realiza un máximo de
+3 intentos en total.
 
-Entre los intentos se utiliza una espera progresiva:
+Entre los intentos se utilizan esperas
+progresivas:
 
-- Primer intento: ejecución inicial.
-- Segundo intento: espera previa de 1 segundo.
-- Tercer intento: espera previa de 2 segundos.
-
-La finalidad es permitir que la aplicación intente recuperarse de un error sin que el usuario tenga que presionar manualmente el botón Reintentar.
+- Intento 1: ejecución inicial.
+- Intento 2: espera previa de 1 segundo.
+- Intento 3: espera previa de 2 segundos.
 
 ## 11. Prompt 2 enviado a Gemini
 
 ### Rol
 
-Actúa como un desarrollador Android senior especializado en Kotlin, Jetpack Compose, corrutinas y arquitectura MVVM.
+Actúa como desarrollador Android senior
+especializado en Kotlin, Jetpack Compose,
+corrutinas y arquitectura MVVM.
 
 ### Contexto
 
-Estoy trabajando en el proyecto CentroTareasTec, ubicado en `Semana 14/CentroTareasTec`, dentro de la rama `mejora-ia-tareas`.
+Estoy trabajando en CentroTareasTec,
+ubicado en `Semana 14/CentroTareasTec`,
+dentro de la rama `mejora-ia-tareas`.
 
-La aplicación ya cuenta con cargas secuenciales y paralelas, manejo de errores, reintentos manuales y un límite opcional de 2 segundos implementado con `withTimeout`.
+El proyecto ya tiene cargas secuenciales,
+paralelas, manejo de errores, reintentos
+manuales y un límite opcional de 2 segundos.
 
 ### Objetivo
 
-Implementa directamente en el proyecto un sistema de reintento automático para las cargas simuladas.
+Implementa directamente en el proyecto
+un sistema de reintentos automáticos
+para las cargas simuladas.
 
-La mejora debe conservar todas las funcionalidades existentes.
+### Requerimientos
+
+1. Agrega un interruptor "Reintento automático".
+2. Debe estar desactivado inicialmente.
+3. Permite hasta 3 intentos en total.
+4. Espera 1 segundo antes del segundo intento.
+5. Espera 2 segundos antes del tercer intento.
+6. Muestra el intento actual en pantalla.
+7. Si la operación funciona, detén los reintentos.
+8. Si fallan los 3 intentos, muestra un error.
+9. Conserva el reintento manual.
+10. Mantén el límite de tiempo anterior.
+11. No reintentes automáticamente los errores
+    por tiempo máximo.
+12. Conserva las cargas secuenciales y paralelas.
+13. Mantén la simulación de errores.
+14. No elimines funciones de la Fase 1.
+
+### Interfaz
+
+Conserva el diseño profesional Material 3.
+
+Agrega una sección que muestre:
+
+- Estado de los intentos.
+- Número de intento actual.
+- Tiempo de espera antes del siguiente.
+- Resultado final.
+- Mensaje de error.
+
+### Archivos permitidos
+
+- `viewmodel/TareasViewModel.kt`
+- `ui/PantallaTareas.kt`
+
+### Restricciones
+
+- Mantener MVVM + Repository.
+- Utilizar `viewModelScope`.
+- Utilizar `StateFlow`.
+- Utilizar `delay()` para las esperas.
+- No utilizar `GlobalScope`.
+- No utilizar `runBlocking`.
+- No utilizar `Thread.sleep`.
+- No bloquear el hilo principal.
+- No tratar `CancellationException` como
+  un error recuperable.
+- Evitar cargas simultáneas.
+- No realizar commits automáticamente.
+
+### Instrucciones al agente
+
+Revisa el código actual e implementa
+directamente los reintentos automáticos.
+
+Conserva las funcionalidades anteriores,
+actualiza la interfaz y comprueba que
+el límite de tiempo siga funcionando.
+
+Revisa los imports y verifica la
+compilación si tienes acceso a ella.
+
+Al finalizar, explica qué modificaste.
+
+## 12. Respuesta de Gemini
+
+**Pendiente:** Agregar un resumen de la
+respuesta real obtenida en Gemini.
+
+## 13. Cambios realizados
+
+### TareasViewModel.kt
+
+Se agregaron los estados:
+
+- `reintentoAutomatico`
+- `intentoActual`
+- `mensajeReintento`
+
+Estos estados permiten controlar los
+reintentos y mostrar su progreso.
+
+También se modificó la ejecución de cargas
+para permitir hasta 3 intentos.
+
+Se utilizó `delay()` para implementar
+esperas progresivas sin bloquear la interfaz.
+
+### PantallaTareas.kt
+
+Se agregó el interruptor
+"Reintento automático".
+
+También se incorporó una sección que
+muestra el estado de los intentos.
+
+Se mantuvieron las tarjetas y los
+controles de la mejora anterior.
+
+### Archivos modificados
+
+- `TareasViewModel.kt`
+- `PantallaTareas.kt`
+
+## 14. Revisión y decisiones tomadas
+
+Se estableció un máximo de 3 intentos
+para evitar repeticiones indefinidas.
+
+Se utilizaron esperas progresivas
+para separar los intentos.
+
+Se decidió no reintentar automáticamente
+cuando se supera el límite de tiempo.
+
+Se mantuvo la arquitectura MVVM
+y el uso de corrutinas estructuradas.
+
+## 15. Pruebas
+
+| Prueba | Resultado esperado |
+|---|---|
+| Reintento desactivado | Un solo intento |
+| Error simulado y reintento activo | Tres intentos |
+| Esperas progresivas | 1 y 2 segundos |
+| Estado visual | Muestra el intento actual |
+| Tres intentos fallidos | Error definitivo |
+| Límite de tiempo activo | No realiza reintentos adicionales |
+| Carga normal | Operación exitosa |
+
+**Resultado real:** Pendiente de registrar
+según las pruebas ejecutadas.
+
+## 16. Commit
+
+`a6a3e6c - Implementa reintentos automaticos con espera progresiva`
+
+---
+
+# MEJORA 3: COMPARACIÓN DE TIEMPOS
+
+## 17. Funcionalidad
+
+Implementar una comparación de rendimiento
+entre las cargas secuenciales y paralelas.
+
+La aplicación debe medir los tiempos reales
+de ambas modalidades y mostrar:
+
+- Tabla de tiempos.
+- Barras comparativas.
+- Modalidad más rápida.
+- Diferencia de tiempo.
+- Porcentaje de ahorro.
+
+## 18. Prompt 3 enviado a Gemini
+
+### Rol
+
+Actúa como desarrollador Android senior
+especializado en Kotlin, Jetpack Compose,
+Material 3, MVVM, Repository y corrutinas.
+
+### Contexto
+
+Estoy desarrollando CentroTareasTec,
+ubicado en `Semana 14/CentroTareasTec`,
+dentro de la rama `mejora-ia-tareas`.
+
+El proyecto ya implementa cargas secuenciales
+y paralelas, un límite opcional de 2 segundos,
+reintentos automáticos con esperas progresivas
+y manejo de errores.
+
+### Objetivo
+
+Implementa directamente en el proyecto
+una tercera mejora que permita comparar
+los tiempos de ejecución de las cargas
+secuenciales y paralelas.
 
 ### Requerimientos funcionales
 
-1. Agregar un interruptor llamado "Reintento automático".
-2. Mantenerlo desactivado inicialmente.
-3. Cuando esté activado y ocurra un error, realizar hasta 3 intentos en total.
-4. Esperar 1 segundo antes del segundo intento.
-5. Esperar 2 segundos antes del tercer intento.
-6. Mostrar el intento actual en la interfaz.
-7. Si una operación funciona, detener los reintentos y mostrar el resultado.
-8. Si fallan los 3 intentos, mostrar un mensaje de error.
-9. Conservar el botón de reintento manual.
-10. Mantener el límite de tiempo de la mejora anterior.
-11. No reintentar automáticamente los errores por tiempo máximo.
-12. Conservar las cargas secuenciales y paralelas.
-13. Mantener la simulación de errores.
-14. No eliminar las funcionalidades de la Fase 1.
+1. Registra los tiempos reales de las cargas.
+2. Agrega un botón "Comparar tiempos".
+3. Ejecuta ambas modalidades para medirlas.
+4. Muestra una tabla con los tiempos en ms.
+5. Calcula la diferencia entre los tiempos.
+6. Calcula el porcentaje de ahorro.
+7. Identifica la modalidad más rápida.
+8. Agrega barras comparativas en Compose.
+9. No utilices tiempos fijos o inventados.
+10. No muestres resultados válidos si
+    alguna de las operaciones falla.
+11. Evita ejecutar varias cargas simultáneamente.
+12. Mantén las funcionalidades anteriores.
 
 ### Requerimientos de interfaz
 
-Mantener el diseño profesional implementado anteriormente.
+Mantén el diseño profesional Material 3.
 
-Agregar una sección visual para mostrar:
+Agrega una tarjeta llamada
+"Comparación de rendimiento".
 
-- Estado del intento.
-- Número de intento actual.
-- Mensaje de espera antes del siguiente intento.
-- Resultado final de la operación.
-- Mensaje de error cuando se agoten los intentos.
+Debe incluir:
+
+- Botón para iniciar la comparación.
+- Indicador de procesamiento.
+- Tabla con tiempos.
+- Barras de comparación.
+- Resultado del análisis.
+- Porcentaje de ahorro.
 
 ### Archivos permitidos
 
@@ -230,133 +455,160 @@ Agregar una sección visual para mostrar:
 
 - Mantener MVVM + Repository.
 - Utilizar `viewModelScope`.
-- Utilizar `delay()` para las esperas.
+- Utilizar `StateFlow`.
 - Utilizar corrutinas estructuradas.
-- No utilizar `GlobalScope`.
-- No utilizar `runBlocking`.
+- Medir tiempos con `SystemClock.elapsedRealtime()`.
 - No utilizar `Thread.sleep`.
+- No utilizar `runBlocking`.
+- No utilizar `GlobalScope`.
 - No bloquear el hilo principal.
-- No tratar `CancellationException` como un error recuperable.
-- Evitar que se ejecuten varias cargas simultáneamente.
+- Propagar correctamente `CancellationException`.
+- Respetar el límite de tiempo.
+- Respetar los reintentos automáticos.
 - No modificar otros laboratorios.
-- No cambiar de rama ni realizar commits.
+- No realizar commits automáticamente.
 
-### Instrucciones para el agente
+### Instrucciones al agente
 
-1. Revisa la implementación actual del ViewModel y la pantalla.
-2. Implementa el reintento automático sin eliminar el código anterior.
-3. Agrega los estados necesarios utilizando StateFlow.
-4. Actualiza la interfaz para mostrar el avance de los intentos.
-5. Comprueba que el límite de tiempo siga funcionando.
-6. Revisa los imports y corrige posibles errores.
-7. Ejecuta la compilación si tienes acceso.
-8. Explica los cambios realizados y las pruebas recomendadas.
+Inspecciona los archivos actuales y
+aplica directamente las modificaciones.
+
+Conserva el diseño profesional y las
+funcionalidades existentes.
+
+Verifica los imports y la compilación
+si tienes acceso a ella.
+
+Al terminar, explica los cambios
+realizados y las pruebas recomendadas.
 
 ### Criterios de aceptación
 
-- Sin reintento automático, la carga funciona como antes.
-- Con error simulado y reintento automático, se realizan 3 intentos.
-- Se muestra el número de intento.
-- Las esperas son de 1 y 2 segundos.
-- Al agotarse los intentos aparece un error.
-- El límite de tiempo funciona de forma independiente.
-- La interfaz permanece operativa.
+1. La comparación presenta tiempos reales.
+2. La tabla muestra ambas modalidades.
+3. Las barras representan los tiempos medidos.
+4. Se identifica la modalidad más rápida.
+5. El porcentaje se calcula correctamente.
+6. Los errores no producen resultados falsos.
+7. La interfaz continúa respondiendo.
+8. Las mejoras anteriores siguen funcionando.
 
-## 12. Respuesta de Gemini - Mejora 2
+## 19. Respuesta de Gemini
 
-**Registro de respuesta:**
+**Pendiente:** Agregar un resumen de la
+respuesta real obtenida en Gemini.
 
-Pendiente de completar con la respuesta real obtenida en Gemini.
-
-## 13. Cambios implementados
+## 20. Cambios propuestos
 
 ### TareasViewModel.kt
 
-Se agregaron nuevos estados utilizando `MutableStateFlow` y `StateFlow`:
+Se propone agregar `ComparacionTiempos`
+para almacenar las duraciones de ambas cargas.
 
-- `reintentoAutomatico`: controla si los reintentos están activados.
-- `intentoActual`: almacena el número del intento.
-- `mensajeReintento`: muestra información sobre el proceso.
+También se incorpora `compararTiempos()`,
+que ejecuta las dos modalidades y mide
+sus tiempos reales utilizando
+`SystemClock.elapsedRealtime()`.
 
-También se modificó la ejecución de cargas para permitir hasta 3 intentos.
-
-Se utilizó `delay()` para establecer las esperas progresivas sin bloquear el hilo principal.
-
-Los errores por tiempo máximo se manejan por separado para evitar reintentos innecesarios.
+Los resultados se exponen mediante StateFlow.
 
 ### PantallaTareas.kt
 
-Se agregó un interruptor para activar el reintento automático.
+Se propone agregar una tarjeta
+"Comparación de rendimiento" con:
 
-También se incorporó una sección que muestra el estado de los intentos, utilizando colores y mensajes informativos.
+- Botón "Comparar tiempos".
+- Indicador de procesamiento.
+- Tabla de tiempos.
+- Barras comparativas.
+- Resultado del análisis.
+- Porcentaje de ahorro.
 
-Se mantuvieron las tarjetas de resultados, los botones de carga y el diseño de la mejora anterior.
-
-### Archivos modificados
+### Archivos por modificar
 
 - `TareasViewModel.kt`
 - `PantallaTareas.kt`
 
-## 14. Revisión y decisiones tomadas
+## 21. Revisión y decisiones técnicas
 
-Se decidió utilizar un máximo de 3 intentos para evitar que la aplicación repita indefinidamente una operación fallida.
+Se decidió medir los tiempos reales
+en lugar de utilizar valores fijos.
 
-Las esperas progresivas permiten dejar un intervalo entre intentos sin bloquear la interfaz.
+La comparación ejecuta primero la carga
+secuencial y después la paralela.
 
-También se decidió que los errores por tiempo máximo no generen nuevos intentos, porque esto podría aumentar innecesariamente el tiempo de espera.
+Se mantienen las corrutinas estructuradas
+para evitar bloquear el hilo principal.
 
-Se conservaron las funcionalidades de la Fase 1 y la mejora de tiempo máximo.
+Si alguna operación falla, no se debe
+mostrar una comparación exitosa.
 
-## 15. Pruebas de la Mejora 2
+También se conserva el límite de tiempo
+y el sistema de reintentos automáticos.
+
+## 22. Pruebas de la Mejora 3
 
 | Prueba | Resultado esperado |
 |---|---|
-| Reintento automático desactivado | Se ejecuta un solo intento |
-| Reintento automático activado + error simulado | Se realizan 3 intentos |
-| Espera entre intentos | Se esperan 1 y 2 segundos |
-| Visualización de intentos | Aparece el número del intento actual |
-| Tres intentos fallidos | Se muestra el error definitivo |
-| Límite de tiempo activado | Se interrumpe la carga sin reintentos adicionales |
-| Carga sin errores | La operación termina correctamente |
+| Comparación normal | Tabla con dos tiempos |
+| Carga secuencial | Aproximadamente 5 segundos |
+| Carga paralela | Aproximadamente 3 segundos |
+| Barras comparativas | Representan los tiempos medidos |
+| Modalidad más rápida | Se identifica correctamente |
+| Porcentaje de ahorro | Se calcula automáticamente |
+| Error simulado | No muestra comparación exitosa |
+| Límite de tiempo activo | Interrumpe la comparación |
+| Interfaz | Permanece operativa |
 
-**Resultado real:** Registrar los resultados observados durante la ejecución.
+**Resultado real:** Pendiente de registrar
+después de ejecutar la aplicación.
 
-## 16. Commit de la Mejora 2
+## 23. Commit previsto
 
-`feat: implementa reintentos automaticos con espera progresiva`
+`feat: agrega comparacion visual de tiempos de carga`
+
+**Estado:** Pendiente de compilación,
+verificación y commit.
 
 ---
 
-# 17. Revisión general del código
+# 24. Revisión general de las propuestas de IA
 
-Durante el desarrollo se deben revisar las propuestas de la inteligencia artificial antes de incorporarlas.
+Durante la Fase 2 se revisaron las mejoras
+propuestas para mantener la organización
+y el funcionamiento del proyecto.
 
-Los aspectos principales son:
+Los principales criterios fueron:
 
-1. Mantener la arquitectura MVVM + Repository.
-2. Evitar operaciones que bloqueen el hilo principal.
+1. Conservar la arquitectura MVVM + Repository.
+2. Mantener las funciones de la Fase 1.
 3. Utilizar corrutinas estructuradas.
-4. Respetar el ciclo de vida del ViewModel.
-5. Manejar correctamente los errores y las cancelaciones.
-6. Conservar las funcionalidades anteriores.
-7. Verificar el comportamiento de cada mejora antes de realizar el commit.
+4. Evitar operaciones bloqueantes.
+5. Manejar correctamente las cancelaciones.
+6. Evitar cargas simultáneas.
+7. No agregar dependencias innecesarias.
+8. Probar cada mejora antes del commit.
+9. Mantener los cambios separados en Git.
 
----
+## 25. Resumen de commits
 
-# 18. Próxima mejora
+| Mejora | Commit | Estado |
+|---|---|---|
+| Tiempo máximo | `7254070` | Registrado |
+| Reintento automático | `a6a3e6c` | Registrado |
+| Comparación de tiempos | Pendiente | Por verificar |
 
-## Mejora 3: Comparación de tiempos
+## 26. Conclusiones
 
-La siguiente mejora consistirá en mostrar una comparación visual entre los tiempos de ejecución de las cargas secuenciales y paralelas.
+1. La inteligencia artificial ayudó a plantear
+   mejoras para el proyecto, pero sus propuestas
+   deben revisarse y probarse antes de incorporarlas.
 
-Esta sección se completará cuando se implemente y pruebe la funcionalidad.
+2. El uso de `withTimeout` y `delay` permite
+   controlar los tiempos de ejecución y manejar
+   errores sin bloquear la interfaz principal.
 
----
-
-# 19. Conclusiones
-
-1. El uso de inteligencia artificial puede ayudar a proponer nuevas funcionalidades y organizar los cambios del proyecto, pero es necesario revisar el código antes de incorporarlo.
-
-2. El control del tiempo máximo y los reintentos automáticos permiten mejorar el manejo de operaciones que tardan demasiado o presentan errores.
-
-3. Mantener la arquitectura MVVM y utilizar correctamente las corrutinas ayuda a desarrollar una aplicación más organizada y con una interfaz que continúa respondiendo durante las tareas.
+3. La comparación de tiempos permite demostrar
+   las diferencias entre ejecutar tareas de forma
+   secuencial y paralela, aplicando los conceptos
+   de corrutinas desarrollados en el laboratorio.

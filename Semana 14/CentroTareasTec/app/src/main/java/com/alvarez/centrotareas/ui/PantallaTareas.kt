@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,7 +33,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.alvarez.centrotareas.model.CargaUi
+import com.alvarez.centrotareas.viewmodel.ComparacionTiempos
 import com.alvarez.centrotareas.viewmodel.TareasViewModel
+import java.util.Locale
 
 private val Azul = Color(0xFF176B9A)
 private val Fondo = Color(0xFFF3F6FA)
@@ -50,8 +53,11 @@ fun PantallaTareas(viewModel: TareasViewModel) {
     val reintentoAutomatico by viewModel.reintentoAutomatico.collectAsState()
     val intentoActual by viewModel.intentoActual.collectAsState()
     val mensajeReintento by viewModel.mensajeReintento.collectAsState()
+    val comparando by viewModel.comparando.collectAsState()
+    val comparacion by viewModel.comparacion.collectAsState()
+    val mensajeComparacion by viewModel.mensajeComparacion.collectAsState()
 
-    val cargando = carga is CargaUi.Cargando
+    val ocupado = carga is CargaUi.Cargando || comparando
 
     Scaffold(
         containerColor = Fondo,
@@ -60,12 +66,12 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                 title = {
                     Column {
                         Text(
-                            text = "CentroTareas Tec",
+                            "CentroTareas Tec",
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Panel de operaciones",
+                            "Panel de operaciones",
                             color = Color.White.copy(alpha = 0.8f),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -88,29 +94,27 @@ fun PantallaTareas(viewModel: TareasViewModel) {
         ) {
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Azul),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                modifier = Modifier.fillMaxWidth()
+                colors = CardDefaults.cardColors(containerColor = Azul)
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "CENTRO DE CONTROL",
+                        "CENTRO DE CONTROL",
                         color = Color.White.copy(alpha = 0.75f),
                         style = MaterialTheme.typography.labelMedium
                     )
-
                     Text(
-                        text = "Gestión inteligente de tareas",
+                        "Gestión inteligente de tareas",
                         color = Color.White,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
-
                     Text(
-                        text = "Supervisa tus operaciones y recupera cargas fallidas.",
+                        "Controla cargas, recupera errores y compara rendimiento.",
                         color = Color.White.copy(alpha = 0.9f),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -120,9 +124,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(2.dp)
             ) {
                 Column(
@@ -130,97 +132,46 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
-                        text = "Configuración",
+                        "Configuración",
                         color = Azul,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Límite de tiempo",
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = "Cancelar después de 2 segundos",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
-                            )
-                        }
-
-                        Switch(
-                            checked = limiteActivo,
-                            onCheckedChange = viewModel::cambiarLimiteActivo,
-                            enabled = !cargando
-                        )
-                    }
+                    FilaConfiguracion(
+                        titulo = "Límite de tiempo",
+                        descripcion = "Cancelar después de 2 segundos",
+                        activo = limiteActivo,
+                        habilitado = !ocupado,
+                        cambiar = viewModel::cambiarLimiteActivo
+                    )
 
                     HorizontalDivider()
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Simular error",
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = "Probar fallos de conexión",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
-                            )
-                        }
-
-                        Switch(
-                            checked = simularError,
-                            onCheckedChange = viewModel::cambiarSimularError,
-                            enabled = !cargando
-                        )
-                    }
+                    FilaConfiguracion(
+                        titulo = "Simular error",
+                        descripcion = "Probar fallos de conexión",
+                        activo = simularError,
+                        habilitado = !ocupado,
+                        cambiar = viewModel::cambiarSimularError
+                    )
 
                     HorizontalDivider()
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Reintento automático",
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = "Hasta 3 intentos con espera progresiva",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
-                            )
-                        }
-
-                        Switch(
-                            checked = reintentoAutomatico,
-                            onCheckedChange =
-                                viewModel::cambiarReintentoAutomatico,
-                            enabled = !cargando
-                        )
-                    }
+                    FilaConfiguracion(
+                        titulo = "Reintento automático",
+                        descripcion = "Hasta 3 intentos con espera progresiva",
+                        activo = reintentoAutomatico,
+                        habilitado = !ocupado,
+                        cambiar = viewModel::cambiarReintentoAutomatico
+                    )
                 }
             }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(2.dp)
             ) {
                 Column(
@@ -228,16 +179,16 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
-                        text = "Ejecución de cargas",
+                        "Ejecución de cargas",
                         color = Azul,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
                     Text(
-                        text = "Selecciona cómo procesar el perfil y los pedidos.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        "Selecciona cómo procesar el perfil y los pedidos.",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodySmall
                     )
 
                     Row(
@@ -246,7 +197,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                     ) {
                         OutlinedButton(
                             onClick = viewModel::cargarSecuencial,
-                            enabled = !cargando,
+                            enabled = !ocupado,
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Una por una")
@@ -254,7 +205,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
 
                         Button(
                             onClick = viewModel::cargarParalelo,
-                            enabled = !cargando,
+                            enabled = !ocupado,
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Azul
@@ -276,21 +227,20 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "ESTADO DE INTENTOS",
+                                "ESTADO DE INTENTOS",
                                 color = Naranja,
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.labelMedium
                             )
 
                             Text(
-                                text = mensajeReintento,
-                                color = Naranja,
-                                style = MaterialTheme.typography.bodyMedium
+                                mensajeReintento,
+                                color = Naranja
                             )
 
                             if (reintentoAutomatico && intentoActual > 0) {
                                 Text(
-                                    text = "Intento $intentoActual de 3",
+                                    "Intento $intentoActual de 3",
                                     color = Naranja,
                                     style = MaterialTheme.typography.bodySmall
                                 )
@@ -301,7 +251,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                     when (val estado = carga) {
                         CargaUi.Inicial -> {
                             Text(
-                                text = "Listo para iniciar una operación.",
+                                "Listo para iniciar una operación.",
                                 color = Color.Gray
                             )
                         }
@@ -314,9 +264,8 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                             ) {
                                 CircularProgressIndicator(color = Azul)
                                 Text(
-                                    text = "Procesando información...",
-                                    color = Azul,
-                                    fontWeight = FontWeight.Medium
+                                    "Procesando información...",
+                                    color = Azul
                                 )
                             }
                         }
@@ -333,15 +282,14 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = "OPERACIÓN COMPLETADA",
+                                    "OPERACIÓN COMPLETADA",
                                     color = Verde,
                                     fontWeight = FontWeight.Bold
                                 )
-
                                 Text("Modo: ${estado.modo}")
                                 Text("Perfil: ${estado.perfil}")
                                 Text("Pedidos: ${estado.pedidos}")
-                                Text("Duración total: ${estado.milisegundos} ms")
+                                Text("Duración: ${estado.milisegundos} ms")
                             }
                         }
 
@@ -357,13 +305,13 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
-                                    text = "OPERACIÓN INTERRUMPIDA",
+                                    "OPERACIÓN INTERRUMPIDA",
                                     color = Rojo,
                                     fontWeight = FontWeight.Bold
                                 )
 
                                 Text(
-                                    text = estado.mensaje.replace(
+                                    estado.mensaje.replace(
                                         "Sin conexion",
                                         "Sin conexión"
                                     ),
@@ -371,7 +319,8 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                                 )
 
                                 OutlinedButton(
-                                    onClick = viewModel::reintentarCarga
+                                    onClick = viewModel::reintentarCarga,
+                                    enabled = !ocupado
                                 ) {
                                     Text("Reintentar operación")
                                 }
@@ -381,12 +330,255 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                 }
             }
 
+            // NUEVA TARJETA: MEJORA 3
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        "Comparación de rendimiento",
+                        color = Azul,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        "Mide cuánto tarda cada modalidad y descubre cuál es más rápida.",
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Button(
+                        onClick = viewModel::compararTiempos,
+                        enabled = !ocupado,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Azul
+                        )
+                    ) {
+                        Text("Comparar tiempos")
+                    }
+
+                    if (comparando) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.height(26.dp),
+                                color = Azul,
+                                strokeWidth = 3.dp
+                            )
+                            Text(
+                                mensajeComparacion,
+                                color = Azul
+                            )
+                        }
+                    } else {
+                        Text(
+                            mensajeComparacion,
+                            color = if (comparacion == null &&
+                                mensajeComparacion.startsWith("No se pudo")
+                            ) Rojo else Color.Gray,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    comparacion?.let { resultado ->
+                        HorizontalDivider()
+
+                        TablaComparacion(resultado)
+
+                        HorizontalDivider()
+
+                        BarrasComparacion(resultado)
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    Color(0xFFE7F6EE),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                "RESULTADO DEL ANÁLISIS",
+                                color = Verde,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                "Más rápido: ${resultado.masRapido}",
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            Text(
+                                "Diferencia: ${resultado.diferenciaMs} ms"
+                            )
+
+                            Text(
+                                "Ahorro: ${
+                                    String.format(
+                                        Locale.US,
+                                        "%.1f",
+                                        resultado.ahorroPorcentaje
+                                    )
+                                }%"
+                            )
+                        }
+                    }
+                }
+            }
+
             Text(
-                text = "CentroTareasTec · Fase 2 · Mejora con IA",
+                "CentroTareasTec · Fase 2 · Mejora con IA",
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray
             )
         }
+    }
+}
+
+@Composable
+private fun FilaConfiguracion(
+    titulo: String,
+    descripcion: String,
+    activo: Boolean,
+    habilitado: Boolean,
+    cambiar: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                titulo,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                descripcion,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+        }
+
+        Switch(
+            checked = activo,
+            onCheckedChange = cambiar,
+            enabled = habilitado
+        )
+    }
+}
+
+@Composable
+private fun TablaComparacion(resultado: ComparacionTiempos) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            "TABLA DE TIEMPOS",
+            color = Azul,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Modalidad", fontWeight = FontWeight.Bold)
+            Text("Tiempo", fontWeight = FontWeight.Bold)
+        }
+
+        HorizontalDivider()
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Una por una")
+            Text("${resultado.secuencialMs} ms")
+        }
+
+        HorizontalDivider()
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("A la vez")
+            Text("${resultado.paraleloMs} ms")
+        }
+    }
+}
+
+@Composable
+private fun BarrasComparacion(resultado: ComparacionTiempos) {
+    val maximo = maxOf(
+        resultado.secuencialMs,
+        resultado.paraleloMs,
+        1L
+    ).toFloat()
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            "COMPARACIÓN VISUAL",
+            color = Azul,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium
+        )
+
+        BarraTiempo(
+            titulo = "Una por una",
+            tiempo = resultado.secuencialMs,
+            proporcion = resultado.secuencialMs / maximo,
+            color = Naranja
+        )
+
+        BarraTiempo(
+            titulo = "A la vez",
+            tiempo = resultado.paraleloMs,
+            proporcion = resultado.paraleloMs / maximo,
+            color = Azul
+        )
+    }
+}
+
+@Composable
+private fun BarraTiempo(
+    titulo: String,
+    tiempo: Long,
+    proporcion: Float,
+    color: Color
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(titulo)
+            Text(
+                "$tiempo ms",
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        androidx.compose.material3.LinearProgressIndicator(
+            progress = { proporcion.coerceIn(0f, 1f) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp),
+            color = color,
+            trackColor = Color(0xFFE8EDF3)
+        )
     }
 }
