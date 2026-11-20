@@ -1,4 +1,3 @@
-
 package com.alvarez.centrotareas.viewmodel
 
 import android.util.Log
@@ -43,9 +42,21 @@ class TareasViewModel(
     private val _simularError = MutableStateFlow(false)
     val simularError: StateFlow<Boolean> = _simularError.asStateFlow()
 
-    // FASE 2: LIMITE DE TIEMPO
     private val _limiteActivo = MutableStateFlow(false)
     val limiteActivo: StateFlow<Boolean> = _limiteActivo.asStateFlow()
+
+    // FASE 2 - MEJORA 2
+    private val _reintentoAutomatico = MutableStateFlow(false)
+    val reintentoAutomatico: StateFlow<Boolean> =
+        _reintentoAutomatico.asStateFlow()
+
+    private val _intentoActual = MutableStateFlow(0)
+    val intentoActual: StateFlow<Int> =
+        _intentoActual.asStateFlow()
+
+    private val _mensajeReintento = MutableStateFlow("")
+    val mensajeReintento: StateFlow<String> =
+        _mensajeReintento.asStateFlow()
 
     private var tareaJob: Job? = null
     private var primosJob: Job? = null
@@ -58,6 +69,19 @@ class TareasViewModel(
         }
     }
 
+    fun cambiarSimularError(activar: Boolean) {
+        if (_carga.value !is CargaUi.Cargando) {
+            _simularError.value = activar
+        }
+    }
+
+    fun cambiarReintentoAutomatico(activo: Boolean) {
+        if (_carga.value !is CargaUi.Cargando) {
+            _reintentoAutomatico.value = activo
+        }
+    }
+
+    // FUNCIONALIDAD DE LA FASE 1
     fun tareaLarga() {
         if (_corriendo.value) return
 
@@ -129,12 +153,7 @@ class TareasViewModel(
         primosJob?.cancel()
     }
 
-    fun cambiarSimularError(activar: Boolean) {
-        if (_carga.value !is CargaUi.Cargando) {
-            _simularError.value = activar
-        }
-    }
-
+    // CARGAS
     fun cargarSecuencial() {
         ejecutarCarga(paralelo = false)
     }
@@ -152,44 +171,90 @@ class TareasViewModel(
 
         ultimoModoParalelo = paralelo
         _carga.value = CargaUi.Cargando
+        _intentoActual.value = 0
+        _mensajeReintento.value = ""
 
         val usarLimite = _limiteActivo.value
         val provocarError = _simularError.value
+        val reintentar = _reintentoAutomatico.value
 
         cargaJob = viewModelScope.launch {
             val inicio = System.currentTimeMillis()
+            val maxIntentos = if (reintentar) 3 else 1
 
             try {
-                val resultado = if (usarLimite) {
-                    withTimeout(2000L) {
-                        obtenerDatos(paralelo, provocarError)
+                for (intento in 1..maxIntentos) {
+                    _intentoActual.value = intento
+                    _mensajeReintento.value =
+                        "Ejecutando intento $intento de $maxIntentos"
+
+                    try {
+                        val resultado = if (usarLimite) {
+                            withTimeout(2000L) {
+                                obtenerDatos(paralelo, provocarError)
+                            }
+                        } else {
+                            obtenerDatos(paralelo, provocarError)
+                        }
+
+                        val tiempo =
+                            System.currentTimeMillis() - inicio
+
+                        _mensajeReintento.value =
+                            "Operación completada en el intento $intento"
+
+                        _carga.value = CargaUi.Exito(
+                            modo = if (paralelo) {
+                                "A la vez"
+                            } else {
+                                "Una por una"
+                            },
+                            perfil = resultado.first,
+                            pedidos = resultado.second.size,
+                            milisegundos = tiempo
+                        )
+
+                        return@launch
+
+                    } catch (e: TimeoutCancellationException) {
+                        _mensajeReintento.value =
+                            "Límite de tiempo alcanzado"
+
+                        _carga.value = CargaUi.Error(
+                            mensaje = "Tiempo máximo superado. " +
+                                    "La carga tardó más de 2 segundos."
+                        )
+
+                        return@launch
+
+                    } catch (e: CancellationException) {
+                        throw e
+
+                    } catch (e: Exception) {
+                        if (intento == maxIntentos) {
+                            _mensajeReintento.value =
+                                "Se agotaron los $maxIntentos intentos"
+
+                            _carga.value = CargaUi.Error(
+                                mensaje = "No se pudo completar la carga " +
+                                        "después de $maxIntentos intento(s): " +
+                                        (e.message ?: "Error desconocido")
+                            )
+                        } else {
+                            val espera = intento * 1000L
+
+                            _mensajeReintento.value =
+                                "Intento $intento fallido. " +
+                                        "Nuevo intento en ${espera / 1000} s"
+
+                            delay(espera)
+                        }
                     }
-                } else {
-                    obtenerDatos(paralelo, provocarError)
                 }
-
-                val tiempo = System.currentTimeMillis() - inicio
-
-                _carga.value = CargaUi.Exito(
-                    modo = if (paralelo) "A la vez" else "Una por una",
-                    perfil = resultado.first,
-                    pedidos = resultado.second.size,
-                    milisegundos = tiempo
-                )
-
-            } catch (e: TimeoutCancellationException) {
-                _carga.value = CargaUi.Error(
-                    mensaje = "Tiempo máximo superado. La carga tardó más de 2 segundos."
-                )
-
-            } catch (e: CancellationException) {
-                throw e
-
-            } catch (e: Exception) {
-                _carga.value = CargaUi.Error(
-                    mensaje = "No se pudo cargar: " +
-                            (e.message ?: "Error desconocido")
-                )
+            } finally {
+                // El estado deja de estar en Cargando al
+                // finalizar correctamente o agotar intentos.
+                // La cancelación del ViewModel se propaga.
             }
         }
     }

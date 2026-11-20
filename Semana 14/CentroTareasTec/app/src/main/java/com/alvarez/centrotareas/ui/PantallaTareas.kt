@@ -1,14 +1,11 @@
-
 package com.alvarez.centrotareas.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +38,7 @@ private val Azul = Color(0xFF176B9A)
 private val Fondo = Color(0xFFF3F6FA)
 private val Verde = Color(0xFF167448)
 private val Rojo = Color(0xFFB42332)
+private val Naranja = Color(0xFFB76B12)
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +47,9 @@ fun PantallaTareas(viewModel: TareasViewModel) {
     val carga by viewModel.carga.collectAsState()
     val simularError by viewModel.simularError.collectAsState()
     val limiteActivo by viewModel.limiteActivo.collectAsState()
+    val reintentoAutomatico by viewModel.reintentoAutomatico.collectAsState()
+    val intentoActual by viewModel.intentoActual.collectAsState()
+    val mensajeReintento by viewModel.mensajeReintento.collectAsState()
 
     val cargando = carga is CargaUi.Cargando
 
@@ -87,9 +88,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
         ) {
 
             Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = Azul
-                ),
+                colors = CardDefaults.cardColors(containerColor = Azul),
                 shape = RoundedCornerShape(18.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -111,7 +110,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                     )
 
                     Text(
-                        text = "Ejecuta cargas, controla tiempos y supervisa resultados.",
+                        text = "Supervisa tus operaciones y recupera cargas fallidas.",
                         color = Color.White.copy(alpha = 0.9f),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -174,7 +173,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "Probar el manejo de fallos",
+                                text = "Probar fallos de conexión",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )
@@ -183,6 +182,33 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                         Switch(
                             checked = simularError,
                             onCheckedChange = viewModel::cambiarSimularError,
+                            enabled = !cargando
+                        )
+                    }
+
+                    HorizontalDivider()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Reintento automático",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Hasta 3 intentos con espera progresiva",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
+
+                        Switch(
+                            checked = reintentoAutomatico,
+                            onCheckedChange =
+                                viewModel::cambiarReintentoAutomatico,
                             enabled = !cargando
                         )
                     }
@@ -209,7 +235,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                     )
 
                     Text(
-                        text = "Selecciona cómo deseas procesar el perfil y los pedidos.",
+                        text = "Selecciona cómo procesar el perfil y los pedidos.",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
@@ -238,13 +264,45 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                         }
                     }
 
-                    when (val estado = carga) {
+                    if (mensajeReintento.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    Color(0xFFFFF5E7),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "ESTADO DE INTENTOS",
+                                color = Naranja,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelMedium
+                            )
 
+                            Text(
+                                text = mensajeReintento,
+                                color = Naranja,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            if (reintentoAutomatico && intentoActual > 0) {
+                                Text(
+                                    text = "Intento $intentoActual de 3",
+                                    color = Naranja,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                    }
+
+                    when (val estado = carga) {
                         CargaUi.Inicial -> {
                             Text(
                                 text = "Listo para iniciar una operación.",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.bodyMedium
+                                color = Color.Gray
                             )
                         }
 
@@ -254,9 +312,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                CircularProgressIndicator(
-                                    color = Azul
-                                )
+                                CircularProgressIndicator(color = Azul)
                                 Text(
                                     text = "Procesando información...",
                                     color = Azul,
@@ -285,7 +341,7 @@ fun PantallaTareas(viewModel: TareasViewModel) {
                                 Text("Modo: ${estado.modo}")
                                 Text("Perfil: ${estado.perfil}")
                                 Text("Pedidos: ${estado.pedidos}")
-                                Text("Duración: ${estado.milisegundos} ms")
+                                Text("Duración total: ${estado.milisegundos} ms")
                             }
                         }
 
