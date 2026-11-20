@@ -15,6 +15,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -33,6 +34,8 @@ import com.alvarez.centrotareas.viewmodel.TareasViewModel
 private val Azul = Color(0xFF2073A9)
 private val VerdeFondo = Color(0xFFE5F5E7)
 private val VerdeTexto = Color(0xFF256D35)
+private val RojoFondo = Color(0xFFFBE4E4)
+private val RojoTexto = Color(0xFFB33B3B)
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +43,7 @@ fun PantallaTareas(
     viewModel: TareasViewModel
 ) {
     val carga by viewModel.carga.collectAsState()
+    val simularError by viewModel.simularError.collectAsState()
 
     val cargando = carga is CargaUi.Cargando
 
@@ -72,7 +76,7 @@ fun PantallaTareas(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            // COMMIT 7: DOS CARGAS
+            // COMMIT 8: ERROR SIMULADO
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -99,11 +103,31 @@ fun PantallaTareas(
                         fontWeight = FontWeight.Bold
                     )
 
+                    // INTERRUPTOR SIMULAR ERROR
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Switch(
+                            checked = simularError,
+                            onCheckedChange = {
+                                viewModel.cambiarSimularError(it)
+                            },
+                            enabled = !cargando
+                        )
+
+                        Text(
+                            text = "Simular error",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    // BOTONES DE CARGA
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         OutlinedButton(
                             onClick = {
                                 viewModel.cargarSecuencial()
@@ -144,7 +168,6 @@ fun PantallaTareas(
                         }
 
                         is CargaUi.Exito -> {
-
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
@@ -158,7 +181,6 @@ fun PantallaTareas(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
-
                                     Text(
                                         text = "Modo: ${estado.modo}",
                                         color = VerdeTexto,
@@ -195,10 +217,37 @@ fun PantallaTareas(
                         }
 
                         is CargaUi.Error -> {
-                            Text(
-                                text = estado.mensaje,
-                                color = Color.Red
-                            )
+
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = RojoFondo
+                                )
+                            ) {
+                                Text(
+                                    text = estado.mensaje.replace(
+                                        "Sin conexion",
+                                        "Sin conexión"
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    color = RojoTexto,
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.reintentarCarga()
+                                }
+                            ) {
+                                Text(
+                                    text = "Reintentar",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

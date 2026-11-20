@@ -42,10 +42,16 @@ class TareasViewModel(
     )
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
 
+    private val _simularError = MutableStateFlow(false)
+    val simularError: StateFlow<Boolean> =
+        _simularError.asStateFlow()
+
     private var tareaJob: Job? = null
     private var primosJob: Job? = null
 
-    // TAREA CON PROGRESO
+    private var ultimoModoParalelo = false
+
+    // TAREA CON PROGRESO - COMMIT ANTERIOR
     fun tareaLarga() {
         if (_corriendo.value) return
 
@@ -94,7 +100,7 @@ class TareasViewModel(
         tareaJob?.cancel()
     }
 
-    // CONTAR NUMEROS PRIMOS
+    // NUMEROS PRIMOS - COMMIT ANTERIOR
     fun contarPrimos(hasta: Int) {
         if (hasta < 2 || _primos.value is PrimosUi.Calculando) {
             return
@@ -107,7 +113,6 @@ class TareasViewModel(
 
             try {
                 val cantidad = repository.contarPrimos(hasta)
-
                 val tiempo =
                     System.currentTimeMillis() - inicio
 
@@ -130,63 +135,92 @@ class TareasViewModel(
         primosJob?.cancel()
     }
 
-    // COMMIT 7: CARGA SECUENCIAL
-    fun cargarSecuencial() {
-        if (_carga.value is CargaUi.Cargando) return
-
-        _carga.value = CargaUi.Cargando
-
-        viewModelScope.launch {
-            val inicio = System.currentTimeMillis()
-
-            val perfil = repository.cargarPerfil()
-            val pedidos = repository.cargarPedidos(false)
-
-            val tiempo = System.currentTimeMillis() - inicio
-
-            _carga.value = CargaUi.Exito(
-                modo = "Una por una",
-                perfil = perfil,
-                pedidos = pedidos.size,
-                milisegundos = tiempo
-            )
-        }
+    // COMMIT 8: ACTIVAR O DESACTIVAR ERROR
+    fun cambiarSimularError(activar: Boolean) {
+        _simularError.value = activar
     }
 
-    // COMMIT 7: CARGA PARALELA CON ASYNC
+    // CARGA SECUENCIAL
+    fun cargarSecuencial() {
+        ejecutarCarga(paralelo = false)
+    }
+
+    // CARGA PARALELA
     fun cargarParalelo() {
+        ejecutarCarga(paralelo = true)
+    }
+
+    // COMMIT 8: REINTENTAR LA ULTIMA CARGA
+    fun reintentarCarga() {
+        ejecutarCarga(paralelo = ultimoModoParalelo)
+    }
+
+    // COMMIT 8: MANEJO DE ERRORES
+    private fun ejecutarCarga(paralelo: Boolean) {
         if (_carga.value is CargaUi.Cargando) return
 
+        ultimoModoParalelo = paralelo
         _carga.value = CargaUi.Cargando
 
         viewModelScope.launch {
             val inicio = System.currentTimeMillis()
 
-            val resultado = coroutineScope {
-                val perfilDeferred = async {
-                    repository.cargarPerfil()
+            try {
+                val perfil: String
+                val pedidos: List<String>
+
+                if (paralelo) {
+                    val resultado = coroutineScope {
+                        val perfilDeferred = async {
+                            repository.cargarPerfil()
+                        }
+
+                        val pedidosDeferred = async {
+                            repository.cargarPedidos(
+                                _simularError.value
+                            )
+                        }
+
+                        Pair(
+                            perfilDeferred.await(),
+                            pedidosDeferred.await()
+                        )
+                    }
+
+                    perfil = resultado.first
+                    pedidos = resultado.second
+
+                } else {
+                    perfil = repository.cargarPerfil()
+
+                    pedidos = repository.cargarPedidos(
+                        _simularError.value
+                    )
                 }
 
-                val pedidosDeferred = async {
-                    repository.cargarPedidos(false)
-                }
+                val tiempo =
+                    System.currentTimeMillis() - inicio
 
-                Pair(
-                    perfilDeferred.await(),
-                    pedidosDeferred.await()
+                _carga.value = CargaUi.Exito(
+                    modo = if (paralelo) {
+                        "A la vez"
+                    } else {
+                        "Una por una"
+                    },
+                    perfil = perfil,
+                    pedidos = pedidos.size,
+                    milisegundos = tiempo
+                )
+
+            } catch (e: CancellationException) {
+                throw e
+
+            } catch (e: Exception) {
+                _carga.value = CargaUi.Error(
+                    mensaje = "No se pudo cargar: " +
+                            (e.message ?: "Error desconocido")
                 )
             }
-
-            val tiempo = System.currentTimeMillis() - inicio
-
-            _carga.value = CargaUi.Exito(
-                modo = "A la vez",
-                perfil = resultado.first,
-                pedidos = resultado.second.size,
-                milisegundos = tiempo
-            )
         }
     }
-
-    // TODO: manejo de errores - siguiente commit
 }
