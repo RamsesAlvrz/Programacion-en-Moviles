@@ -1,4 +1,3 @@
-
 package com.alvarez.centrotareas.viewmodel
 
 import android.util.Log
@@ -41,8 +40,9 @@ class TareasViewModel(
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
 
     private var tareaJob: Job? = null
+    private var primosJob: Job? = null
 
-    // COMMIT 5: progreso con cancelacion
+    // Tarea con progreso y cancelacion
     fun tareaLarga() {
         if (_corriendo.value) return
 
@@ -78,12 +78,6 @@ class TareasViewModel(
 
             } catch (e: CancellationException) {
                 _mensaje.value = "Cancelado"
-
-                Log.d(
-                    "HILO",
-                    "Tarea cancelada"
-                )
-
                 throw e
 
             } finally {
@@ -97,7 +91,41 @@ class TareasViewModel(
         tareaJob?.cancel()
     }
 
-    // TODO: calculo de primos
+    // COMMIT 6: calculo de numeros primos
+    fun contarPrimos(hasta: Int) {
+        if (hasta < 2 || _primos.value is PrimosUi.Calculando) {
+            return
+        }
+
+        _primos.value = PrimosUi.Calculando
+
+        primosJob = viewModelScope.launch {
+            val inicio = System.currentTimeMillis()
+
+            try {
+                val cantidad = repository.contarPrimos(hasta)
+
+                val tiempo =
+                    System.currentTimeMillis() - inicio
+
+                _primos.value = PrimosUi.Listo(
+                    cantidad = cantidad,
+                    milisegundos = tiempo
+                )
+
+            } catch (e: CancellationException) {
+                _primos.value = PrimosUi.Cancelado
+                throw e
+
+            } finally {
+                primosJob = null
+            }
+        }
+    }
+
+    fun cancelarPrimos() {
+        primosJob?.cancel()
+    }
 
     // TODO: cargas secuenciales y paralelas
 
