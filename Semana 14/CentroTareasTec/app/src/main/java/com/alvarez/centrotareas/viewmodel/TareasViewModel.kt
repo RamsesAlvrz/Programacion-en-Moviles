@@ -7,7 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.alvarez.centrotareas.data.TareasRepository
 import com.alvarez.centrotareas.model.CargaUi
 import com.alvarez.centrotareas.model.PrimosUi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,15 +40,17 @@ class TareasViewModel(
     )
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
 
-    // COMMIT 4: tarea larga con progreso
+    private var tareaJob: Job? = null
+
+    // COMMIT 5: progreso con cancelacion
     fun tareaLarga() {
         if (_corriendo.value) return
 
-        viewModelScope.launch {
-            _corriendo.value = true
-            _progreso.value = 0f
-            _mensaje.value = "Trabajando..."
+        _corriendo.value = true
+        _progreso.value = 0f
+        _mensaje.value = "Trabajando..."
 
+        tareaJob = viewModelScope.launch {
             Log.d(
                 "HILO",
                 "Inicio: ${Thread.currentThread().name}"
@@ -71,13 +75,27 @@ class TareasViewModel(
                 )
 
                 _mensaje.value = "Terminado"
+
+            } catch (e: CancellationException) {
+                _mensaje.value = "Cancelado"
+
+                Log.d(
+                    "HILO",
+                    "Tarea cancelada"
+                )
+
+                throw e
+
             } finally {
                 _corriendo.value = false
+                tareaJob = null
             }
         }
     }
 
-    // TODO: cancelacion con Job
+    fun cancelarTarea() {
+        tareaJob?.cancel()
+    }
 
     // TODO: calculo de primos
 

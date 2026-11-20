@@ -128,8 +128,10 @@ fun PantallaTareas(
                         }
 
                         OutlinedButton(
-                            onClick = {},
-                            enabled = false
+                            onClick = {
+                                viewModel.cancelarTarea()
+                            },
+                            enabled = corriendo
                         ) {
                             Text("Cancelar")
                         }
