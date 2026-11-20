@@ -1,3 +1,4 @@
+
 package com.alvarez.centrotareas.viewmodel
 
 import android.util.Log
@@ -9,6 +10,8 @@ import com.alvarez.centrotareas.model.PrimosUi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +45,7 @@ class TareasViewModel(
     private var tareaJob: Job? = null
     private var primosJob: Job? = null
 
-    // Tarea con progreso y cancelacion
+    // TAREA CON PROGRESO
     fun tareaLarga() {
         if (_corriendo.value) return
 
@@ -91,7 +94,7 @@ class TareasViewModel(
         tareaJob?.cancel()
     }
 
-    // COMMIT 6: calculo de numeros primos
+    // CONTAR NUMEROS PRIMOS
     fun contarPrimos(hasta: Int) {
         if (hasta < 2 || _primos.value is PrimosUi.Calculando) {
             return
@@ -127,7 +130,63 @@ class TareasViewModel(
         primosJob?.cancel()
     }
 
-    // TODO: cargas secuenciales y paralelas
+    // COMMIT 7: CARGA SECUENCIAL
+    fun cargarSecuencial() {
+        if (_carga.value is CargaUi.Cargando) return
 
-    // TODO: manejo de errores
+        _carga.value = CargaUi.Cargando
+
+        viewModelScope.launch {
+            val inicio = System.currentTimeMillis()
+
+            val perfil = repository.cargarPerfil()
+            val pedidos = repository.cargarPedidos(false)
+
+            val tiempo = System.currentTimeMillis() - inicio
+
+            _carga.value = CargaUi.Exito(
+                modo = "Una por una",
+                perfil = perfil,
+                pedidos = pedidos.size,
+                milisegundos = tiempo
+            )
+        }
+    }
+
+    // COMMIT 7: CARGA PARALELA CON ASYNC
+    fun cargarParalelo() {
+        if (_carga.value is CargaUi.Cargando) return
+
+        _carga.value = CargaUi.Cargando
+
+        viewModelScope.launch {
+            val inicio = System.currentTimeMillis()
+
+            val resultado = coroutineScope {
+                val perfilDeferred = async {
+                    repository.cargarPerfil()
+                }
+
+                val pedidosDeferred = async {
+                    repository.cargarPedidos(false)
+                }
+
+                Pair(
+                    perfilDeferred.await(),
+                    pedidosDeferred.await()
+                )
+            }
+
+            val tiempo = System.currentTimeMillis() - inicio
+
+            _carga.value = CargaUi.Exito(
+                modo = "A la vez",
+                perfil = resultado.first,
+                pedidos = resultado.second.size,
+                milisegundos = tiempo
+            )
+        }
+    }
+
+    // TODO: manejo de errores - siguiente commit
 }
