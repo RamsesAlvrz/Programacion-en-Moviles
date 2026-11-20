@@ -1,29 +1,41 @@
 package com.alvarez.centrotareas.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.alvarez.centrotareas.viewmodel.TareasViewModel
 
+private val Azul = Color(0xFF2073A9)
+private val Rojo = Color(0xFFC43C3C)
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaTareas(
     viewModel: TareasViewModel
@@ -32,137 +44,106 @@ fun PantallaTareas(
         mutableIntStateOf(0)
     }
 
+    val mensaje by viewModel.mensaje.collectAsState()
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color(0xFFFAF9FC),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "CentroTareas",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Azul
+                )
+            )
+        }
     ) { innerPadding ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            Text(
-                text = "CentroTareas",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = "Laboratorio 14 - Hilos y corrutinas",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Button(
-                onClick = { toques++ },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Tócame: $toques")
-            }
-
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                )
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = "Tarea con progreso",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text = "Estado: Listo"
-                    )
-
-                    Spacer(Modifier.height(12.dp))
 
                     Button(
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
+                        onClick = { toques++ },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Azul
+                        )
                     ) {
-                        Text("Iniciar tarea")
+                        Text("Tócame: $toques")
                     }
 
-                    OutlinedButton(
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
+                    Button(
+                        onClick = {
+                            viewModel.tareaLargaMal()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Azul
+                        )
                     ) {
-                        Text("Cancelar")
+                        Text("Tarea larga (MAL)")
                     }
+
+                    Text(
+                        text = mensaje,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
                 }
             }
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(
+                    1.dp,
+                    Rojo
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFF3F3)
+                )
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Contar números primos",
-                        style = MaterialTheme.typography.titleLarge
+                        text = "Lo que observas: durante 4 segundos\n" +
+                                "nada responde y el texto\n" +
+                                "«Trabajando...» no aparece",
+                        color = Rojo,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall
                     )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text = "Cálculo pendiente"
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Button(
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Contar primos")
-                    }
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Dos cargas",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text = "Comparación pendiente"
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Button(
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Carga secuencial")
-                    }
-
-                    OutlinedButton(
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Carga paralela")
-                    }
                 }
             }
         }

@@ -25,13 +25,20 @@ class TareasViewModel(
     )
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
 
-    // TODO: tarea larga - siguientes pasos
+    // COMMIT 2: bloqueo intencional del hilo principal.
+    fun tareaLargaMal() {
+        _mensaje.value = "Trabajando..."
 
-    // TODO: progreso y cancelacion - siguientes pasos
+        Thread.sleep(4000)
 
-    // TODO: calculo de primos - siguientes pasos
+        _mensaje.value = "Listo"
+    }
 
-    // TODO: cargas secuenciales y paralelas - siguientes pasos
+    // TODO: progreso y cancelacion
 
-    // TODO: manejo de errores - siguientes pasos
+    // TODO: calculo de primos
+
+    // TODO: cargas secuenciales y paralelas
+
+    // TODO: manejo de errores
 }
