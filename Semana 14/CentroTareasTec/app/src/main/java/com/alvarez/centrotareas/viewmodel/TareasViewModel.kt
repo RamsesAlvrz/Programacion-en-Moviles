@@ -4,6 +4,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alvarez.centrotareas.data.HistorialRepository
 import com.alvarez.centrotareas.data.TareasRepository
 import com.alvarez.centrotareas.model.CargaUi
 import com.alvarez.centrotareas.model.PrimosUi
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import java.util.Locale
 import kotlin.math.abs
 
 data class ComparacionTiempos(
@@ -48,7 +50,8 @@ data class ComparacionTiempos(
 }
 
 class TareasViewModel(
-    private val repository: TareasRepository
+    private val repository: TareasRepository,
+    private val historialRepository: HistorialRepository
 ) : ViewModel() {
 
     private val _mensaje = MutableStateFlow("Listo")
@@ -60,34 +63,40 @@ class TareasViewModel(
     private val _corriendo = MutableStateFlow(false)
     val corriendo: StateFlow<Boolean> = _corriendo.asStateFlow()
 
-    private val _primos = MutableStateFlow<PrimosUi>(PrimosUi.Inicial)
+    private val _primos =
+        MutableStateFlow<PrimosUi>(PrimosUi.Inicial)
     val primos: StateFlow<PrimosUi> = _primos.asStateFlow()
 
-    private val _carga = MutableStateFlow<CargaUi>(CargaUi.Inicial)
+    private val _carga =
+        MutableStateFlow<CargaUi>(CargaUi.Inicial)
     val carga: StateFlow<CargaUi> = _carga.asStateFlow()
 
     private val _simularError = MutableStateFlow(false)
-    val simularError: StateFlow<Boolean> = _simularError.asStateFlow()
+    val simularError: StateFlow<Boolean> =
+        _simularError.asStateFlow()
 
     private val _limiteActivo = MutableStateFlow(false)
-    val limiteActivo: StateFlow<Boolean> = _limiteActivo.asStateFlow()
+    val limiteActivo: StateFlow<Boolean> =
+        _limiteActivo.asStateFlow()
 
     private val _reintentoAutomatico = MutableStateFlow(false)
     val reintentoAutomatico: StateFlow<Boolean> =
         _reintentoAutomatico.asStateFlow()
 
     private val _intentoActual = MutableStateFlow(0)
-    val intentoActual: StateFlow<Int> = _intentoActual.asStateFlow()
+    val intentoActual: StateFlow<Int> =
+        _intentoActual.asStateFlow()
 
     private val _mensajeReintento = MutableStateFlow("")
     val mensajeReintento: StateFlow<String> =
         _mensajeReintento.asStateFlow()
 
-    // FASE 2 - MEJORA 3
     private val _comparando = MutableStateFlow(false)
-    val comparando: StateFlow<Boolean> = _comparando.asStateFlow()
+    val comparando: StateFlow<Boolean> =
+        _comparando.asStateFlow()
 
-    private val _comparacion = MutableStateFlow<ComparacionTiempos?>(null)
+    private val _comparacion =
+        MutableStateFlow<ComparacionTiempos?>(null)
     val comparacion: StateFlow<ComparacionTiempos?> =
         _comparacion.asStateFlow()
 
@@ -102,6 +111,11 @@ class TareasViewModel(
     private var cargaJob: Job? = null
     private var ultimoModoParalelo = false
 
+    private fun ocupado(): Boolean =
+        _carga.value is CargaUi.Cargando ||
+                _comparando.value ||
+                cargaJob?.isActive == true
+
     fun cambiarLimiteActivo(activo: Boolean) {
         if (!ocupado()) _limiteActivo.value = activo
     }
@@ -114,13 +128,8 @@ class TareasViewModel(
         if (!ocupado()) _reintentoAutomatico.value = activo
     }
 
-    private fun ocupado(): Boolean {
-        return _carga.value is CargaUi.Cargando ||
-                _comparando.value ||
-                cargaJob?.isActive == true
-    }
+    // FUNCIONES ORIGINALES
 
-    // FUNCIONALIDADES DE LA FASE 1
     fun tareaLarga() {
         if (_corriendo.value) return
 
@@ -133,24 +142,16 @@ class TareasViewModel(
 
             try {
                 withContext(Dispatchers.Default) {
-                    Log.d(
-                        "HILO",
-                        "Trabajo: ${Thread.currentThread().name}"
-                    )
-
                     for (i in 1..100) {
                         delay(40)
                         _progreso.value = i / 100f
                     }
                 }
 
-                Log.d("HILO", "Final: ${Thread.currentThread().name}")
                 _mensaje.value = "Terminado"
-
             } catch (e: CancellationException) {
                 _mensaje.value = "Cancelado"
                 throw e
-
             } finally {
                 _corriendo.value = false
                 tareaJob = null
@@ -163,7 +164,9 @@ class TareasViewModel(
     }
 
     fun contarPrimos(hasta: Int) {
-        if (hasta < 2 || _primos.value is PrimosUi.Calculando) return
+        if (hasta < 2 || _primos.value is PrimosUi.Calculando) {
+            return
+        }
 
         _primos.value = PrimosUi.Calculando
 
@@ -178,11 +181,9 @@ class TareasViewModel(
                     cantidad = cantidad,
                     milisegundos = tiempo
                 )
-
             } catch (e: CancellationException) {
                 _primos.value = PrimosUi.Cancelado
                 throw e
-
             } finally {
                 primosJob = null
             }
@@ -193,7 +194,8 @@ class TareasViewModel(
         primosJob?.cancel()
     }
 
-    // CARGAS EXISTENTES
+    // CARGAS
+
     fun cargarSecuencial() {
         ejecutarCarga(paralelo = false)
     }
@@ -218,6 +220,12 @@ class TareasViewModel(
         val provocarError = _simularError.value
         val reintentar = _reintentoAutomatico.value
 
+        val tipo = if (paralelo) {
+            "Carga paralela"
+        } else {
+            "Carga secuencial"
+        }
+
         cargaJob = viewModelScope.launch {
             val inicio = SystemClock.elapsedRealtime()
             val maxIntentos = if (reintentar) 3 else 1
@@ -234,26 +242,52 @@ class TareasViewModel(
                         usarLimite = usarLimite
                     )
 
-                    val tiempo = SystemClock.elapsedRealtime() - inicio
+                    val tiempo =
+                        SystemClock.elapsedRealtime() - inicio
 
                     _mensajeReintento.value =
                         "Operación completada en el intento $intento"
 
                     _carga.value = CargaUi.Exito(
-                        modo = if (paralelo) "A la vez" else "Una por una",
+                        modo = if (paralelo) {
+                            "A la vez"
+                        } else {
+                            "Una por una"
+                        },
                         perfil = resultado.first,
                         pedidos = resultado.second.size,
                         milisegundos = tiempo
                     )
+
+                    registrarHistorial(
+                        tipo = tipo,
+                        estado = "Exitosa",
+                        descripcion =
+                            "Perfil: ${resultado.first}. " +
+                                    "Pedidos: ${resultado.second.size}. " +
+                                    "Intentos: $intento.",
+                        duracionMs = tiempo
+                    )
                     return@launch
 
                 } catch (e: TimeoutCancellationException) {
+                    val tiempo =
+                        SystemClock.elapsedRealtime() - inicio
+
+                    val error =
+                        "Tiempo máximo superado. " +
+                                "La carga tardó más de 2 segundos."
+
                     _mensajeReintento.value =
                         "Límite de tiempo alcanzado"
 
-                    _carga.value = CargaUi.Error(
-                        "Tiempo máximo superado. " +
-                                "La carga tardó más de 2 segundos."
+                    _carga.value = CargaUi.Error(error)
+
+                    registrarHistorial(
+                        tipo = tipo,
+                        estado = "Fallida",
+                        descripcion = error,
+                        duracionMs = tiempo
                     )
                     return@launch
 
@@ -262,13 +296,24 @@ class TareasViewModel(
 
                 } catch (e: Exception) {
                     if (intento == maxIntentos) {
-                        _mensajeReintento.value =
-                            "Se agotaron los $maxIntentos intentos"
+                        val tiempo =
+                            SystemClock.elapsedRealtime() - inicio
 
-                        _carga.value = CargaUi.Error(
+                        val error =
                             "No se pudo completar la carga después " +
                                     "de $maxIntentos intento(s): " +
                                     (e.message ?: "Error desconocido")
+
+                        _mensajeReintento.value =
+                            "Se agotaron los $maxIntentos intentos"
+
+                        _carga.value = CargaUi.Error(error)
+
+                        registrarHistorial(
+                            tipo = tipo,
+                            estado = "Fallida",
+                            descripcion = error,
+                            duracionMs = tiempo
                         )
                     } else {
                         val espera = intento * 1000L
@@ -284,7 +329,8 @@ class TareasViewModel(
         }
     }
 
-    // FASE 2 - MEJORA 3: COMPARACIÓN
+    // COMPARACIÓN DE TIEMPOS
+
     fun compararTiempos() {
         if (ocupado()) return
 
@@ -298,6 +344,8 @@ class TareasViewModel(
         val reintentar = _reintentoAutomatico.value
 
         cargaJob = viewModelScope.launch {
+            val inicio = SystemClock.elapsedRealtime()
+
             try {
                 _mensajeComparacion.value =
                     "Midiendo carga secuencial..."
@@ -319,32 +367,96 @@ class TareasViewModel(
                     reintentar = reintentar
                 )
 
-                _comparacion.value = ComparacionTiempos(
+                val resultado = ComparacionTiempos(
                     secuencialMs = tiempoSecuencial,
                     paraleloMs = tiempoParalelo
                 )
 
+                _comparacion.value = resultado
                 _mensajeComparacion.value =
                     "Comparación completada correctamente."
 
+                val porcentaje = String.format(
+                    Locale.US,
+                    "%.1f",
+                    resultado.ahorroPorcentaje
+                )
+
+                registrarHistorial(
+                    tipo = "Comparación de tiempos",
+                    estado = "Exitosa",
+                    descripcion =
+                        "Secuencial: ${resultado.secuencialMs} ms. " +
+                                "Paralela: ${resultado.paraleloMs} ms. " +
+                                "Más rápida: ${resultado.masRapido}. " +
+                                "Ahorro: $porcentaje%.",
+                    duracionMs =
+                        SystemClock.elapsedRealtime() - inicio
+                )
+
             } catch (e: TimeoutCancellationException) {
                 _comparacion.value = null
-                _mensajeComparacion.value =
+
+                val error =
                     "Comparación interrumpida: se superó " +
                             "el límite de 2 segundos."
+
+                _mensajeComparacion.value = error
+
+                registrarHistorial(
+                    tipo = "Comparación de tiempos",
+                    estado = "Fallida",
+                    descripcion = error,
+                    duracionMs =
+                        SystemClock.elapsedRealtime() - inicio
+                )
 
             } catch (e: CancellationException) {
                 throw e
 
             } catch (e: Exception) {
                 _comparacion.value = null
-                _mensajeComparacion.value =
-                    "No se pudo comparar: " +
-                            (e.message ?: "Error desconocido")
+
+                val error = "No se pudo comparar: " +
+                        (e.message ?: "Error desconocido")
+
+                _mensajeComparacion.value = error
+
+                registrarHistorial(
+                    tipo = "Comparación de tiempos",
+                    estado = "Fallida",
+                    descripcion = error,
+                    duracionMs =
+                        SystemClock.elapsedRealtime() - inicio
+                )
 
             } finally {
                 _comparando.value = false
             }
+        }
+    }
+
+    private suspend fun registrarHistorial(
+        tipo: String,
+        estado: String,
+        descripcion: String,
+        duracionMs: Long?
+    ) {
+        try {
+            historialRepository.registrar(
+                tipo = tipo,
+                estado = estado,
+                descripcion = descripcion,
+                duracionMs = duracionMs
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(
+                "CentroTareasHistorial",
+                "No se pudo guardar el registro",
+                e
+            )
         }
     }
 
@@ -369,10 +481,8 @@ class TareasViewModel(
 
             } catch (e: TimeoutCancellationException) {
                 throw e
-
             } catch (e: CancellationException) {
                 throw e
-
             } catch (e: Exception) {
                 if (intento == maxIntentos) throw e
 
