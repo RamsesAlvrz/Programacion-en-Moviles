@@ -14,6 +14,7 @@ import com.alvarez.murocampus.viewmodel.UiState
 @Composable
 fun PantallaLista(
     vm: PostsViewModel,
+    onVerDetalle: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -53,7 +54,10 @@ fun PantallaLista(
                         TarjetaPost(
                             userId = post.userId,
                             titulo = post.title,
-                            contenido = post.body
+                            contenido = post.body,
+                            onClick = {
+                                onVerDetalle(post.id)
+                            }
                         )
                     }
                 }
