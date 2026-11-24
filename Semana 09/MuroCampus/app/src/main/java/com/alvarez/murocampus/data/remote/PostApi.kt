@@ -14,11 +14,23 @@ interface PostApi {
     @GET("posts")
     suspend fun listar(): List<Post>
 
-    // Completar detalle
+    @GET("posts/{id}")
+    suspend fun detalle(
+        @Path("id") id: Int
+    ): Post
 
-    // Completar comentarios
+    @GET("posts/{id}/comments")
+    suspend fun comentarios(
+        @Path("id") id: Int
+    ): List<Comentario>
 
-    // Completar porUsuario
+    @GET("posts")
+    suspend fun porUsuario(
+        @Query("userId") userId: Int
+    ): List<Post>
 
-    // Completar crear
+    @POST("posts")
+    suspend fun crear(
+        @Body nuevo: NuevoPost
+    ): Post
 }
