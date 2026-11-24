@@ -6,6 +6,7 @@ import com.alvarez.murocampus.data.PostRepository
 import com.alvarez.murocampus.data.mensajeDe
 import com.alvarez.murocampus.model.Post
 import com.alvarez.murocampus.model.Comentario
+import com.alvarez.murocampus.model.NuevoPost
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,9 +41,17 @@ class PostsViewModel(
     val usuarioFiltro: StateFlow<Int?> =
         _usuarioFiltro.asStateFlow()
 
+    private val _publicacion =
+        MutableStateFlow<UiState<Post>?>(null)
+
+    val publicacion: StateFlow<UiState<Post>?> =
+        _publicacion.asStateFlow()
+
     private var trabajoLista: Job? = null
 
     private var trabajoDetalle: Job? = null
+
+    private var trabajoPublicacion: Job? = null
 
     init {
         cargar()
@@ -118,5 +127,41 @@ class PostsViewModel(
 
     fun cerrarDetalle() {
         trabajoDetalle?.cancel()
+    }
+
+    fun publicar(titulo: String, texto: String) {
+
+        if (titulo.isBlank() || texto.isBlank()) {
+            return
+        }
+
+        if (_publicacion.value == UiState.Cargando) {
+            return
+        }
+
+        _publicacion.value = UiState.Cargando
+
+        trabajoPublicacion = viewModelScope.launch {
+
+            val nuevo = NuevoPost(
+                userId = 1,
+                title = titulo.trim(),
+                body = texto.trim()
+            )
+
+            repo.crear(nuevo)
+                .onSuccess { post ->
+                    _publicacion.value = UiState.Exito(post)
+                }
+                .onFailure { error ->
+                    _publicacion.value =
+                        UiState.Error(mensajeDe(error))
+                }
+        }
+    }
+
+    fun limpiarPublicacion() {
+        trabajoPublicacion?.cancel()
+        _publicacion.value = null
     }
 }
