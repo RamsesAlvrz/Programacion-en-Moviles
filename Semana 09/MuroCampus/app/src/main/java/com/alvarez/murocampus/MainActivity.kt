@@ -4,14 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
+import com.alvarez.murocampus.data.PostRepositoryRemote
+import com.alvarez.murocampus.data.remote.RetrofitClient
+import com.alvarez.murocampus.ui.PantallaLista
 import com.alvarez.murocampus.ui.theme.MuroCampusTheme
+import com.alvarez.murocampus.viewmodel.PostsViewModel
+import com.alvarez.murocampus.viewmodel.PostsViewModelFactory
 
 class MainActivity : ComponentActivity() {
+
+    private val vm: PostsViewModel by viewModels {
+        PostsViewModelFactory(
+            PostRepositoryRemote(RetrofitClient.api)
+        )
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +31,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MuroCampusTheme {
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = MaterialTheme.colorScheme.background,
@@ -38,10 +50,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
+
+                    PantallaLista(
+                        vm = vm,
+                        modifier = Modifier.padding(innerPadding)
                     )
                 }
             }

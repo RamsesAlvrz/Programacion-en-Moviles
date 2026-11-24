@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,6 +65,27 @@ fun TarjetaPost(
     contenido: String,
     onClick: () -> Unit = {}
 ) {
+
+    val colorUsuario = when (userId) {
+        1 -> Color(0xFF287FC4)
+        2 -> Color(0xFFFFB300)
+        3 -> Color(0xFF287D46)
+        4 -> Color(0xFF7B4BB7)
+        5 -> Color(0xFFB3261E)
+        6 -> Color(0xFF00796B)
+        7 -> Color(0xFFC2410C)
+        8 -> Color(0xFFAD356D)
+        9 -> Color(0xFF475569)
+        10 -> Color(0xFF795548)
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    val colorTextoUsuario = if (userId == 2) {
+        Color(0xFF202B38)
+    } else {
+        Color.White
+    }
+
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -75,24 +97,25 @@ fun TarjetaPost(
         )
     ) {
         Column(
-            modifier = Modifier.padding(14.dp)
+            modifier = Modifier.padding(12.dp)
         ) {
             Surface(
-                color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(6.dp)
+                color = colorUsuario,
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = "Usuario $userId",
                     modifier = Modifier.padding(
                         horizontal = 8.dp,
-                        vertical = 3.dp
+                        vertical = 2.dp
                     ),
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = colorTextoUsuario,
+                    fontWeight = FontWeight.SemiBold,
                     style = MaterialTheme.typography.labelMedium
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
                 text = titulo,
