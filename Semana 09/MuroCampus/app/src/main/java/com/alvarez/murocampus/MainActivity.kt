@@ -7,13 +7,23 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.murocampus.data.PostRepositoryRemote
@@ -22,7 +32,7 @@ import com.alvarez.murocampus.ui.PantallaLista
 import com.alvarez.murocampus.ui.PantallaDetalle
 import com.alvarez.murocampus.ui.PantallaCrear
 import com.alvarez.murocampus.ui.PantallaEditar
-import com.alvarez.murocampus.ui.theme.MuroCampusTheme
+import com.alvarez.murocampus.ui.theme.*
 import com.alvarez.murocampus.viewmodel.PostsViewModel
 import com.alvarez.murocampus.viewmodel.PostsViewModelFactory
 import com.alvarez.murocampus.viewmodel.UiState
@@ -75,7 +85,16 @@ class MainActivity : ComponentActivity() {
 
                 val scope = rememberCoroutineScope()
 
-                // Recuperar el detalle si se recrea el proceso
+                val enInicio =
+                    idSeleccionado == null &&
+                            !mostrarCrear &&
+                            !mostrarEditar
+
+                val ocupado =
+                    eliminacion == UiState.Cargando ||
+                            edicion == UiState.Cargando
+
+                // Recuperar el detalle
                 LaunchedEffect(idSeleccionado) {
 
                     val id = idSeleccionado
@@ -88,16 +107,19 @@ class MainActivity : ComponentActivity() {
                             actual is UiState.Exito &&
                             actual.datos.post.id != id
                         ) {
+
                             vm.abrir(id)
+
                         } else if (
                             actual == UiState.Cargando
                         ) {
+
                             vm.abrir(id)
                         }
                     }
                 }
 
-                // Eliminacion exitosa
+                // Confirmacion de eliminacion
                 LaunchedEffect(eliminacion) {
 
                     if (eliminacion is UiState.Exito) {
@@ -111,7 +133,8 @@ class MainActivity : ComponentActivity() {
                         scope.launch {
 
                             snackbarHostState.showSnackbar(
-                                message = "Publicación eliminada correctamente",
+                                message =
+                                    "Publicación eliminada correctamente",
                                 duration = SnackbarDuration.Short
                             )
                         }
@@ -120,7 +143,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Edicion exitosa
+                // Confirmacion de edicion
                 LaunchedEffect(edicion) {
 
                     if (edicion is UiState.Exito) {
@@ -130,7 +153,8 @@ class MainActivity : ComponentActivity() {
                         scope.launch {
 
                             snackbarHostState.showSnackbar(
-                                message = "Publicación actualizada correctamente",
+                                message =
+                                    "Publicación actualizada correctamente",
                                 duration = SnackbarDuration.Short
                             )
                         }
@@ -139,16 +163,10 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                BackHandler(
-                    enabled = idSeleccionado != null ||
-                            mostrarCrear ||
-                            mostrarEditar
-                ) {
+                // Navegacion compartida
+                val volver: () -> Unit = {
 
-                    if (
-                        eliminacion != UiState.Cargando &&
-                        edicion != UiState.Cargando
-                    ) {
+                    if (!ocupado) {
 
                         when {
 
@@ -180,8 +198,14 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                BackHandler(
+                    enabled = !enInicio,
+                    onBack = volver
+                )
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+
                     containerColor =
                         MaterialTheme.colorScheme.background,
 
@@ -193,8 +217,10 @@ class MainActivity : ComponentActivity() {
 
                             Snackbar(
                                 snackbarData = datos,
-                                containerColor = Color(0xFF287D46),
-                                contentColor = Color.White
+                                modifier = Modifier.padding(8.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                containerColor = VerdeExito,
+                                contentColor = Blanco
                             )
                         }
                     },
@@ -202,52 +228,151 @@ class MainActivity : ComponentActivity() {
                     topBar = {
 
                         TopAppBar(
+
+                            navigationIcon = {
+
+                                if (!enInicio) {
+
+                                    IconButton(
+                                        onClick = volver,
+                                        enabled = !ocupado,
+                                        modifier = Modifier.semantics {
+                                            contentDescription =
+                                                "Regresar"
+                                        }
+                                    ) {
+
+                                        IconoRegresar(
+                                            color = if (ocupado) {
+                                                Blanco.copy(alpha = 0.4f)
+                                            } else {
+                                                Blanco
+                                            },
+                                            modifier =
+                                                Modifier.size(24.dp)
+                                        )
+                                    }
+
+                                } else {
+
+                                    Surface(
+                                        modifier = Modifier
+                                            .padding(
+                                                start = 12.dp,
+                                                end = 10.dp
+                                            )
+                                            .size(42.dp),
+                                        color = Blanco,
+                                        shape =
+                                            RoundedCornerShape(13.dp)
+                                    ) {
+
+                                        Box(
+                                            contentAlignment =
+                                                Alignment.Center
+                                        ) {
+
+                                            IconoCampus(
+                                                color = AzulOscuro,
+                                                modifier =
+                                                    Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+
                             title = {
 
-                                Text(
-                                    text = if (mostrarEditar) {
-                                        "Editar publicación"
-                                    } else {
-                                        "MuroCampus"
-                                    },
-                                    style = MaterialTheme.typography.titleLarge
-                                )
+                                Column {
+
+                                    Text(
+                                        text = when {
+
+                                            mostrarEditar ->
+                                                "Editar publicación"
+
+                                            mostrarCrear ->
+                                                "Nueva publicación"
+
+                                            idSeleccionado != null ->
+                                                "Detalle"
+
+                                            else ->
+                                                "MuroCampus"
+                                        },
+                                        color = Blanco,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 21.sp
+                                    )
+
+                                    Text(
+                                        text = when {
+
+                                            mostrarEditar ->
+                                                "Actualiza tu contenido"
+
+                                            mostrarCrear ->
+                                                "Comparte con la comunidad"
+
+                                            idSeleccionado != null ->
+                                                "Publicación #$idSeleccionado"
+
+                                            else ->
+                                                "Comunidad universitaria"
+                                        },
+                                        color = Color(0xFFC7DDEB),
+                                        fontSize = 12.sp
+                                    )
+                                }
                             },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor =
-                                    MaterialTheme.colorScheme.primary,
-                                titleContentColor =
-                                    MaterialTheme.colorScheme.onPrimary
-                            )
+
+                            colors =
+                                TopAppBarDefaults.topAppBarColors(
+                                    containerColor = AzulOscuro,
+                                    titleContentColor = Blanco,
+                                    navigationIconContentColor = Blanco
+                                )
                         )
                     },
 
                     floatingActionButton = {
 
-                        if (
-                            idSeleccionado == null &&
-                            !mostrarCrear &&
-                            !mostrarEditar
-                        ) {
+                        if (enInicio) {
 
-                            FloatingActionButton(
+                            ExtendedFloatingActionButton(
+
                                 onClick = {
 
                                     vm.limpiarPublicacion()
 
                                     mostrarCrear = true
                                 },
-                                containerColor =
-                                    MaterialTheme.colorScheme.primary,
-                                contentColor =
-                                    MaterialTheme.colorScheme.onPrimary
-                            ) {
 
-                                Text(
-                                    text = "+",
-                                    fontSize = 30.sp
-                                )
-                            }
+                                icon = {
+
+                                    IconoAgregar(
+                                        color = Blanco,
+                                        modifier =
+                                            Modifier.size(23.dp)
+                                    )
+                                },
+
+                                text = {
+
+                                    Text(
+                                        text = "Publicar",
+                                        fontWeight =
+                                            FontWeight.SemiBold
+                                    )
+                                },
+
+                                shape = RoundedCornerShape(18.dp),
+
+                                containerColor = AzulOscuro,
+
+                                contentColor = Blanco
+                            )
                         }
                     }
 
@@ -268,12 +393,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(
                                     innerPadding
                                 ),
-                                onCancelar = {
-
-                                    vm.limpiarEdicion()
-
-                                    mostrarEditar = false
-                                }
+                                onCancelar = volver
                             )
                         }
 
@@ -327,5 +447,141 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+// Icono de identidad universitaria
+@Composable
+private fun IconoCampus(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+
+    Canvas(modifier = modifier) {
+
+        val w = size.width
+        val h = size.height
+        val grosor = size.minDimension * 0.065f
+
+        val birrete = Path().apply {
+
+            moveTo(w * 0.08f, h * 0.32f)
+
+            lineTo(w * 0.50f, h * 0.10f)
+
+            lineTo(w * 0.92f, h * 0.32f)
+
+            lineTo(w * 0.50f, h * 0.55f)
+
+            close()
+        }
+
+        drawPath(
+            path = birrete,
+            color = color
+        )
+
+        val base = Path().apply {
+
+            moveTo(w * 0.25f, h * 0.48f)
+
+            lineTo(w * 0.25f, h * 0.69f)
+
+            quadraticBezierTo(
+                w * 0.50f,
+                h * 0.88f,
+                w * 0.75f,
+                h * 0.69f
+            )
+
+            lineTo(w * 0.75f, h * 0.48f)
+        }
+
+        drawPath(
+            path = base,
+            color = color,
+            style = Stroke(
+                width = grosor,
+                cap = StrokeCap.Round
+            )
+        )
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.89f, h * 0.35f),
+            end = Offset(w * 0.89f, h * 0.76f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+// Icono para regresar
+@Composable
+private fun IconoRegresar(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+
+    Canvas(modifier = modifier) {
+
+        val w = size.width
+        val h = size.height
+        val grosor = size.minDimension * 0.09f
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.18f, h * 0.50f),
+            end = Offset(w * 0.85f, h * 0.50f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.18f, h * 0.50f),
+            end = Offset(w * 0.48f, h * 0.20f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.18f, h * 0.50f),
+            end = Offset(w * 0.48f, h * 0.80f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+// Icono para publicar
+@Composable
+private fun IconoAgregar(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+
+    Canvas(modifier = modifier) {
+
+        val w = size.width
+        val h = size.height
+        val grosor = size.minDimension * 0.10f
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.50f, h * 0.15f),
+            end = Offset(w * 0.50f, h * 0.85f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.15f, h * 0.50f),
+            end = Offset(w * 0.85f, h * 0.50f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
     }
 }
