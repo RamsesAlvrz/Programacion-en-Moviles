@@ -1,3 +1,4 @@
+
 package com.alvarez.murocampus.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -47,6 +48,16 @@ class PostsViewModel(
     val publicacion: StateFlow<UiState<Post>?> =
         _publicacion.asStateFlow()
 
+    // Estado del buscador
+    private val _busqueda = MutableStateFlow("")
+
+    val busqueda: StateFlow<String> =
+        _busqueda.asStateFlow()
+
+    // Conserva las publicaciones descargadas
+    private var publicacionesOriginales: List<Post> =
+        emptyList()
+
     private var trabajoLista: Job? = null
 
     private var trabajoDetalle: Job? = null
@@ -75,10 +86,17 @@ class PostsViewModel(
 
             resultado
                 .onSuccess { publicaciones ->
-                    _lista.value = UiState.Exito(publicaciones)
+
+                    publicacionesOriginales = publicaciones
+
+                    aplicarBusqueda()
                 }
                 .onFailure { error ->
-                    _lista.value = UiState.Error(mensajeDe(error))
+
+                    publicacionesOriginales = emptyList()
+
+                    _lista.value =
+                        UiState.Error(mensajeDe(error))
                 }
         }
     }
@@ -94,6 +112,45 @@ class PostsViewModel(
         cargar()
     }
 
+    // Actualiza el texto sin consultar la API
+    fun buscar(texto: String) {
+
+        _busqueda.value = texto
+
+        if (_lista.value is UiState.Exito) {
+            aplicarBusqueda()
+        }
+    }
+
+    fun limpiarBusqueda() {
+        buscar("")
+    }
+
+    // Filtra únicamente los datos descargados
+    private fun aplicarBusqueda() {
+
+        val consulta = _busqueda.value.trim()
+
+        val publicacionesFiltradas =
+            if (consulta.isBlank()) {
+
+                publicacionesOriginales
+
+            } else {
+
+                publicacionesOriginales.filter { post ->
+
+                    post.title.contains(
+                        other = consulta,
+                        ignoreCase = true
+                    )
+                }
+            }
+
+        _lista.value =
+            UiState.Exito(publicacionesFiltradas)
+    }
+
     fun abrir(id: Int) {
 
         trabajoDetalle?.cancel()
@@ -103,6 +160,7 @@ class PostsViewModel(
         trabajoDetalle = viewModelScope.launch {
 
             try {
+
                 val post = repo.detalle(id).getOrThrow()
 
                 val comentarios =
@@ -116,9 +174,11 @@ class PostsViewModel(
                 )
 
             } catch (e: CancellationException) {
+
                 throw e
 
             } catch (e: Exception) {
+
                 _detalle.value =
                     UiState.Error(mensajeDe(e))
             }
@@ -151,9 +211,12 @@ class PostsViewModel(
 
             repo.crear(nuevo)
                 .onSuccess { post ->
-                    _publicacion.value = UiState.Exito(post)
+
+                    _publicacion.value =
+                        UiState.Exito(post)
                 }
                 .onFailure { error ->
+
                     _publicacion.value =
                         UiState.Error(mensajeDe(error))
                 }
@@ -161,7 +224,9 @@ class PostsViewModel(
     }
 
     fun limpiarPublicacion() {
+
         trabajoPublicacion?.cancel()
+
         _publicacion.value = null
     }
 }
