@@ -1,3 +1,4 @@
+
 package com.alvarez.murocampus
 
 import android.os.Bundle
@@ -12,7 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alvarez.murocampus.data.PostRepositoryRemote
 import com.alvarez.murocampus.data.remote.RetrofitClient
 import com.alvarez.murocampus.ui.PantallaLista
@@ -21,10 +24,13 @@ import com.alvarez.murocampus.ui.PantallaCrear
 import com.alvarez.murocampus.ui.theme.MuroCampusTheme
 import com.alvarez.murocampus.viewmodel.PostsViewModel
 import com.alvarez.murocampus.viewmodel.PostsViewModelFactory
+import com.alvarez.murocampus.viewmodel.UiState
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
     private val vm: PostsViewModel by viewModels {
+
         PostsViewModelFactory(
             PostRepositoryRemote(RetrofitClient.api)
         )
@@ -32,10 +38,13 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
 
         setContent {
+
             MuroCampusTheme {
 
                 var idSeleccionado by rememberSaveable {
@@ -46,36 +55,94 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(false)
                 }
 
+                val eliminacion by
+                vm.eliminacion.collectAsStateWithLifecycle()
+
+                val snackbarHostState = remember {
+                    SnackbarHostState()
+                }
+
+                val scope = rememberCoroutineScope()
+
+                // Navegacion y mensaje de confirmacion
+                LaunchedEffect(eliminacion) {
+
+                    if (eliminacion is UiState.Exito) {
+
+                        vm.cerrarDetalle()
+
+                        idSeleccionado = null
+
+                        scope.launch {
+
+                            snackbarHostState.showSnackbar(
+                                message = "Publicación eliminada correctamente",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+
+                        vm.limpiarEliminacion()
+                    }
+                }
+
                 BackHandler(
                     enabled = idSeleccionado != null ||
                             mostrarCrear
                 ) {
 
-                    if (mostrarCrear) {
-                        vm.limpiarPublicacion()
-                        mostrarCrear = false
+                    if (eliminacion != UiState.Cargando) {
 
-                    } else {
-                        vm.cerrarDetalle()
-                        idSeleccionado = null
+                        if (mostrarCrear) {
+
+                            vm.limpiarPublicacion()
+
+                            mostrarCrear = false
+
+                        } else {
+
+                            vm.cerrarDetalle()
+
+                            vm.limpiarEliminacion()
+
+                            idSeleccionado = null
+                        }
                     }
                 }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor =
+                        MaterialTheme.colorScheme.background,
+
+                    snackbarHost = {
+
+                        SnackbarHost(
+                            hostState = snackbarHostState
+                        ) { datos ->
+
+                            Snackbar(
+                                snackbarData = datos,
+                                containerColor = Color(0xFF287D46),
+                                contentColor = Color.White
+                            )
+                        }
+                    },
 
                     topBar = {
+
                         TopAppBar(
                             title = {
+
                                 Text(
                                     text = "MuroCampus",
                                     style = MaterialTheme.typography.titleLarge
                                 )
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                titleContentColor = MaterialTheme.colorScheme.onPrimary
+                                containerColor =
+                                    MaterialTheme.colorScheme.primary,
+                                titleContentColor =
+                                    MaterialTheme.colorScheme.onPrimary
                             )
                         )
                     },
@@ -88,7 +155,9 @@ class MainActivity : ComponentActivity() {
 
                             FloatingActionButton(
                                 onClick = {
+
                                     vm.limpiarPublicacion()
+
                                     mostrarCrear = true
                                 },
                                 containerColor =
@@ -140,7 +209,11 @@ class MainActivity : ComponentActivity() {
                                     innerPadding
                                 ),
                                 onVerDetalle = { postId ->
+
+                                    vm.limpiarEliminacion()
+
                                     vm.abrir(postId)
+
                                     idSeleccionado = postId
                                 }
                             )

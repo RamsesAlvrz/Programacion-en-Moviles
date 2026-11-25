@@ -1,10 +1,13 @@
+
 package com.alvarez.murocampus.data.remote
 
 import com.alvarez.murocampus.model.Post
 import com.alvarez.murocampus.model.Comentario
 import com.alvarez.murocampus.model.NuevoPost
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.DELETE
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Body
@@ -33,4 +36,10 @@ interface PostApi {
     suspend fun crear(
         @Body nuevo: NuevoPost
     ): Post
+
+    // Eliminar una publicacion por su ID
+    @DELETE("posts/{id}")
+    suspend fun eliminar(
+        @Path("id") id: Int
+    ): Response<Unit>
 }

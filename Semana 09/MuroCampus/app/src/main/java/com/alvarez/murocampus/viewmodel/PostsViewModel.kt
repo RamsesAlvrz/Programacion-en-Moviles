@@ -54,9 +54,19 @@ class PostsViewModel(
     val busqueda: StateFlow<String> =
         _busqueda.asStateFlow()
 
-    // Conserva las publicaciones descargadas
     private var publicacionesOriginales: List<Post> =
         emptyList()
+
+    // Estado de la eliminacion
+    private val _eliminacion =
+        MutableStateFlow<UiState<Unit>?>(null)
+
+    val eliminacion: StateFlow<UiState<Unit>?> =
+        _eliminacion.asStateFlow()
+
+    // IDs eliminados durante la sesion actual
+    private val publicacionesEliminadas =
+        mutableSetOf<Int>()
 
     private var trabajoLista: Job? = null
 
@@ -87,7 +97,10 @@ class PostsViewModel(
             resultado
                 .onSuccess { publicaciones ->
 
-                    publicacionesOriginales = publicaciones
+                    publicacionesOriginales =
+                        publicaciones.filterNot { post ->
+                            post.id in publicacionesEliminadas
+                        }
 
                     aplicarBusqueda()
                 }
@@ -112,7 +125,6 @@ class PostsViewModel(
         cargar()
     }
 
-    // Actualiza el texto sin consultar la API
     fun buscar(texto: String) {
 
         _busqueda.value = texto
@@ -126,7 +138,6 @@ class PostsViewModel(
         buscar("")
     }
 
-    // Filtra únicamente los datos descargados
     private fun aplicarBusqueda() {
 
         val consulta = _busqueda.value.trim()
@@ -186,6 +197,7 @@ class PostsViewModel(
     }
 
     fun cerrarDetalle() {
+
         trabajoDetalle?.cancel()
     }
 
@@ -228,5 +240,62 @@ class PostsViewModel(
         trabajoPublicacion?.cancel()
 
         _publicacion.value = null
+    }
+
+    // Eliminar una publicacion mediante el Repository
+    fun eliminar(id: Int) {
+
+        if (_eliminacion.value == UiState.Cargando) {
+            return
+        }
+
+        if (id in publicacionesEliminadas) {
+            return
+        }
+
+        val detalleActual = _detalle.value
+
+        if (
+            detalleActual !is UiState.Exito ||
+            detalleActual.datos.post.id != id
+        ) {
+            return
+        }
+
+        _eliminacion.value = UiState.Cargando
+
+        viewModelScope.launch {
+
+            repo.eliminar(id)
+                .onSuccess {
+
+                    publicacionesEliminadas.add(id)
+
+                    publicacionesOriginales =
+                        publicacionesOriginales.filterNot {
+                            it.id == id
+                        }
+
+                    if (_lista.value is UiState.Exito) {
+                        aplicarBusqueda()
+                    }
+
+                    _eliminacion.value =
+                        UiState.Exito(Unit)
+                }
+                .onFailure { error ->
+
+                    _eliminacion.value =
+                        UiState.Error(mensajeDe(error))
+                }
+        }
+    }
+
+    fun limpiarEliminacion() {
+
+        if (_eliminacion.value != UiState.Cargando) {
+
+            _eliminacion.value = null
+        }
     }
 }
