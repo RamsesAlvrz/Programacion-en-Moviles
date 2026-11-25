@@ -32,3 +32,9 @@ data class NuevoPost(
     val title: String,
     val body: String
 )
+
+// Modelo para actualizar solamente el titulo
+@Serializable
+data class EditarPost(
+    val title: String
+)

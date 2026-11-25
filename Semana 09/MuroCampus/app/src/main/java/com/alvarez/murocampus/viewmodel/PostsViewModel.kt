@@ -1,4 +1,3 @@
-
 package com.alvarez.murocampus.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -8,6 +7,7 @@ import com.alvarez.murocampus.data.mensajeDe
 import com.alvarez.murocampus.model.Post
 import com.alvarez.murocampus.model.Comentario
 import com.alvarez.murocampus.model.NuevoPost
+import com.alvarez.murocampus.model.EditarPost
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +48,6 @@ class PostsViewModel(
     val publicacion: StateFlow<UiState<Post>?> =
         _publicacion.asStateFlow()
 
-    // Estado del buscador
     private val _busqueda = MutableStateFlow("")
 
     val busqueda: StateFlow<String> =
@@ -57,16 +56,25 @@ class PostsViewModel(
     private var publicacionesOriginales: List<Post> =
         emptyList()
 
-    // Estado de la eliminacion
     private val _eliminacion =
         MutableStateFlow<UiState<Unit>?>(null)
 
     val eliminacion: StateFlow<UiState<Unit>?> =
         _eliminacion.asStateFlow()
 
-    // IDs eliminados durante la sesion actual
     private val publicacionesEliminadas =
         mutableSetOf<Int>()
+
+    // Estado de la edicion
+    private val _edicion =
+        MutableStateFlow<UiState<Post>?>(null)
+
+    val edicion: StateFlow<UiState<Post>?> =
+        _edicion.asStateFlow()
+
+    // Publicaciones editadas durante la sesion
+    private val publicacionesEditadas =
+        mutableMapOf<Int, Post>()
 
     private var trabajoLista: Job? = null
 
@@ -98,9 +106,13 @@ class PostsViewModel(
                 .onSuccess { publicaciones ->
 
                     publicacionesOriginales =
-                        publicaciones.filterNot { post ->
-                            post.id in publicacionesEliminadas
-                        }
+                        publicaciones
+                            .filterNot { post ->
+                                post.id in publicacionesEliminadas
+                            }
+                            .map { post ->
+                                publicacionesEditadas[post.id] ?: post
+                            }
 
                     aplicarBusqueda()
                 }
@@ -172,7 +184,9 @@ class PostsViewModel(
 
             try {
 
-                val post = repo.detalle(id).getOrThrow()
+                val post =
+                    publicacionesEditadas[id]
+                        ?: repo.detalle(id).getOrThrow()
 
                 val comentarios =
                     repo.comentarios(id).getOrThrow()
@@ -242,10 +256,11 @@ class PostsViewModel(
         _publicacion.value = null
     }
 
-    // Eliminar una publicacion mediante el Repository
     fun eliminar(id: Int) {
 
-        if (_eliminacion.value == UiState.Cargando) {
+        if (_eliminacion.value == UiState.Cargando ||
+            _edicion.value == UiState.Cargando
+        ) {
             return
         }
 
@@ -270,6 +285,8 @@ class PostsViewModel(
                 .onSuccess {
 
                     publicacionesEliminadas.add(id)
+
+                    publicacionesEditadas.remove(id)
 
                     publicacionesOriginales =
                         publicacionesOriginales.filterNot {
@@ -296,6 +313,96 @@ class PostsViewModel(
         if (_eliminacion.value != UiState.Cargando) {
 
             _eliminacion.value = null
+        }
+    }
+
+    // Actualiza el titulo mediante PATCH
+    fun editar(id: Int, titulo: String) {
+
+        val nuevoTitulo = titulo.trim()
+
+        if (nuevoTitulo.isBlank()) {
+            return
+        }
+
+        if (_edicion.value == UiState.Cargando ||
+            _eliminacion.value == UiState.Cargando
+        ) {
+            return
+        }
+
+        if (id in publicacionesEliminadas) {
+            return
+        }
+
+        val detalleActual = _detalle.value
+
+        if (
+            detalleActual !is UiState.Exito ||
+            detalleActual.datos.post.id != id
+        ) {
+            return
+        }
+
+        if (nuevoTitulo == detalleActual.datos.post.title) {
+            return
+        }
+
+        _edicion.value = UiState.Cargando
+
+        viewModelScope.launch {
+
+            val cambios = EditarPost(
+                title = nuevoTitulo
+            )
+
+            repo.editar(id, cambios)
+                .onSuccess { respuesta ->
+
+                    val postActualizado =
+                        detalleActual.datos.post.copy(
+                            title = respuesta.title
+                        )
+
+                    publicacionesEditadas[id] =
+                        postActualizado
+
+                    publicacionesOriginales =
+                        publicacionesOriginales.map { post ->
+
+                            if (post.id == id) {
+                                postActualizado
+                            } else {
+                                post
+                            }
+                        }
+
+                    if (_lista.value is UiState.Exito) {
+                        aplicarBusqueda()
+                    }
+
+                    _detalle.value = UiState.Exito(
+                        detalleActual.datos.copy(
+                            post = postActualizado
+                        )
+                    )
+
+                    _edicion.value =
+                        UiState.Exito(postActualizado)
+                }
+                .onFailure { error ->
+
+                    _edicion.value =
+                        UiState.Error(mensajeDe(error))
+                }
+        }
+    }
+
+    fun limpiarEdicion() {
+
+        if (_edicion.value != UiState.Cargando) {
+
+            _edicion.value = null
         }
     }
 }

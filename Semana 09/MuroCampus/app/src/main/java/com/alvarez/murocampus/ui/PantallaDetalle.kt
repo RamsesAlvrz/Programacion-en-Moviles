@@ -1,4 +1,3 @@
-
 package com.alvarez.murocampus.ui
 
 import androidx.compose.foundation.Canvas
@@ -13,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -24,11 +24,14 @@ import com.alvarez.murocampus.viewmodel.UiState
 
 private val RojoEliminar = Color(0xFFB3261E)
 private val FondoEliminar = Color(0xFFFCE8E6)
+private val AzulEditar = Color(0xFF176B98)
+private val FondoEditar = Color(0xFFE4EEF5)
 
 @Composable
 fun PantallaDetalle(
     vm: PostsViewModel,
     id: Int,
+    onEditar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -38,11 +41,18 @@ fun PantallaDetalle(
     val eliminacion by
     vm.eliminacion.collectAsStateWithLifecycle()
 
+    val edicion by
+    vm.edicion.collectAsStateWithLifecycle()
+
     var mostrarConfirmacion by rememberSaveable(id) {
         mutableStateOf(false)
     }
 
     val eliminando = eliminacion == UiState.Cargando
+
+    val ocupado = eliminando ||
+            edicion == UiState.Cargando ||
+            eliminacion is UiState.Exito
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -120,14 +130,44 @@ fun PantallaDetalle(
                                     modifier = Modifier.height(14.dp)
                                 )
 
-                                // Boton de eliminacion
+                                // Boton para editar
+                                Button(
+                                    onClick = onEditar,
+                                    enabled = !ocupado,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = FondoEditar,
+                                        contentColor = AzulEditar
+                                    )
+                                ) {
+
+                                    IconoEditar(
+                                        color = AzulEditar,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+
+                                    Spacer(
+                                        modifier = Modifier.width(8.dp)
+                                    )
+
+                                    Text(
+                                        text = "Editar publicación",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+
+                                Spacer(
+                                    modifier = Modifier.height(8.dp)
+                                )
+
+                                // Boton para eliminar
                                 Button(
                                     onClick = {
                                         vm.limpiarEliminacion()
                                         mostrarConfirmacion = true
                                     },
-                                    enabled = !eliminando &&
-                                            eliminacion !is UiState.Exito,
+                                    enabled = !ocupado,
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
@@ -247,7 +287,6 @@ fun PantallaDetalle(
         }
     }
 
-    // Dialogo de confirmacion
     if (mostrarConfirmacion) {
 
         AlertDialog(
@@ -324,7 +363,52 @@ fun PantallaDetalle(
     }
 }
 
-// Icono de papelera sin dependencias adicionales
+@Composable
+internal fun IconoEditar(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+
+    Canvas(modifier = modifier) {
+
+        val w = size.width
+        val h = size.height
+        val grosor = size.minDimension * 0.09f
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.25f, h * 0.75f),
+            end = Offset(w * 0.78f, h * 0.22f),
+            strokeWidth = grosor * 2,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.15f, h * 0.85f),
+            end = Offset(w * 0.35f, h * 0.80f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.15f, h * 0.85f),
+            end = Offset(w * 0.20f, h * 0.65f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = color,
+            start = Offset(w * 0.50f, h * 0.85f),
+            end = Offset(w * 0.88f, h * 0.85f),
+            strokeWidth = grosor,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
 @Composable
 private fun IconoEliminar(
     color: Color,
@@ -349,9 +433,7 @@ private fun IconoEliminar(
             color = color,
             topLeft = Offset(w * 0.24f, h * 0.30f),
             size = Size(w * 0.52f, h * 0.58f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                w * 0.06f
-            ),
+            cornerRadius = CornerRadius(w * 0.06f),
             style = Stroke(width = grosor)
         )
 

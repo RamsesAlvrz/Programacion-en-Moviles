@@ -21,6 +21,7 @@ import com.alvarez.murocampus.data.remote.RetrofitClient
 import com.alvarez.murocampus.ui.PantallaLista
 import com.alvarez.murocampus.ui.PantallaDetalle
 import com.alvarez.murocampus.ui.PantallaCrear
+import com.alvarez.murocampus.ui.PantallaEditar
 import com.alvarez.murocampus.ui.theme.MuroCampusTheme
 import com.alvarez.murocampus.viewmodel.PostsViewModel
 import com.alvarez.murocampus.viewmodel.PostsViewModelFactory
@@ -55,8 +56,18 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(false)
                 }
 
+                var mostrarEditar by rememberSaveable {
+                    mutableStateOf(false)
+                }
+
                 val eliminacion by
                 vm.eliminacion.collectAsStateWithLifecycle()
+
+                val edicion by
+                vm.edicion.collectAsStateWithLifecycle()
+
+                val detalle by
+                vm.detalle.collectAsStateWithLifecycle()
 
                 val snackbarHostState = remember {
                     SnackbarHostState()
@@ -64,12 +75,36 @@ class MainActivity : ComponentActivity() {
 
                 val scope = rememberCoroutineScope()
 
-                // Navegacion y mensaje de confirmacion
+                // Recuperar el detalle si se recrea el proceso
+                LaunchedEffect(idSeleccionado) {
+
+                    val id = idSeleccionado
+
+                    if (id != null) {
+
+                        val actual = vm.detalle.value
+
+                        if (
+                            actual is UiState.Exito &&
+                            actual.datos.post.id != id
+                        ) {
+                            vm.abrir(id)
+                        } else if (
+                            actual == UiState.Cargando
+                        ) {
+                            vm.abrir(id)
+                        }
+                    }
+                }
+
+                // Eliminacion exitosa
                 LaunchedEffect(eliminacion) {
 
                     if (eliminacion is UiState.Exito) {
 
                         vm.cerrarDetalle()
+
+                        mostrarEditar = false
 
                         idSeleccionado = null
 
@@ -85,26 +120,62 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // Edicion exitosa
+                LaunchedEffect(edicion) {
+
+                    if (edicion is UiState.Exito) {
+
+                        mostrarEditar = false
+
+                        scope.launch {
+
+                            snackbarHostState.showSnackbar(
+                                message = "Publicación actualizada correctamente",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+
+                        vm.limpiarEdicion()
+                    }
+                }
+
                 BackHandler(
                     enabled = idSeleccionado != null ||
-                            mostrarCrear
+                            mostrarCrear ||
+                            mostrarEditar
                 ) {
 
-                    if (eliminacion != UiState.Cargando) {
+                    if (
+                        eliminacion != UiState.Cargando &&
+                        edicion != UiState.Cargando
+                    ) {
 
-                        if (mostrarCrear) {
+                        when {
 
-                            vm.limpiarPublicacion()
+                            mostrarEditar -> {
 
-                            mostrarCrear = false
+                                vm.limpiarEdicion()
 
-                        } else {
+                                mostrarEditar = false
+                            }
 
-                            vm.cerrarDetalle()
+                            mostrarCrear -> {
 
-                            vm.limpiarEliminacion()
+                                vm.limpiarPublicacion()
 
-                            idSeleccionado = null
+                                mostrarCrear = false
+                            }
+
+                            else -> {
+
+                                vm.cerrarDetalle()
+
+                                vm.limpiarEliminacion()
+
+                                vm.limpiarEdicion()
+
+                                idSeleccionado = null
+                            }
                         }
                     }
                 }
@@ -134,7 +205,11 @@ class MainActivity : ComponentActivity() {
                             title = {
 
                                 Text(
-                                    text = "MuroCampus",
+                                    text = if (mostrarEditar) {
+                                        "Editar publicación"
+                                    } else {
+                                        "MuroCampus"
+                                    },
                                     style = MaterialTheme.typography.titleLarge
                                 )
                             },
@@ -149,8 +224,10 @@ class MainActivity : ComponentActivity() {
 
                     floatingActionButton = {
 
-                        if (idSeleccionado == null &&
-                            !mostrarCrear
+                        if (
+                            idSeleccionado == null &&
+                            !mostrarCrear &&
+                            !mostrarEditar
                         ) {
 
                             FloatingActionButton(
@@ -178,7 +255,27 @@ class MainActivity : ComponentActivity() {
 
                     val id = idSeleccionado
 
+                    val detalleActual = detalle
+
                     when {
+
+                        mostrarEditar &&
+                                detalleActual is UiState.Exito -> {
+
+                            PantallaEditar(
+                                vm = vm,
+                                post = detalleActual.datos.post,
+                                modifier = Modifier.padding(
+                                    innerPadding
+                                ),
+                                onCancelar = {
+
+                                    vm.limpiarEdicion()
+
+                                    mostrarEditar = false
+                                }
+                            )
+                        }
 
                         mostrarCrear -> {
 
@@ -197,7 +294,13 @@ class MainActivity : ComponentActivity() {
                                 id = id,
                                 modifier = Modifier.padding(
                                     innerPadding
-                                )
+                                ),
+                                onEditar = {
+
+                                    vm.limpiarEdicion()
+
+                                    mostrarEditar = true
+                                }
                             )
                         }
 
@@ -212,9 +315,11 @@ class MainActivity : ComponentActivity() {
 
                                     vm.limpiarEliminacion()
 
-                                    vm.abrir(postId)
+                                    vm.limpiarEdicion()
 
                                     idSeleccionado = postId
+
+                                    vm.abrir(postId)
                                 }
                             )
                         }
