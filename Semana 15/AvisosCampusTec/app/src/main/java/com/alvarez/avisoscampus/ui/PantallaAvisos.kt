@@ -5,10 +5,12 @@ import android.Manifest
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.alvarez.avisoscampus.model.PermisoUi
 import com.alvarez.avisoscampus.notificacion.Notificador
@@ -42,10 +45,20 @@ fun PantallaAvisos(vm: AvisosViewModel) {
 
     val avisos by vm.avisos.collectAsState()
 
+    val mensaje by vm.mensaje.collectAsState()
+
     val launcherPermiso = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { concedido ->
         vm.permisoRespondido(concedido)
+    }
+
+    val launcherAjustes = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        vm.permisoRespondido(
+            Notificador.tienePermiso(contexto)
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -55,10 +68,17 @@ fun PantallaAvisos(vm: AvisosViewModel) {
     }
 
     LaunchedEffect(Unit) {
-        vm.eventos.collect { aviso ->
-            Notificador.mostrar(contexto, aviso)
 
-            // TODO Paso 8: manejar permiso denegado
+        vm.eventos.collect { aviso ->
+
+            val mostrado = Notificador.mostrar(
+                contexto,
+                aviso
+            )
+
+            if (!mostrado) {
+                vm.noSePudoMostrar()
+            }
         }
     }
 
@@ -192,6 +212,62 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                         }
                     ) {
                         Text("Mostrar aviso")
+                    }
+                }
+            }
+
+            mensaje?.let { textoError ->
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = MaterialTheme.colorScheme.error
+                                .copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = textoError,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            if (permiso == PermisoUi.Denegado) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+
+                    OutlinedButton(
+                        onClick = {
+
+                            val intent = Intent(
+                                Settings.ACTION_APP_NOTIFICATION_SETTINGS
+                            ).apply {
+
+                                putExtra(
+                                    Settings.EXTRA_APP_PACKAGE,
+                                    contexto.packageName
+                                )
+                            }
+
+                            launcherAjustes.launch(intent)
+                        },
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+
+                        Text("Abrir ajustes")
                     }
                 }
             }

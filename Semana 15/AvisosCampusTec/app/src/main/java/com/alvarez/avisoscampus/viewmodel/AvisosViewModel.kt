@@ -58,6 +58,10 @@ class AvisosViewModel(
         } else {
             PermisoUi.Denegado
         }
+
+        if (concedido) {
+            _mensaje.value = null
+        }
     }
 
     fun avisarAhora() {
@@ -138,5 +142,11 @@ class AvisosViewModel(
         }
     }
 
-    // TODO Paso 8: manejar permiso denegado
+    fun noSePudoMostrar() {
+
+        _permiso.value = PermisoUi.Denegado
+
+        _mensaje.value =
+            "Sin permiso: el aviso se guardó en el historial, pero no se mostró"
+    }
 }
