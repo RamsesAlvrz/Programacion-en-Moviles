@@ -1,8 +1,11 @@
+
 package com.alvarez.avisoscampus.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.alvarez.avisoscampus.data.AvisosRepository
 import com.alvarez.avisoscampus.model.Aviso
+import com.alvarez.avisoscampus.model.Origen
 import com.alvarez.avisoscampus.model.PermisoUi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +13,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class AvisosViewModel(
     private val repo: AvisosRepository
@@ -42,7 +46,19 @@ class AvisosViewModel(
         }
     }
 
-    // TODO Paso 3: avisarAhora()
+    fun avisarAhora() {
+
+        viewModelScope.launch {
+
+            val aviso = repo.registrar(
+                titulo = "Tarea lista",
+                texto = "Tu entrega fue registrada",
+                origen = Origen.BOTON
+            )
+
+            _eventos.emit(aviso)
+        }
+    }
 
     // TODO Paso 5: recordarEn() y cancelarRecordatorio()
 
