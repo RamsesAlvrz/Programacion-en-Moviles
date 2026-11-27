@@ -2,9 +2,12 @@
 package com.alvarez.avisoscampus.ui
 
 import android.Manifest
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.alvarez.avisoscampus.model.PermisoUi
 import com.alvarez.avisoscampus.notificacion.Notificador
+import com.alvarez.avisoscampus.receiver.ModoAvionReceiver
 import com.alvarez.avisoscampus.ui.theme.GrisPendiente
 import com.alvarez.avisoscampus.ui.theme.VerdePermitido
 import com.alvarez.avisoscampus.ui.theme.RojoDenegado
@@ -33,6 +37,8 @@ fun PantallaAvisos(vm: AvisosViewModel) {
     val permiso by vm.permiso.collectAsState()
 
     val faltan by vm.faltan.collectAsState()
+
+    val escuchandoAvion by vm.escuchandoAvion.collectAsState()
 
     val launcherPermiso = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -51,6 +57,35 @@ fun PantallaAvisos(vm: AvisosViewModel) {
             Notificador.mostrar(contexto, aviso)
 
             // TODO Paso 8: manejar permiso denegado
+        }
+    }
+
+    DisposableEffect(escuchandoAvion, contexto) {
+
+        if (escuchandoAvion) {
+
+            val receptor = ModoAvionReceiver { activado ->
+                vm.alCambiarModoAvion(activado)
+            }
+
+            val filtro = IntentFilter(
+                Intent.ACTION_AIRPLANE_MODE_CHANGED
+            )
+
+            ContextCompat.registerReceiver(
+                contexto,
+                receptor,
+                filtro,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+
+            onDispose {
+                contexto.unregisterReceiver(receptor)
+            }
+
+        } else {
+
+            onDispose { }
         }
     }
 
@@ -233,9 +268,9 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                     )
 
                     Switch(
-                        checked = false,
+                        checked = escuchandoAvion,
                         onCheckedChange = {
-                            // TODO Paso 6
+                            vm.cambiarEscucha(it)
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor =
@@ -248,6 +283,21 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                             uncheckedBorderColor = GrisPendiente
                         )
                     )
+                }
+
+                if (escuchandoAvion) {
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+
+                        Text(
+                            text = "Activa o desactiva el modo avión del celular",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 

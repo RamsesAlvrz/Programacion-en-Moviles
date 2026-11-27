@@ -46,6 +46,11 @@ class AvisosViewModel(
 
     private var recordatorioJob: Job? = null
 
+    private val _escuchandoAvion = MutableStateFlow(false)
+
+    val escuchandoAvion: StateFlow<Boolean> =
+        _escuchandoAvion.asStateFlow()
+
     fun permisoRespondido(concedido: Boolean) {
 
         _permiso.value = if (concedido) {
@@ -106,7 +111,32 @@ class AvisosViewModel(
         recordatorioJob?.cancel()
     }
 
-    // TODO Paso 6: escuchar cambios del modo avión
+    fun cambiarEscucha(activado: Boolean) {
+
+        _escuchandoAvion.value = activado
+    }
+
+    fun alCambiarModoAvion(activado: Boolean) {
+
+        if (!_escuchandoAvion.value) {
+            return
+        }
+
+        viewModelScope.launch {
+
+            val aviso = repo.registrar(
+                titulo = "Modo avión",
+                texto = if (activado) {
+                    "Activado"
+                } else {
+                    "Desactivado"
+                },
+                origen = Origen.MODO_AVION
+            )
+
+            _eventos.emit(aviso)
+        }
+    }
 
     // TODO Paso 8: manejar permiso denegado
 }
