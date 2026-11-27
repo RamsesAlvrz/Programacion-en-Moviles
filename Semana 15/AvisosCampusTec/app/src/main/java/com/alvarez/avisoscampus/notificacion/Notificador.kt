@@ -102,6 +102,21 @@ object Notificador {
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        val textoCompleto = when (aviso.origen) {
+
+            Origen.BOTON ->
+                "${aviso.texto}. Recuerda revisar tus actividades " +
+                        "académicas y verificar que tus entregas estén completas."
+
+            Origen.RECORDATORIO ->
+                "${aviso.texto}. Recuerda completar tus actividades " +
+                        "y revisar las fechas de entrega de tus laboratorios."
+
+            Origen.MODO_AVION ->
+                "Modo avión: ${aviso.texto}. " +
+                        "Verifica el estado de conectividad de tu dispositivo."
+        }
+
         val notificacion = NotificationCompat.Builder(
             context,
             canal
@@ -109,6 +124,12 @@ object Notificador {
             .setSmallIcon(R.drawable.ic_notificacion)
             .setContentTitle(aviso.titulo)
             .setContentText(aviso.texto)
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(textoCompleto)
+                    .setBigContentTitle(aviso.titulo)
+                    .setSummaryText("AvisosCampus")
+            )
             .setPriority(prioridad)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
