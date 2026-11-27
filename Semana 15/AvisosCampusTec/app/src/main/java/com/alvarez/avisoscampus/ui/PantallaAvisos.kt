@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.alvarez.avisoscampus.model.PermisoUi
 import com.alvarez.avisoscampus.notificacion.Notificador
@@ -30,6 +31,8 @@ fun PantallaAvisos(vm: AvisosViewModel) {
     val contexto = LocalContext.current
 
     val permiso by vm.permiso.collectAsState()
+
+    val faltan by vm.faltan.collectAsState()
 
     val launcherPermiso = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -171,21 +174,23 @@ fun PantallaAvisos(vm: AvisosViewModel) {
 
                     Button(
                         onClick = {
-                            // TODO Paso 5
-                        }
+                            vm.recordarEn(10)
+                        },
+                        enabled = faltan == null
                     ) {
                         Text("Recordar en 10 s")
                     }
 
                     OutlinedButton(
                         onClick = {
-                            // TODO Paso 5
+                            vm.cancelarRecordatorio()
                         },
-                        enabled = false,
+                        enabled = faltan != null,
                         border = BorderStroke(
                             1.dp,
-                            MaterialTheme.colorScheme.primary
-                                .copy(alpha = 0.5f)
+                            MaterialTheme.colorScheme.primary.copy(
+                                alpha = if (faltan != null) 1f else 0.5f
+                            )
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
                             disabledContentColor = GrisPendiente
@@ -195,7 +200,21 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                     }
                 }
 
-                // TODO Paso 5: mostrar segundos restantes
+                faltan?.let { segundos ->
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+
+                        Text(
+                            text = "Faltan $segundos s",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
 
             TarjetaAvisos(

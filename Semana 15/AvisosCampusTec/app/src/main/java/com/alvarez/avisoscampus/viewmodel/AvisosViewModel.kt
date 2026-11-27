@@ -7,6 +7,8 @@ import com.alvarez.avisoscampus.data.AvisosRepository
 import com.alvarez.avisoscampus.model.Aviso
 import com.alvarez.avisoscampus.model.Origen
 import com.alvarez.avisoscampus.model.PermisoUi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,6 +39,13 @@ class AvisosViewModel(
     val mensaje: StateFlow<String?> =
         _mensaje.asStateFlow()
 
+    private val _faltan = MutableStateFlow<Int?>(null)
+
+    val faltan: StateFlow<Int?> =
+        _faltan.asStateFlow()
+
+    private var recordatorioJob: Job? = null
+
     fun permisoRespondido(concedido: Boolean) {
 
         _permiso.value = if (concedido) {
@@ -60,7 +69,42 @@ class AvisosViewModel(
         }
     }
 
-    // TODO Paso 5: recordarEn() y cancelarRecordatorio()
+    fun recordarEn(segundos: Int = 10) {
+
+        if (recordatorioJob?.isActive == true) {
+            return
+        }
+
+        recordatorioJob = viewModelScope.launch {
+
+            try {
+
+                for (restantes in segundos downTo 1) {
+
+                    _faltan.value = restantes
+
+                    delay(1000)
+                }
+
+                val aviso = repo.registrar(
+                    titulo = "Recordatorio",
+                    texto = "Revisa tu laboratorio pendiente",
+                    origen = Origen.RECORDATORIO
+                )
+
+                _eventos.emit(aviso)
+
+            } finally {
+
+                _faltan.value = null
+            }
+        }
+    }
+
+    fun cancelarRecordatorio() {
+
+        recordatorioJob?.cancel()
+    }
 
     // TODO Paso 6: escuchar cambios del modo avión
 
