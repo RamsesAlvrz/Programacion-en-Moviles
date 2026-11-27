@@ -35,7 +35,6 @@ fun HistorialAvisos(avisos: List<Aviso>) {
         ) {
 
             avisos.take(20).forEach { aviso ->
-
                 FilaAviso(aviso)
             }
         }
@@ -49,6 +48,7 @@ private fun FilaAviso(aviso: Aviso) {
         Origen.BOTON -> Color(0xFF287DA8)
         Origen.RECORDATORIO -> Color(0xFFF4B942)
         Origen.MODO_AVION -> Color(0xFF7655B5)
+        Origen.CARGADOR -> Color(0xFF16845B)
     }
 
     val colorTextoOrigen = when (aviso.origen) {

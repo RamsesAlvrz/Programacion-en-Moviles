@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.alvarez.avisoscampus.model.PermisoUi
 import com.alvarez.avisoscampus.notificacion.Notificador
 import com.alvarez.avisoscampus.receiver.ModoAvionReceiver
+import com.alvarez.avisoscampus.receiver.CargadorReceiver
 import com.alvarez.avisoscampus.ui.theme.GrisPendiente
 import com.alvarez.avisoscampus.ui.theme.VerdePermitido
 import com.alvarez.avisoscampus.ui.theme.RojoDenegado
@@ -38,13 +39,10 @@ fun PantallaAvisos(vm: AvisosViewModel) {
     val contexto = LocalContext.current
 
     val permiso by vm.permiso.collectAsState()
-
     val faltan by vm.faltan.collectAsState()
-
     val escuchandoAvion by vm.escuchandoAvion.collectAsState()
-
+    val escuchandoCargador by vm.escuchandoCargador.collectAsState()
     val avisos by vm.avisos.collectAsState()
-
     val mensaje by vm.mensaje.collectAsState()
 
     val launcherPermiso = rememberLauncherForActivityResult(
@@ -62,6 +60,7 @@ fun PantallaAvisos(vm: AvisosViewModel) {
     }
 
     LaunchedEffect(Unit) {
+
         if (Notificador.tienePermiso(contexto)) {
             vm.permisoRespondido(true)
         }
@@ -93,6 +92,36 @@ fun PantallaAvisos(vm: AvisosViewModel) {
             val filtro = IntentFilter(
                 Intent.ACTION_AIRPLANE_MODE_CHANGED
             )
+
+            ContextCompat.registerReceiver(
+                contexto,
+                receptor,
+                filtro,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+
+            onDispose {
+                contexto.unregisterReceiver(receptor)
+            }
+
+        } else {
+
+            onDispose { }
+        }
+    }
+
+    DisposableEffect(escuchandoCargador, contexto) {
+
+        if (escuchandoCargador) {
+
+            val receptor = CargadorReceiver { conectado ->
+                vm.alCambiarCargador(conectado)
+            }
+
+            val filtro = IntentFilter().apply {
+                addAction(Intent.ACTION_POWER_CONNECTED)
+                addAction(Intent.ACTION_POWER_DISCONNECTED)
+            }
 
             ContextCompat.registerReceiver(
                 contexto,
@@ -197,9 +226,7 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 }
             }
 
-            TarjetaAvisos(
-                titulo = "Avisos"
-            ) {
+            TarjetaAvisos(titulo = "Avisos") {
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -207,9 +234,7 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 ) {
 
                     Button(
-                        onClick = {
-                            vm.avisarAhora()
-                        }
+                        onClick = { vm.avisarAhora() }
                     ) {
                         Text("Mostrar aviso")
                     }
@@ -272,9 +297,7 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 }
             }
 
-            TarjetaAvisos(
-                titulo = "Recordatorio"
-            ) {
+            TarjetaAvisos(titulo = "Recordatorio") {
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -286,18 +309,14 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 ) {
 
                     Button(
-                        onClick = {
-                            vm.recordarEn(10)
-                        },
+                        onClick = { vm.recordarEn(10) },
                         enabled = faltan == null
                     ) {
                         Text("Recordar en 10 s")
                     }
 
                     OutlinedButton(
-                        onClick = {
-                            vm.cancelarRecordatorio()
-                        },
+                        onClick = { vm.cancelarRecordatorio() },
                         enabled = faltan != null,
                         border = BorderStroke(
                             1.dp,
@@ -330,62 +349,87 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 }
             }
 
-            TarjetaAvisos(
-                titulo = "Receptor de anuncios"
-            ) {
+            TarjetaAvisos(titulo = "Receptor de anuncios") {
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Text(
-                        text = "Escuchar el modo avión",
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    Switch(
-                        checked = escuchandoAvion,
-                        onCheckedChange = {
-                            vm.cambiarEscucha(it)
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor =
-                                MaterialTheme.colorScheme.onPrimary,
-                            checkedTrackColor =
-                                MaterialTheme.colorScheme.primary,
-                            uncheckedThumbColor = GrisPendiente,
-                            uncheckedTrackColor =
-                                MaterialTheme.colorScheme.surface,
-                            uncheckedBorderColor = GrisPendiente
-                        )
-                    )
-                }
+                InterruptorReceptor(
+                    titulo = "Escuchar el modo avión",
+                    activado = escuchandoAvion,
+                    alCambiar = { vm.cambiarEscucha(it) }
+                )
 
                 if (escuchandoAvion) {
 
-                    Row(
+                    Text(
+                        text = "Activa o desactiva el modo avión del celular",
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-                        Text(
-                            text = "Activa o desactiva el modo avión del celular",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+
+                InterruptorReceptor(
+                    titulo = "Escuchar el cargador",
+                    activado = escuchandoCargador,
+                    alCambiar = { vm.cambiarEscuchaCargador(it) }
+                )
+
+                if (escuchandoCargador) {
+
+                    Text(
+                        text = "Conecta o desconecta el cargador",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = VerdePermitido
+                    )
                 }
             }
 
-            TarjetaAvisos(
-                titulo = "Historial"
-            ) {
+            TarjetaAvisos(titulo = "Historial") {
 
                 HistorialAvisos(avisos = avisos)
             }
         }
+    }
+}
+
+@Composable
+private fun InterruptorReceptor(
+    titulo: String,
+    activado: Boolean,
+    alCambiar: (Boolean) -> Unit
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Text(
+            text = titulo,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Switch(
+            checked = activado,
+            onCheckedChange = alCambiar,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor =
+                    MaterialTheme.colorScheme.onPrimary,
+                checkedTrackColor =
+                    MaterialTheme.colorScheme.primary,
+                uncheckedThumbColor = GrisPendiente,
+                uncheckedTrackColor =
+                    MaterialTheme.colorScheme.surface,
+                uncheckedBorderColor = GrisPendiente
+            )
+        )
     }
 }
 

@@ -24,25 +24,18 @@ class AvisosViewModel(
     val avisos: StateFlow<List<Aviso>> = repo.avisos
 
     private val _eventos = MutableSharedFlow<Aviso>()
-
-    val eventos: SharedFlow<Aviso> =
-        _eventos.asSharedFlow()
+    val eventos: SharedFlow<Aviso> = _eventos.asSharedFlow()
 
     private val _permiso =
         MutableStateFlow<PermisoUi>(PermisoUi.SinPedir)
 
-    val permiso: StateFlow<PermisoUi> =
-        _permiso.asStateFlow()
+    val permiso: StateFlow<PermisoUi> = _permiso.asStateFlow()
 
     private val _mensaje = MutableStateFlow<String?>(null)
-
-    val mensaje: StateFlow<String?> =
-        _mensaje.asStateFlow()
+    val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
 
     private val _faltan = MutableStateFlow<Int?>(null)
-
-    val faltan: StateFlow<Int?> =
-        _faltan.asStateFlow()
+    val faltan: StateFlow<Int?> = _faltan.asStateFlow()
 
     private var recordatorioJob: Job? = null
 
@@ -50,6 +43,11 @@ class AvisosViewModel(
 
     val escuchandoAvion: StateFlow<Boolean> =
         _escuchandoAvion.asStateFlow()
+
+    private val _escuchandoCargador = MutableStateFlow(false)
+
+    val escuchandoCargador: StateFlow<Boolean> =
+        _escuchandoCargador.asStateFlow()
 
     fun permisoRespondido(concedido: Boolean) {
 
@@ -104,7 +102,6 @@ class AvisosViewModel(
                 for (restantes in segundos downTo 1) {
 
                     _faltan.value = restantes
-
                     delay(1000)
                 }
 
@@ -147,6 +144,31 @@ class AvisosViewModel(
                     "Desactivado"
                 },
                 origen = Origen.MODO_AVION
+            )
+        }
+    }
+
+    fun cambiarEscuchaCargador(activado: Boolean) {
+
+        _escuchandoCargador.value = activado
+    }
+
+    fun alCambiarCargador(conectado: Boolean) {
+
+        if (!_escuchandoCargador.value) {
+            return
+        }
+
+        viewModelScope.launch {
+
+            emitirAviso(
+                titulo = "Estado del cargador",
+                texto = if (conectado) {
+                    "Cargador conectado"
+                } else {
+                    "Cargador desconectado"
+                },
+                origen = Origen.CARGADOR
             )
         }
     }

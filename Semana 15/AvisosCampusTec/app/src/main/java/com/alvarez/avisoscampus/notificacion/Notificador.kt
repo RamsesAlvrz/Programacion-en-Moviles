@@ -115,6 +115,10 @@ object Notificador {
             Origen.MODO_AVION ->
                 "Modo avión: ${aviso.texto}. " +
                         "Verifica el estado de conectividad de tu dispositivo."
+
+            Origen.CARGADOR ->
+                "${aviso.texto}. Se detectó un cambio en la " +
+                        "alimentación eléctrica de tu dispositivo."
         }
 
         val notificacion = NotificationCompat.Builder(
