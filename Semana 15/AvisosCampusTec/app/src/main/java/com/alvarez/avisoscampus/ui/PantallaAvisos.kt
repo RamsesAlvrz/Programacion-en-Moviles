@@ -40,6 +40,8 @@ fun PantallaAvisos(vm: AvisosViewModel) {
 
     val escuchandoAvion by vm.escuchandoAvion.collectAsState()
 
+    val avisos by vm.avisos.collectAsState()
+
     val launcherPermiso = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { concedido ->
@@ -305,13 +307,7 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 titulo = "Historial"
             ) {
 
-                Text(
-                    text = "Sin avisos todavía",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // TODO Paso 7: integrar HistorialAvisos
+                HistorialAvisos(avisos = avisos)
             }
         }
     }
