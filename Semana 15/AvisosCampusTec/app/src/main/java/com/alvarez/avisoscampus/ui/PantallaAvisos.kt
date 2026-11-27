@@ -1,7 +1,7 @@
 
 package com.alvarez.avisoscampus.ui
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,17 +35,10 @@ fun PantallaAvisos(vm: AvisosViewModel) {
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = "AvisosCampus",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-
-                        Text(
-                            text = "Centro de notificaciones",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    Text(
+                        text = "AvisosCampus",
+                        style = MaterialTheme.typography.titleLarge
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -60,90 +53,80 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            Text(
-                text = "Panel de avisos",
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Text(
-                text = "Gestiona tus notificaciones y eventos del dispositivo.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
             TarjetaAvisos(
-                numero = "01",
                 titulo = "Permiso de notificaciones"
             ) {
 
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = GrisPendiente.copy(alpha = 0.12f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+
+                    Text("Estado: ")
+
                     Text(
                         text = "Sin pedir",
                         color = GrisPendiente,
-                        modifier = Modifier.padding(
-                            horizontal = 12.dp,
-                            vertical = 6.dp
-                        )
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
 
-                Button(
-                    onClick = {
-                        // TODO Paso 2
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("Permitir notificaciones")
+
+                    Button(
+                        onClick = {
+                            // TODO Paso 2
+                        }
+                    ) {
+                        Text("Pedir permiso")
+                    }
                 }
             }
 
             TarjetaAvisos(
-                numero = "02",
                 titulo = "Avisos"
             ) {
 
-                Text(
-                    text = "Genera una notificación inmediata.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
-                Button(
-                    onClick = {
-                        // TODO Paso 3
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("Mostrar aviso")
+
+                    Button(
+                        onClick = {
+                            // TODO Paso 3
+                        }
+                    ) {
+                        Text("Mostrar aviso")
+                    }
                 }
             }
 
             TarjetaAvisos(
-                numero = "03",
                 titulo = "Recordatorio"
             ) {
 
-                Text(
-                    text = "Programa un aviso en 10 segundos.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(
+                        8.dp,
+                        Alignment.CenterHorizontally
+                    ),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
 
                     Button(
                         onClick = {
                             // TODO Paso 5
-                        },
-                        modifier = Modifier.weight(1f)
+                        }
                     ) {
                         Text("Recordar en 10 s")
                     }
@@ -152,15 +135,24 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                         onClick = {
                             // TODO Paso 5
                         },
-                        enabled = false
+                        enabled = false,
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.primary
+                                .copy(alpha = 0.5f)
+                        ),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            disabledContentColor = GrisPendiente
+                        )
                     ) {
                         Text("Cancelar")
                     }
                 }
+
+                // TODO Paso 5: mostrar segundos restantes
             }
 
             TarjetaAvisos(
-                numero = "04",
                 titulo = "Receptor de anuncios"
             ) {
 
@@ -169,33 +161,32 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-
-                        Text(
-                            text = "Escuchar el modo avión",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-
-                        Text(
-                            text = "Detecta cambios del sistema.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Escuchar el modo avión",
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
 
                     Switch(
                         checked = false,
                         onCheckedChange = {
                             // TODO Paso 6
-                        }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor =
+                                MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor =
+                                MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = GrisPendiente,
+                            uncheckedTrackColor =
+                                MaterialTheme.colorScheme.surface,
+                            uncheckedBorderColor = GrisPendiente
+                        )
                     )
                 }
             }
 
             TarjetaAvisos(
-                numero = "05",
                 titulo = "Historial"
             ) {
 
@@ -207,67 +198,36 @@ fun PantallaAvisos(vm: AvisosViewModel) {
 
                 // TODO Paso 7: integrar HistorialAvisos
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
 private fun TarjetaAvisos(
-    numero: String,
     titulo: String,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
 
-    Card(
+    OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.outlinedCardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        border = CardDefaults.outlinedCardBorder()
     ) {
 
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(10.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-
-                    Text(
-                        text = numero,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-
-                Text(
-                    text = titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant
-                    .copy(alpha = 0.5f)
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
             )
 
             contenido()
