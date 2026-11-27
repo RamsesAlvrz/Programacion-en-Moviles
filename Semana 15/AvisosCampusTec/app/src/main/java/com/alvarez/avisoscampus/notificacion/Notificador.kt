@@ -16,10 +16,12 @@ import androidx.core.content.ContextCompat
 import com.alvarez.avisoscampus.MainActivity
 import com.alvarez.avisoscampus.R
 import com.alvarez.avisoscampus.model.Aviso
+import com.alvarez.avisoscampus.model.Origen
 
 object Notificador {
 
     const val CANAL = "avisos"
+    const val CANAL_URGENTE = "urgentes"
 
     fun crearCanal(context: Context) {
 
@@ -30,14 +32,25 @@ object Notificador {
                 "Avisos",
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Notificaciones de la app"
+                description = "Notificaciones generales"
+            }
+
+            val canalUrgente = NotificationChannel(
+                CANAL_URGENTE,
+                "Urgentes",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Recordatorios importantes"
+                enableVibration(true)
             }
 
             val manager = context.getSystemService(
                 NotificationManager::class.java
             )
 
-            manager.createNotificationChannel(canal)
+            manager.createNotificationChannels(
+                listOf(canal, canalUrgente)
+            )
         }
     }
 
@@ -63,6 +76,20 @@ object Notificador {
             return false
         }
 
+        val esUrgente = aviso.origen == Origen.RECORDATORIO
+
+        val canal = if (esUrgente) {
+            CANAL_URGENTE
+        } else {
+            CANAL
+        }
+
+        val prioridad = if (esUrgente) {
+            NotificationCompat.PRIORITY_HIGH
+        } else {
+            NotificationCompat.PRIORITY_DEFAULT
+        }
+
         val intent = Intent(
             context,
             MainActivity::class.java
@@ -77,12 +104,12 @@ object Notificador {
 
         val notificacion = NotificationCompat.Builder(
             context,
-            CANAL
+            canal
         )
             .setSmallIcon(R.drawable.ic_notificacion)
             .setContentTitle(aviso.titulo)
             .setContentText(aviso.texto)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(prioridad)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()

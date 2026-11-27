@@ -64,17 +64,30 @@ class AvisosViewModel(
         }
     }
 
+    private suspend fun emitirAviso(
+        titulo: String,
+        texto: String,
+        origen: Origen
+    ) {
+
+        val aviso = repo.registrar(
+            titulo = titulo,
+            texto = texto,
+            origen = origen
+        )
+
+        _eventos.emit(aviso)
+    }
+
     fun avisarAhora() {
 
         viewModelScope.launch {
 
-            val aviso = repo.registrar(
+            emitirAviso(
                 titulo = "Tarea lista",
                 texto = "Tu entrega fue registrada",
                 origen = Origen.BOTON
             )
-
-            _eventos.emit(aviso)
         }
     }
 
@@ -95,13 +108,11 @@ class AvisosViewModel(
                     delay(1000)
                 }
 
-                val aviso = repo.registrar(
-                    titulo = "Recordatorio",
+                emitirAviso(
+                    titulo = "Recordatorio urgente",
                     texto = "Revisa tu laboratorio pendiente",
                     origen = Origen.RECORDATORIO
                 )
-
-                _eventos.emit(aviso)
 
             } finally {
 
@@ -128,7 +139,7 @@ class AvisosViewModel(
 
         viewModelScope.launch {
 
-            val aviso = repo.registrar(
+            emitirAviso(
                 titulo = "Modo avión",
                 texto = if (activado) {
                     "Activado"
@@ -137,8 +148,6 @@ class AvisosViewModel(
                 },
                 origen = Origen.MODO_AVION
             )
-
-            _eventos.emit(aviso)
         }
     }
 
