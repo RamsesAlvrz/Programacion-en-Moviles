@@ -1,6 +1,9 @@
-
 package com.alvarez.avisoscampus.ui
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,8 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.alvarez.avisoscampus.model.PermisoUi
 import com.alvarez.avisoscampus.notificacion.Notificador
 import com.alvarez.avisoscampus.ui.theme.GrisPendiente
+import com.alvarez.avisoscampus.ui.theme.VerdePermitido
+import com.alvarez.avisoscampus.ui.theme.RojoDenegado
 import com.alvarez.avisoscampus.viewmodel.AvisosViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,6 +27,20 @@ import com.alvarez.avisoscampus.viewmodel.AvisosViewModel
 fun PantallaAvisos(vm: AvisosViewModel) {
 
     val contexto = LocalContext.current
+
+    val permiso by vm.permiso.collectAsState()
+
+    val launcherPermiso = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { concedido ->
+        vm.permisoRespondido(concedido)
+    }
+
+    LaunchedEffect(Unit) {
+        if (Notificador.tienePermiso(contexto)) {
+            vm.permisoRespondido(true)
+        }
+    }
 
     LaunchedEffect(Unit) {
         vm.eventos.collect { aviso ->
@@ -61,6 +81,18 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                 titulo = "Permiso de notificaciones"
             ) {
 
+                val textoEstado = when (permiso) {
+                    PermisoUi.SinPedir -> "Sin pedir"
+                    PermisoUi.Concedido -> "Concedido"
+                    PermisoUi.Denegado -> "Denegado"
+                }
+
+                val colorEstado = when (permiso) {
+                    PermisoUi.SinPedir -> GrisPendiente
+                    PermisoUi.Concedido -> VerdePermitido
+                    PermisoUi.Denegado -> RojoDenegado
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -70,8 +102,8 @@ fun PantallaAvisos(vm: AvisosViewModel) {
                     Text("Estado: ")
 
                     Text(
-                        text = "Sin pedir",
-                        color = GrisPendiente,
+                        text = textoEstado,
+                        color = colorEstado,
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -83,7 +115,20 @@ fun PantallaAvisos(vm: AvisosViewModel) {
 
                     Button(
                         onClick = {
-                            // TODO Paso 2
+
+                            if (Notificador.tienePermiso(contexto)) {
+
+                                vm.permisoRespondido(true)
+
+                            } else if (
+                                Build.VERSION.SDK_INT >=
+                                Build.VERSION_CODES.TIRAMISU
+                            ) {
+
+                                launcherPermiso.launch(
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                )
+                            }
                         }
                     ) {
                         Text("Pedir permiso")
